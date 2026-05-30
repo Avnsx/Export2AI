@@ -26,7 +26,7 @@ npm install
 | File | Size | Role |
 |------|------|------|
 | `package.slim.json` | ~30 KB | **Source of truth** — edit settings, commands, npm scripts |
-| `package.json` (generated) | **~32 KB** | Produced by merge — base + model-target commands |
+| `package.json` (generated) | **~34 KB** | Produced by merge — base + model-target commands |
 | `scripts/generated/model-target-contributes.json` | Small | Model-target + zipFor menu rows + palette hides |
 
 > **Note:** before 1.2.3 `package.json` was ~1.9–4 MB because of ~10,900 token-bucket commands. Those were removed (see [agent-chokepoints.md](./agent-chokepoints.md) §1); the manifest is now small.
@@ -48,6 +48,10 @@ npm run slim:package
 - `export2ai.extensionInfo` from version + `CHANGELOG.md`
 
 `scripts/sync-comment-settings.js` injects comment-strip settings from compiled `out/utils/commentProfiles.js`.
+
+### Marketplace assets
+
+`package.slim.json` sets the shared marketplace icon to `icons/icon-128x128.png`. The generated `package.json`, Cursor, VS Code Marketplace, and Open VSX all read that manifest field from the packaged VSIX. Larger icon sources and the GitHub README banner remain in `icons/` for repository and publishing assets.
 
 ## npm scripts
 
@@ -84,7 +88,7 @@ Or press **F5** (`.vscode/launch.json`) for Extension Development Host.
 
 ### VSIX contents (`.vscodeignore`)
 
-**Ships:** `out/`, generated `package.json`, production `node_modules/`, `README.md`, `CHANGELOG.md`, `AGENTS.md`, `docs/`
+**Ships:** `out/`, generated `package.json`, production `node_modules/`, `README.md`, `CHANGELOG.md`, `AGENTS.md`, `docs/`, `icons/`
 
 **Does not ship:** `src/`, `scripts/`, `package.slim.json`, `tsconfig.json`, `*.vsix`, test zips
 
@@ -93,7 +97,7 @@ Or press **F5** (`.vscode/launch.json`) for Extension Development Host.
 See **[agent-chokepoints.md](./agent-chokepoints.md)** for full detail. Short version:
 
 - **`tsc` is ~2–3 s** — not the main IDE hang source
-- **`package.json` is ~32 KB** — if it balloons into the MB range, you reintroduced a generated-command explosion
+- **`package.json` is ~34 KB** — if it balloons into the MB range, you reintroduced a generated-command explosion
 - **Never generate per-token-count commands** — the count lives in the status bar / decoration badge / notification (`test:tokens` enforces zero bucket commands)
 
 ## Releases (GitHub)
@@ -101,8 +105,8 @@ See **[agent-chokepoints.md](./agent-chokepoints.md)** for full detail. Short ve
 Push a semver tag to trigger [`.github/workflows/release.yml`](../.github/workflows/release.yml):
 
 ```bash
-git tag v1.2.4
-git push origin v1.2.4
+git tag v1.2.5
+git push origin v1.2.5
 ```
 
 The workflow compiles, runs tests, builds `export2ai-{version}.vsix`, generates release notes from `CHANGELOG.md` via `scripts/release-notes.js`, and attaches the VSIX to a GitHub Release. Optional marketplace publish when `VSCE_PAT` / `OVSX_PAT` secrets are set.

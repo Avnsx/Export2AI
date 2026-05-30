@@ -8,7 +8,7 @@
 | `config.ts` | Reads `export2ai.*` from VS Code configuration; default exclude patterns; value clamps |
 | `types.ts` | `Export2AIConfiguration`, `FileContent`, `TokenCountMethod`, collect/zip option interfaces |
 | `zipService.ts` | `createZipArchive()`; archiver integration, in-zip manifest |
-| `projectService.ts` | Ignore context, copy project structure, tree + formatter orchestration |
+| `projectService.ts` | Ignore context, copy project structure, single-file content copy, tree + formatter orchestration |
 | `tokenEstimate.ts` | `TokenEstimateManager` — status bar, Explorer decoration badge, deferred scans, single-pass per-folder aggregation (`aggregateDirectoryEstimates`) |
 | `archiver-v8.d.ts` | Type declarations for archiver v8 `ZipArchive` |
 | `ignore.d.ts` | Type declarations for `ignore` package |
@@ -49,11 +49,11 @@
 | `configuration-utils.js` | Read settings from categorized or flat `contributes.configuration` |
 | `sync-comment-settings.js` | Syncs comment-strip markdown into `package.slim.json` from compiled `out/` |
 | `verify-build.js` | Ensures `out/extension.js` exists before VSIX pack (avoids double compile) |
-| `submenu-base.json` | Static Explorer submenu items (copy structure, settings, open zip) |
+| `submenu-base.json` | Static folder-submenu items (copy structure, settings, open zip) |
 | `test-token-format.js` | Token format, Opus routing, status-bar labels, manifest hygiene |
 | `test-comment-strip.js` | Language-aware comment stripping assertions |
 | `test-model-format.js` | Model slug and zip filename helpers |
-| `test-menu-merge.js` | Submenu shape, single zip row, palette hides, no bucket rows |
+| `test-menu-merge.js` | Submenu shape, single zip row, single-file copy row, palette hides, no bucket rows |
 | `test-extension-settings.js` | Extension ID resolution + metadata sync |
 | `live-test.js` | End-to-end zip creation smoke test |
 
@@ -62,7 +62,8 @@
 | File | Role |
 |------|------|
 | `package.slim.json` | **Manifest source of truth** — edit settings, commands, scripts here |
-| `package.json` | Generated after compile (~32 KB) — do not hand-edit |
+| `package.json` | Generated after compile (~34 KB) — do not hand-edit |
 | `tsconfig.json` | TypeScript compile options (`src/` → `out/`) |
 | `.vscodeignore` | Controls VSIX contents |
 | `CHANGELOG.md` | Release history; feeds `export2ai.extensionInfo` date |
+| `icons/` | Packaged marketplace icons and the GitHub README banner |

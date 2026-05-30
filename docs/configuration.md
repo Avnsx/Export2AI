@@ -38,7 +38,7 @@ When adding a setting, place it in the matching category object in `package.slim
 | `export2ai.maxFileSize` | number | `1048576` | Max bytes per file (larger → placeholder) |
 | `export2ai.maxDepth` | number | `5` | Tree depth for copy project structure |
 | `export2ai.fileConcurrency` | number | `4` | Parallel file reads (clamped 1–32) |
-| `export2ai.outputFormat` | enum | `markdown` | `plaintext`, `markdown`, or `xml` for copy structure |
+| `export2ai.outputFormat` | enum | `plaintext` | `plaintext`, `markdown`, or `xml` for copy structure |
 | `export2ai.includeManifest` | boolean | `true` | Add `_EXPORT2AI_MANIFEST.txt` inside zip |
 | `export2ai.compressionLevel` | number | `9` | Zip archive pack level 0–9 (upload size only; not token count after extract) |
 | `export2ai.copyPathAfterCreate` | boolean | `true` | Copy zip path to clipboard after create |
@@ -46,12 +46,12 @@ When adding a setting, place it in the matching category object in `package.slim
 
 ### Debug logging
 
-When `export2ai.debug` is `true`, Export2AI writes diagnostic lines to **View -> Output -> Export2AI** for activation/deactivation, command registration, settings navigation, zip creation, copy-structure, token-estimate refreshes, ignore setup, and file collection. Routine diagnostics are read from the live setting on each log call, so turning the setting off stops later Output entries.
+When `export2ai.debug` is `true`, Export2AI writes diagnostic lines to **View -> Output -> Export2AI** for activation/deactivation, command registration, settings navigation, zip creation, copy-structure, single-file copy, token-estimate refreshes, ignore setup, and file collection. Routine diagnostics are read from the live setting on each log call, so turning the setting off stops later Output entries.
 
 Log lines are prefixed with the extension name and a compact timestamp formatted by the local PC locale/time settings, for example:
 
 ```
-[Export2AI 05/30/26, 09:05:07 PM] settings: navigation start settingsQuery=@ext:local.export2ai contributedCommands=39
+[Export2AI 05/30/26, 09:05:07 PM] settings: navigation start settingsQuery=@ext:local.export2ai contributedCommands=40
 ```
 
 ### Settings UI copy (Zip archive & Comments)

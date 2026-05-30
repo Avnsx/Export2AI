@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="icons/gh_banner.png" alt="Export2AI" width="1672" height="941">
+</p>
+
 # Export2AI 📦
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./LICENSE.txt)
@@ -24,6 +28,10 @@ Export2AI is a [Cursor](https://cursor.com) / [VS Code](https://code.visualstudi
 
 ### 1️⃣ Install
 
+**From a marketplace (when published):**
+
+Search for **Export2AI** in Cursor, VS Code Marketplace, or Open VSX. The listing uses the packaged manifest icon from `icons/icon-128x128.png`.
+
 **From a `.vsix` file (local build):**
 
 ```bash
@@ -32,7 +40,7 @@ npm run compile
 npm run package
 ```
 
-Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick `export2ai-1.2.4.vsix`.
+Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick `export2ai-1.2.5.vsix`.
 
 ### 2️⃣ Zip your project
 
@@ -65,6 +73,10 @@ The zip includes **text source files only**. Binaries are replaced with a short 
 
 Need just the folder tree, not every file? Use **Copy Project Structure** from the same menu. Output goes to your clipboard as plain text, Markdown, or XML (see settings).
 
+### 📄 Copy one file's content
+
+Right-click a single file (for example, a `.md` file) and choose **Export2AI: Copy Content to Clipboard**. This copies the file's exact UTF-8 text to your clipboard without creating a zip, applying ignore rules, stripping comments, compressing whitespace, or masking content. Binary files, directories, invalid UTF-8, multi-selects, and clipboard failures show a visible Export2AI message instead of failing silently.
+
 ### 📂 Open the last zip
 
 **Export2AI → Open Last Zip** opens the most recently created zip in your **system file manager** (Explorer on Windows, Finder on macOS, your default file manager on Linux) with the file selected. Tracks the last zip for the current session only.
@@ -96,7 +108,7 @@ These open the **extension-specific settings page** via VS Code’s `@ext:` rout
 
 At the **top** of the settings page, a read-only row shows:
 
-`Extension version v.1.2.4 · Last updated May 30, 2026`
+`Extension version v.1.2.5 · Last updated May 30, 2026`
 
 That string is synced automatically from `package.json` version and `CHANGELOG.md` when the extension is built.
 
@@ -125,11 +137,11 @@ This avoids slow global Settings search, which could freeze Cursor when filterin
 | `export2ai.maxFileSize` | Max bytes per file (larger = placeholder) | `1048576` (1 MB) |
 | `export2ai.maxDepth` | Tree depth for **Copy Project Structure** | `5` |
 | `export2ai.fileConcurrency` | Parallel file reads (1–32) | `4` |
-| `export2ai.outputFormat` | Structure format: `plaintext`, `markdown`, `xml` | `markdown` |
+| `export2ai.outputFormat` | Structure format: `plaintext`, `markdown`, `xml` | `plaintext` |
 | `export2ai.includeManifest` | Add `_EXPORT2AI_MANIFEST.txt` inside zip | `true` |
 | `export2ai.compressionLevel` | Zip file pack tightness 0 (fast) – 9 (smallest upload); does not change token count after extract | `9` |
 | `export2ai.copyPathAfterCreate` | Copy zip path to clipboard after create | `true` |
-| `export2ai.debug` | Log full extension diagnostics to Output (activation, commands, zip/copy, token scans, settings navigation) | `false` |
+| `export2ai.debug` | Log full extension diagnostics to Output (activation, commands, zip/copy, single-file copy, token scans, settings navigation) | `false` |
 
 ---
 
@@ -222,7 +234,7 @@ npm run test:settings-nav      # extension ID + extensionInfo metadata
 npm run package          # compile once + build export2ai-x.x.x.vsix
 ```
 
-**Manifest workflow:** edit `package.slim.json` (not the generated `package.json`). `npm run compile` runs `precompile` (menu generation), TypeScript compile, then `postcompile` (comment settings sync + manifest merge). `package.json` stays small (~32 KB); if it ever balloons into the MB range you have reintroduced a generated-command explosion — see [docs/agent-chokepoints.md](./docs/agent-chokepoints.md).
+**Manifest workflow:** edit `package.slim.json` (not the generated `package.json`). `npm run compile` runs `precompile` (menu generation), TypeScript compile, then `postcompile` (comment settings sync + manifest merge). `package.json` stays small (~34 KB); if it ever balloons into the MB range you have reintroduced a generated-command explosion — see [docs/agent-chokepoints.md](./docs/agent-chokepoints.md).
 
 ### Documentation
 

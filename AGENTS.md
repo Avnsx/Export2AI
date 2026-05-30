@@ -19,6 +19,7 @@ This document is for **AI coding agents** and **human contributors** working on 
 | **Entry point** | `src/extension.ts` → `out/extension.js` |
 | **Config namespace** | `export2ai.*` |
 | **Command prefix** | `export2ai.*` |
+| **Marketplace icon** | `icons/icon-128x128.png` |
 | **Publisher** | `local` (change before marketplace publish) |
 | **Default `llmModel`** | `gpt-5.5` (`DEFAULT_LLM_MODEL` in `modelRegistry.ts`) |
 
@@ -34,8 +35,9 @@ Export2AI/
 ├── out/                          # compiled JS (shipped in VSIX)
 ├── scripts/                      # build & test utilities (not shipped)
 ├── docs/                         # technical documentation
+├── icons/                        # packaged marketplace icons + README banner
 ├── package.slim.json             # **manifest source of truth** (hand-edited)
-├── package.json                  # generated after compile (~32 KB) — do not hand-edit
+├── package.json                  # generated after compile (~34 KB) — do not hand-edit
 ├── CHANGELOG.md
 ├── README.md                     # user-facing quick start
 ├── tsconfig.json
@@ -61,7 +63,7 @@ Full file-by-file map: **[docs/source-modules.md](./docs/source-modules.md)**
 
 Details and rationale: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
 
-> **History (1.2.3):** the ~10,900 `export2ai.zip.bucket.{N}` command system was **removed**. It bloated `package.json` to ~1.9–4 MB, polluted the Command Palette, and was the root cause of Cursor settings/activate hangs — while providing nothing the status bar/decoration badge didn't already show. `package.json` is now ~32 KB. **Do not bring it back.** See [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) §1.
+> **History (1.2.3):** the ~10,900 `export2ai.zip.bucket.{N}` command system was **removed**. It bloated `package.json` to ~1.9–4 MB, polluted the Command Palette, and was the root cause of Cursor settings/activate hangs — while providing nothing the status bar/decoration badge didn't already show. `package.json` is now ~34 KB. **Do not bring it back.** See [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) §1.
 
 ---
 
@@ -72,6 +74,7 @@ Detailed flows: **[docs/architecture.md](./docs/architecture.md)**
 - **Zip:** `extension.ts` → `zipService.ts` → `FileProcessor.collectFiles()` → archiver
 - **Token estimate:** `TokenEstimateManager` in `tokenEstimate.ts` (deferred scan; single-pass folder aggregation; status bar + decoration badge)
 - **Copy structure:** `projectService.ts` → `projectTree.ts` + `formatters.ts`
+- **Copy file content:** `projectService.ts` → validate one file → raw UTF-8 clipboard copy (+ token label if enabled)
 - **Settings nav:** `extensionSettings.ts` + `@ext:` route with fallbacks
 - **Debug logging:** `debugLogger.ts` gates full-extension diagnostics behind `export2ai.debug` and writes local-time lines to the Export2AI output channel
 - **Comments:** `commentStripper.ts` + `commentProfiles.ts` when `removeComments` is on
@@ -119,7 +122,7 @@ npm run package           # compile once + VSIX (verify-build only in prepublish
 
 Full pipeline: **[docs/build-and-test.md](./docs/build-and-test.md)**
 
-**Note:** `tsc` is fast (~2–3 s). `package.json` is now ~32 KB (~39 commands), so manifest parse is no longer a hang source. If you ever see it grow into the MB range again, you have reintroduced a generated-command explosion — stop and reconsider.
+**Note:** `tsc` is fast (~2–3 s). `package.json` is now ~34 KB (~40 commands), so manifest parse is no longer a hang source. If you ever see it grow into the MB range again, you have reintroduced a generated-command explosion — stop and reconsider.
 
 ---
 

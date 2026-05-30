@@ -1,4 +1,6 @@
 const assert = require("assert");
+const fs = require("fs");
+const path = require("path");
 const { buildExport2AISubmenu, isGeneratedCommand } = require("./merge-package");
 
 const baseSubmenu = [
@@ -37,5 +39,40 @@ assert.strictEqual(isGeneratedCommand("export2ai.modelTarget.gpt-5-5"), true, "m
 assert.strictEqual(isGeneratedCommand("export2ai.zipFor.gpt-5-5"), true, "zipFor is generated");
 assert.strictEqual(isGeneratedCommand("export2ai.zipSelectedFolder"), false, "base command is not generated");
 assert.strictEqual(isGeneratedCommand("export2ai.zip.bucket.0"), false, "bucket commands no longer exist");
+
+const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"));
+const commands = pkg.contributes.commands ?? [];
+assert.ok(
+  commands.some(
+    (cmd) =>
+      cmd.command === "export2ai.copyFileContent"
+      && cmd.title === "Export2AI: Copy Content to Clipboard"
+  ),
+  "single-file copy command is contributed"
+);
+
+const explorerContext = pkg.contributes.menus["explorer/context"] ?? [];
+assert.ok(
+  explorerContext.some(
+    (item) =>
+      item.command === "export2ai.copyFileContent"
+      && item.when === "!explorerResourceIsFolder && !explorerResourceIsRoot"
+  ),
+  "single-file right-click menu shows Copy Content to Clipboard"
+);
+assert.ok(
+  !explorerContext.some(
+    (item) =>
+      item.command === "export2ai.copyProjectStructure"
+      && String(item.when).includes("!explorerResourceIsFolder")
+  ),
+  "file right-click no longer shows Copy Project Structure"
+);
+
+const palette = pkg.contributes.menus.commandPalette ?? [];
+assert.ok(
+  palette.some((item) => item.command === "export2ai.copyFileContent" && item.when === "false"),
+  "single-file copy command is hidden from Command Palette"
+);
 
 console.log(`test-menu-merge: ok (${submenu.length} submenu rows).`);

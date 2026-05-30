@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Export2AI creates AI-ready zip archives from workspace folders. It applies ignore rules, optional whitespace compression, language-aware comment stripping, and offline token estimates. A secondary feature copies project tree structure to the clipboard.
+Export2AI creates AI-ready zip archives from workspace folders. It applies ignore rules, optional whitespace compression, language-aware comment stripping, and offline token estimates. Secondary features copy project tree structure or one selected text file to the clipboard.
 
 ## Entry point
 
@@ -67,6 +67,19 @@ export2ai.copyProjectStructure
   → clipboard (+ token label if counting enabled)
 ```
 
+## Data flow: copy one file's content
+
+```
+export2ai.copyFileContent
+  → validate exactly one target file (no folders, multi-selects, or missing URI)
+  → vscode.workspace.fs.stat/readFile()
+  → binary check via isbinaryfile
+  → UTF-8 decode via fatal TextDecoder
+  → clipboard (+ token label if counting enabled)
+```
+
+This command is intentionally raw: it copies the file's exact UTF-8 text. It does **not** apply ignore rules, `maxFileSize`, whitespace compression, comment stripping, manifest formatting, or masking. Binary files, invalid UTF-8, directories, multi-selects, read failures, and clipboard failures produce visible Export2AI messages and debug/error logs.
+
 ## Data flow: settings navigation
 
 ```
@@ -91,7 +104,7 @@ High-level extension work
   → [Export2AI {local short date/time}] scope: message key=value
 ```
 
-Debug mode covers activation/deactivation, command registration, settings navigation, zip creation, copy-structure, token estimate refreshes, ignore setup, and file collection. Routine debug entries are skipped when `export2ai.debug` is off; user-facing errors still surface through notifications/errors.
+Debug mode covers activation/deactivation, command registration, settings navigation, zip creation, copy-structure, single-file copy, token estimate refreshes, ignore setup, and file collection. Routine debug entries are skipped when `export2ai.debug` is off; user-facing errors still surface through notifications/errors.
 
 ## Ignore pipeline
 
@@ -106,6 +119,8 @@ Shared by zip and copy-structure:
 7. `maxFileSize` cap (placeholder text if exceeded)
 8. Skip output zip path if it appears during collection
 
+`export2ai.copyFileContent` does not use the ignore pipeline because a user explicitly selected one file and asked for its content.
+
 ## Commands
 
 | Command ID | Purpose |
@@ -115,10 +130,11 @@ Shared by zip and copy-structure:
 | `export2ai.modelTarget.*` | Generated (~17); shows **Target model: …** when `config.export2ai.llmModel` matches; hidden from Command Palette |
 | `export2ai.zipFor.*` | Generated (~17); **Zip Folder for {model}** when token counting off; hidden from Command Palette |
 | `export2ai.copyProjectStructure` | Clipboard tree (+ token label if counting on) |
+| `export2ai.copyFileContent` | Right-click a single file → copy exact UTF-8 text to clipboard (+ token label if counting on); hidden from Command Palette |
 | `export2ai.openOutputFolder` | Open last zip in OS file manager (session-scoped) |
 | `export2ai.openSettings` | Open extension settings via `@ext:` route |
 
-The manifest holds **~39 commands total** — there is no longer a per-token-count command set. Generated `modelTarget.*` / `zipFor.*` commands are hidden from the Command Palette with `when: false` so it stays clean.
+The manifest holds **~40 commands total** — there is no longer a per-token-count command set. Generated `modelTarget.*` / `zipFor.*` commands and the right-click-only single-file copy command are hidden from the Command Palette with `when: false` so it stays clean.
 
 ### Settings navigation (no hang)
 
@@ -129,7 +145,7 @@ The manifest holds **~39 commands total** — there is no longer a per-token-cou
 - Initial workspace scan deferred **5s** on cold start
 - Explorer decoration scans skipped during settings navigation
 
-Static submenu items (settings, copy structure, open last zip) come from `scripts/submenu-base.json`. Generated menus come from `scripts/generate-all-menus.js`.
+Static folder-submenu items (settings, copy structure, open last zip) come from `scripts/submenu-base.json`. The single-file right-click row is a direct `explorer/context` command, not a submenu. Generated menus come from `scripts/generate-all-menus.js`.
 
 ### Target model in UI
 
@@ -146,7 +162,7 @@ That approach was removed because it was **pure cost with no surviving benefit**
 - **No menu surface left** — the Explorer submenu can only render a handful of rows, so the bucket rows were already dropped from the submenu; the `setContext('export2ai.tokenBucket', …)` had no consumer.
 - **Already covered elsewhere** — the exact token count shows in the **status bar**, the per-folder **Explorer decoration badge** (`formatTokenBadge`), and the **post-zip notification**.
 
-Result: the manifest is ~32 KB with ~39 commands. **Do not reintroduce a per-count command set.** If a future requirement truly needs an in-menu count, use a *small* coarse bucket set (≤ ~25 rows) and hide the commands from the palette — never thousands.
+Result: the manifest is ~34 KB with ~40 commands. **Do not reintroduce a per-count command set.** If a future requirement truly needs an in-menu count, use a *small* coarse bucket set (≤ ~25 rows) and hide the commands from the palette — never thousands.
 
 ## Token counting
 

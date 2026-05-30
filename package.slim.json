@@ -3,6 +3,7 @@
   "displayName": "Export2AI",
   "version": "1.2.5",
   "description": "Create compact AI-ready zip archives from the current Cursor or VS Code workspace.",
+  "icon": "icons/icon-128x128.png",
   "main": "./out/extension.js",
   "type": "commonjs",
   "publisher": "local",
@@ -58,6 +59,12 @@
         "title": "Copy Project Structure",
         "category": "Export2AI",
         "icon": "$(list-tree)"
+      },
+      {
+        "command": "export2ai.copyFileContent",
+        "title": "Export2AI: Copy Content to Clipboard",
+        "category": "Export2AI",
+        "icon": "$(copy)"
       }
     ],
     "submenus": [
@@ -83,6 +90,10 @@
         },
         {
           "command": "export2ai.copyProjectStructure"
+        },
+        {
+          "command": "export2ai.copyFileContent",
+          "when": "false"
         }
       ],
       "explorer/context": [
@@ -92,7 +103,7 @@
           "group": "7_modification@50"
         },
         {
-          "command": "export2ai.copyProjectStructure",
+          "command": "export2ai.copyFileContent",
           "when": "!explorerResourceIsFolder && !explorerResourceIsRoot",
           "group": "7_modification@51"
         }
@@ -283,7 +294,7 @@
               "markdown",
               "xml"
             ],
-            "default": "markdown",
+            "default": "plaintext",
             "order": 1,
             "description": "Output format for the copied project tree."
           }

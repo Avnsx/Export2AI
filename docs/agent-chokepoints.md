@@ -26,7 +26,7 @@ This caused a cascade of problems:
 - **Explorer decoration badge** — 2-char folder badge only (`formatTokenBadge`); no badge tooltip. One workspace walk populates every folder; `provideFileDecoration` reads the cache synchronously.
 - **Post-zip notification** — exact/approx count after the archive is written.
 
-`package.json` is now **~32 KB / ~39 commands**. Deleted: `src/utils/{tokenBuckets,zipBucketCommands,zipBucketRegistry}.ts`, `scripts/{token-bucket-config,generate-token-menu,test-zip-bucket-commands}.js`, and context keys `tokenBucket` / `tokenCountExact` / `tokenCountFormatted`.
+`package.json` is now **~34 KB / ~40 commands**. Deleted: `src/utils/{tokenBuckets,zipBucketCommands,zipBucketRegistry}.ts`, `scripts/{token-bucket-config,generate-token-menu,test-zip-bucket-commands}.js`, and context keys `tokenBucket` / `tokenCountExact` / `tokenCountFormatted`.
 
 ### Do not
 - Reintroduce `export2ai.zip.bucket.*` or any "one command per number" set.
@@ -49,7 +49,7 @@ npm run test:menu-merge
 | Artifact | Size | Slows `tsc`? | Slows Cursor/VS Code? |
 |----------|------|--------------|------------------------|
 | `node_modules/` | ~170 MB | No (not compiled) | Slightly on disk scan |
-| `package.json` (generated) | **~32 KB now** (was ~1.9–4 MB) | No | Only if it balloons again |
+| `package.json` (generated) | **~34 KB now** (was ~1.9–4 MB) | No | Only if it balloons again |
 | `src/` | ~24 files | Yes (~2–3 s) | No |
 
 ### Rules
@@ -91,7 +91,7 @@ workbench.action.openSettings("@ext:{publisher}.{name}")
   → fallback: extension.open → vscode:extension/ URI → user prompts
 ```
 
-Enable **`export2ai.debug`** and **View → Output → Export2AI** to diagnose. Debug logging is now shared across the extension (activation, commands, zip/copy, token scans, file collection, and settings navigation), not only the settings page. Routine debug entries must stay gated by the live setting; turning `export2ai.debug` off must stop later Output lines. F5 configs in `.vscode/launch.json`:
+Enable **`export2ai.debug`** and **View → Output → Export2AI** to diagnose. Debug logging is now shared across the extension (activation, commands, zip/copy, single-file copy, token scans, file collection, and settings navigation), not only the settings page. Routine debug entries must stay gated by the live setting; turning `export2ai.debug` off must stop later Output lines. F5 configs in `.vscode/launch.json`:
 - **Run Extension** — normal
 - **Run Extension (auto settings test)** — sets `EXPORT2AI_AUTO_TEST_SETTINGS=1`
 
@@ -165,7 +165,7 @@ VS Code can't compute titles at runtime, but showing the **active model** needs 
 | File | Keep in git? | Needed at runtime? | Purpose |
 |------|--------------|-------------------|---------|
 | `package.slim.json` | Yes | No (dev manifest source) | Edit settings, scripts, base commands |
-| `package.json` (generated, ~32 KB) | Regenerated | Yes in VSIX | Base + generated model-target commands |
+| `package.json` (generated, ~34 KB) | Regenerated | Yes in VSIX | Base + generated model-target commands |
 | `package-lock.json` | Yes | No | Reproducible `npm install` |
 | `node_modules/` | No (local) | Yes in VSIX (prod deps) | Build + runtime |
 | `scripts/generated/model-target-contributes.json` | Optional / regen | No | Build intermediate |
@@ -199,4 +199,4 @@ Before submitting changes, confirm you did **not**:
 | Full `npm run compile` | 3–4 s |
 | `npm run package` | 8–10 s (includes compile + vsce zip) |
 
-If activate feels slow after your change, check **manifest size and command count** first (`package.json` should stay ~32 KB), not TypeScript compile time.
+If activate feels slow after your change, check **manifest size and command count** first (`package.json` should stay ~34 KB), not TypeScript compile time.

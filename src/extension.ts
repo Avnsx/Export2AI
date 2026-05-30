@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { getConfiguration } from "./config";
-import { copyProjectStructure } from "./projectService";
+import { copyFileContentToClipboard, copyProjectStructure } from "./projectService";
 import { TokenEstimateManager } from "./tokenEstimate";
 import { openOwnExtensionSettings, OUTPUT_CHANNEL_NAME } from "./utils/extensionSettings";
 import { MENU_TARGET_MODELS } from "./utils/menuTargetModels";
@@ -43,6 +43,28 @@ function formatProgressMessage(progress: {
     : "Scanning project files...";
 }
 
+async function updateTokenEstimateForUri(uri: vscode.Uri, phase: string): Promise<boolean> {
+  try {
+    await tokenEstimateManager?.updateContextForUri(uri);
+    return true;
+  } catch (error) {
+    debugError("zip: token estimate refresh failed", error, {
+      details: { phase, uri: uri.toString() }
+    });
+    return false;
+  }
+}
+
+async function copyZipPathToClipboard(zipPath: string): Promise<void> {
+  try {
+    await vscode.env.clipboard.writeText(zipPath);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    debugError("zip: failed to copy zip path", error, { details: { zipPath } });
+    vscode.window.showErrorMessage(`Export2AI: Failed to copy zip path to clipboard: ${message}`);
+  }
+}
+
 async function zipFolder(rootUri?: vscode.Uri): Promise<void> {
   const started = Date.now();
   const workspaceFolder = rootUri
@@ -72,11 +94,12 @@ async function zipFolder(rootUri?: vscode.Uri): Promise<void> {
       resource: workspaceFolder.uri,
       details: { source: sourceUri.fsPath, model: config.llmModel }
     });
-    await tokenEstimateManager?.updateContextForUri(sourceUri);
-    debugLog("zip: preflight token estimate finished", {
-      resource: workspaceFolder.uri,
-      details: { source: sourceUri.fsPath, model: config.llmModel }
-    });
+    if (await updateTokenEstimateForUri(sourceUri, "preflight")) {
+      debugLog("zip: preflight token estimate finished", {
+        resource: workspaceFolder.uri,
+        details: { source: sourceUri.fsPath, model: config.llmModel }
+      });
+    }
   }
 
   let result: ZipResult | undefined;
@@ -131,7 +154,7 @@ async function zipFolder(rootUri?: vscode.Uri): Promise<void> {
   }
 
   lastZipPath = result.zipPath;
-  await tokenEstimateManager?.updateContextForUri(sourceUri);
+  await updateTokenEstimateForUri(sourceUri, "post-zip");
 
   debugLog("zip: command finished", {
     resource: workspaceFolder.uri,
@@ -171,13 +194,13 @@ async function zipFolder(rootUri?: vscode.Uri): Promise<void> {
       resource: workspaceFolder.uri,
       details: { action: copied, zipPath: result.zipPath }
     });
-    await vscode.env.clipboard.writeText(result.zipPath);
+    await copyZipPathToClipboard(result.zipPath);
   } else if (config.copyPathAfterCreate) {
     debugLog("zip: copied path after create", {
       resource: workspaceFolder.uri,
       details: { zipPath: result.zipPath }
     });
-    await vscode.env.clipboard.writeText(result.zipPath);
+    await copyZipPathToClipboard(result.zipPath);
   }
 }
 
@@ -228,6 +251,10 @@ function registerZipHandlers(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("export2ai.zipWorkspace", () => zipFolder()),
     vscode.commands.registerCommand("export2ai.zipSelectedFolder", (uri?: vscode.Uri) => zipFolder(uri)),
     vscode.commands.registerCommand("export2ai.copyProjectStructure", (uri?: vscode.Uri) => copyProjectStructure(uri)),
+    vscode.commands.registerCommand(
+      "export2ai.copyFileContent",
+      (uri?: vscode.Uri, selectedUris?: vscode.Uri[]) => copyFileContentToClipboard(uri, selectedUris)
+    ),
     vscode.commands.registerCommand("export2ai.openOutputFolder", openOutputFolder),
     vscode.commands.registerCommand("export2ai.openSettings", () => {
       void openOwnExtensionSettings(context).catch(error => {

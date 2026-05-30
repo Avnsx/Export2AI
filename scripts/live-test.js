@@ -7,7 +7,7 @@ const ignore = require("ignore");
 const { isBinaryFile } = require("isbinaryfile");
 const { TokenCounter } = require("../out/utils/tokenCounter");
 const { DEFAULT_LLM_MODEL } = require("../out/utils/modelRegistry");
-const { buildZipArchiveFileName } = require("../out/utils/modelFormat");
+const { buildZipArchiveFileName, formatCompactTimestamp } = require("../out/utils/modelFormat");
 
 function createIgnoreInstance(patterns, ignoreDotFiles, ignoreDollarFiles = true) {
   const ig = ignore().add(patterns);
@@ -93,7 +93,7 @@ async function collectFiles(sourcePath, workspaceRoot, config, zipOutputPath) {
 }
 
 async function createZip(sourcePath, workspaceRoot, config) {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const timestamp = formatCompactTimestamp();
   const baseName = path.basename(sourcePath);
   const zipPath = path.join(
     workspaceRoot,

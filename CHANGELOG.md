@@ -2,6 +2,12 @@
 
 All notable changes to Export2AI are documented in this file.
 
+## [1.2.4] - 2026-05-30
+
+### Changed
+
+- **Shorter, cleaner zip names** — the archive name now uses only the selected folder's own name instead of its full nested path (no more `y--HOST_ROOT-…` clutter) and a compact `YYYY-MM-DD-HHMMSS` timestamp. Example: `WinMGT-gpt-5.5-context-2026-05-30-182617.zip`. The folder segment is capped at 40 characters to keep paths well under the Windows limit. New helpers `formatFolderNameSegment()` and `formatCompactTimestamp()` in `modelFormat.ts`.
+
 ## [1.2.3] - 2026-05-30
 
 ### Added

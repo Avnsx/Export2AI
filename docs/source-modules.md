@@ -27,7 +27,7 @@
 | `anthropicTokenizer.ts` | Opus 4.7+ content-aware uplift heuristics |
 | `tokenFormat.ts` | Display strings, badge formatting, status-bar label, tooltip chart |
 | `modelRegistry.ts` | `MODEL_REGISTRY`, `detectFamily`, `DEFAULT_LLM_MODEL` |
-| `modelFormat.ts` | Model file slug, zip filename builder, command-id slug |
+| `modelFormat.ts` | Model file slug, command-id slug, compact folder-name + timestamp helpers, zip filename builder |
 | `menuTargetModels.ts` | `MENU_TARGET_MODELS` — models with config-scoped Explorer menu rows |
 | `extensionSettings.ts` | `openOwnExtensionSettings()`, navigation guards, output channel |
 | `extensionId.ts` | `resolveExtensionId`, `buildExtensionSettingsQuery` |

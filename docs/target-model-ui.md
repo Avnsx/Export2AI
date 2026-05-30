@@ -13,14 +13,14 @@ Keep `DEFAULT_LLM_MODEL` in `modelRegistry.ts` in sync with the default in `pack
 ## Zip filename
 
 ```
-{folderSafeName}-{model-slug}-context-{ISO-timestamp}.zip
+{folderBasename}-{model-slug}-context-{YYYY-MM-DD-HHMMSS}.zip
 ```
 
 Examples:
-- `my-app-gpt-5.5-context-2026-05-30T14-00-00-000Z.zip`
-- `backend-claude-opus-4-8-context-2026-05-30T14-00-00-000Z.zip`
+- `my-app-gpt-5.5-context-2026-05-30-140000.zip`
+- `backend-claude-opus-4-8-context-2026-05-30-140000.zip`
 
-Built by **`buildZipArchiveFileName()`** in `src/utils/modelFormat.ts`.
+Built by **`buildZipArchiveFileName()`** in `src/utils/modelFormat.ts`. Only the folder's **basename** is used (not the nested path), sanitized and capped at 40 chars via `formatFolderNameSegment()`; the timestamp comes from `formatCompactTimestamp()`.
 
 Default exclude patterns skip `*-chatgpt-context-*.zip` (legacy) and `*-*-context-*.zip` (new).
 

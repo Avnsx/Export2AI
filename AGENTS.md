@@ -157,7 +157,7 @@ Full reference: **[docs/comment-stripping.md](./docs/comment-stripping.md)**
 3. **Config keys** must stay `export2ai.*`.
 4. **User-visible strings** — prefix `Export2AI:` for errors/warnings where applicable.
 5. **Manifest inside zip:** `_EXPORT2AI_MANIFEST.txt` includes `Target model:` from `llmModel`.
-6. **Zip naming:** `{folderName}-{model-slug}-context-{ISO-timestamp}.zip` — see `modelFormat.ts`.
+6. **Zip naming:** `{folderBasename}-{model-slug}-context-{YYYY-MM-DD-HHMMSS}.zip` — folder **basename only** (capped at 40 chars) + compact timestamp; see `modelFormat.ts` (`formatFolderNameSegment`, `formatCompactTimestamp`).
 
 ---
 

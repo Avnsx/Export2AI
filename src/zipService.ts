@@ -6,7 +6,7 @@ import { getConfiguration } from "./config";
 import { prepareIgnoreContext } from "./projectService";
 import { CollectProgress, FileContent, Export2AIConfiguration } from "./types";
 import { FileProcessor } from "./utils/fileProcessor";
-import { buildZipArchiveFileName } from "./utils/modelFormat";
+import { buildZipArchiveFileName, formatCompactTimestamp } from "./utils/modelFormat";
 import { TokenCounter } from "./utils/tokenCounter";
 import { UriUtils } from "./utils/uriUtils";
 
@@ -59,12 +59,11 @@ export async function createZipArchive(
   options: ZipOptions = {}
 ): Promise<ZipResult> {
   const sourcePath = sourceUri.fsPath;
-  const sourceName = UriUtils.relativePath(workspaceFolder.uri, sourceUri)
-    || vscode.workspace.asRelativePath(sourceUri, false);
-  const safeName = sourceName.replace(/[\\/:*?"<>|]/g, "-").replace(/\//g, "-") || "workspace";
+  // Use only the folder's own name (not its nested path) so zip names stay short.
+  const sourceName = UriUtils.basename(sourceUri) || UriUtils.basename(workspaceFolder.uri);
 
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const zipFileName = buildZipArchiveFileName(safeName, config.llmModel, timestamp);
+  const timestamp = formatCompactTimestamp();
+  const zipFileName = buildZipArchiveFileName(sourceName, config.llmModel, timestamp);
   const zipUri = vscode.Uri.joinPath(workspaceFolder.uri, zipFileName);
   const zipPath = zipUri.fsPath;
 

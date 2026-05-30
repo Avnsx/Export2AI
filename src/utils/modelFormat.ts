@@ -24,10 +24,36 @@ export function formatModelCommandSlug(model: string): string {
   return formatModelFileSlug(model).replace(/\./g, "-");
 }
 
+/** Max characters kept from the folder name in a zip filename (keeps paths short on Windows). */
+export const MAX_FOLDER_NAME_SEGMENT = 40;
+
+/**
+ * Compact, filesystem-safe segment from a folder name.
+ * Uses only the **last** path segment (no nested clutter like `y--HOST_ROOT-…`),
+ * strips illegal characters, and caps the length.
+ */
+export function formatFolderNameSegment(name: string): string {
+  const lastSegment = name.split(/[\\/]/).filter(Boolean).pop() ?? "";
+  const cleaned = lastSegment
+    .replace(/[\\/:*?"<>|]/g, "-")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  const trimmed = cleaned.slice(0, MAX_FOLDER_NAME_SEGMENT).replace(/-+$/, "");
+  return trimmed || "workspace";
+}
+
+/** Compact, filesystem-safe timestamp: `YYYY-MM-DD-HHMMSS` (e.g. 2026-05-30-182617). */
+export function formatCompactTimestamp(date: Date = new Date()): string {
+  const [datePart, timePart] = date.toISOString().split("T");
+  const hms = timePart.slice(0, 8).replace(/:/g, "");
+  return `${datePart}-${hms}`;
+}
+
 export function buildZipArchiveFileName(
-  folderSafeName: string,
+  folderName: string,
   model: string,
   timestamp: string
 ): string {
-  return `${folderSafeName}-${formatModelFileSlug(model)}-context-${timestamp}.zip`;
+  return `${formatFolderNameSegment(folderName)}-${formatModelFileSlug(model)}-context-${timestamp}.zip`;
 }

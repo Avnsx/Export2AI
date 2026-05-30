@@ -40,12 +40,12 @@ Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick 
 
 1. Open a folder in Cursor or VS Code.
 2. In the **Explorer**, right-click a folder (or use the **Export2AI** toolbar menu).
-3. Choose **Zip Folder for ChatGPT** — the label shows a token estimate when counting is enabled.
+3. Choose **Zip Folder** (or **Zip Folder for {model}**) — the status bar shows a token estimate when counting is enabled.
 4. Your zip appears in the **workspace root** as something like:
 
-   `my-project-gpt-5-5-context-2026-05-30T14-00-00-000Z.zip`
+   `my-project-gpt-5.5-context-2026-05-30-140000.zip`
 
-   The middle segment matches your **`export2ai.llmModel`** setting (e.g. `gpt-5.5`, `claude-opus-4-8`).
+   The name uses the folder's own name, the **`export2ai.llmModel`** setting (e.g. `gpt-5.5`, `claude-opus-4-8`), and a compact timestamp.
 
 5. Upload that file to your AI chat, or copy the path from the notification.
 

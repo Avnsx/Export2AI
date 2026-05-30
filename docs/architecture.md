@@ -24,7 +24,7 @@ User command (zipFolder)
   → revealInSystemExplorer() / notification / clipboard
 ```
 
-Zip naming: `{folderName}-{model-slug}-context-{ISO-timestamp}.zip` in the workspace root.
+Zip naming: `{folderBasename}-{model-slug}-context-{YYYY-MM-DD-HHMMSS}.zip` in the workspace root. Only the folder's own name is used (not its nested path), capped at 40 chars, with a compact timestamp — e.g. `WinMGT-gpt-5.5-context-2026-05-30-182617.zip`.
 
 Optional manifest: `_EXPORT2AI_MANIFEST.txt` when `includeManifest` is true.
 

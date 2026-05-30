@@ -8,6 +8,7 @@ import { formatModelCommandSlug } from "./utils/modelFormat";
 import { TokenCounter } from "./utils/tokenCounter";
 import { revealInSystemExplorer } from "./utils/systemExplorer";
 import { createZipArchive, ZipResult } from "./zipService";
+import { debugError, debugLog, setDebugOutputChannel } from "./utils/debugLogger";
 
 let lastZipPath: string | undefined;
 let tokenEstimateManager: TokenEstimateManager | undefined;
@@ -18,6 +19,7 @@ async function revealZipInSystemExplorer(zipPath: string): Promise<void> {
     await revealInSystemExplorer(zipPath);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    debugError("zip: reveal in system explorer failed", error, { details: { zipPath } });
     vscode.window.showErrorMessage(`Export2AI: Could not open zip in file manager: ${message}`);
   }
 }
@@ -42,11 +44,13 @@ function formatProgressMessage(progress: {
 }
 
 async function zipFolder(rootUri?: vscode.Uri): Promise<void> {
+  const started = Date.now();
   const workspaceFolder = rootUri
     ? vscode.workspace.getWorkspaceFolder(rootUri)
     : vscode.workspace.workspaceFolders?.[0];
 
   if (!workspaceFolder) {
+    debugLog("zip: command aborted", { details: { reason: "no workspace folder", requestedUri: rootUri?.toString() } });
     vscode.window.showErrorMessage("Export2AI: No workspace folder found.");
     return;
   }
@@ -54,8 +58,25 @@ async function zipFolder(rootUri?: vscode.Uri): Promise<void> {
   const sourceUri = rootUri ?? workspaceFolder.uri;
   const config = getConfiguration(workspaceFolder.uri);
 
+  debugLog("zip: command start", {
+    resource: workspaceFolder.uri,
+    details: {
+      source: sourceUri.fsPath,
+      workspace: workspaceFolder.uri.fsPath,
+      config
+    }
+  });
+
   if (config.enableTokenCounting) {
+    debugLog("zip: preflight token estimate start", {
+      resource: workspaceFolder.uri,
+      details: { source: sourceUri.fsPath, model: config.llmModel }
+    });
     await tokenEstimateManager?.updateContextForUri(sourceUri);
+    debugLog("zip: preflight token estimate finished", {
+      resource: workspaceFolder.uri,
+      details: { source: sourceUri.fsPath, model: config.llmModel }
+    });
   }
 
   let result: ZipResult | undefined;
@@ -88,11 +109,19 @@ async function zipFolder(rootUri?: vscode.Uri): Promise<void> {
     );
   } catch (error) {
     if (error instanceof vscode.CancellationError) {
+      debugLog("zip: command cancelled", {
+        resource: workspaceFolder.uri,
+        details: { source: sourceUri.fsPath, elapsedMs: Date.now() - started }
+      });
       vscode.window.showInformationMessage("Export2AI: Zip creation cancelled.");
       return;
     }
 
     const message = error instanceof Error ? error.message : String(error);
+    debugError("zip: command failed", error, {
+      resource: workspaceFolder.uri,
+      details: { source: sourceUri.fsPath, elapsedMs: Date.now() - started }
+    });
     vscode.window.showErrorMessage(`Export2AI failed: ${message}`);
     return;
   }
@@ -103,6 +132,20 @@ async function zipFolder(rootUri?: vscode.Uri): Promise<void> {
 
   lastZipPath = result.zipPath;
   await tokenEstimateManager?.updateContextForUri(sourceUri);
+
+  debugLog("zip: command finished", {
+    resource: workspaceFolder.uri,
+    details: {
+      source: sourceUri.fsPath,
+      zipPath: result.zipPath,
+      files: result.fileCount,
+      bytes: result.totalBytes,
+      tokenCount: result.tokenCount,
+      tokenApproximate: result.tokenApproximate,
+      model: result.llmModel,
+      elapsedMs: Date.now() - started
+    }
+  });
 
   const open = "Show in Explorer";
   const copied = "Copy Path";
@@ -118,15 +161,28 @@ async function zipFolder(rootUri?: vscode.Uri): Promise<void> {
   );
 
   if (choice === open) {
+    debugLog("zip: notification action", {
+      resource: workspaceFolder.uri,
+      details: { action: open, zipPath: result.zipPath }
+    });
     await revealZipInSystemExplorer(result.zipPath);
   } else if (choice === copied) {
+    debugLog("zip: notification action", {
+      resource: workspaceFolder.uri,
+      details: { action: copied, zipPath: result.zipPath }
+    });
     await vscode.env.clipboard.writeText(result.zipPath);
   } else if (config.copyPathAfterCreate) {
+    debugLog("zip: copied path after create", {
+      resource: workspaceFolder.uri,
+      details: { zipPath: result.zipPath }
+    });
     await vscode.env.clipboard.writeText(result.zipPath);
   }
 }
 
 async function openOutputFolder(): Promise<void> {
+  debugLog("zip: open last zip requested", { details: { lastZipPath } });
   if (!lastZipPath) {
     vscode.window.showWarningMessage("Export2AI: No zip has been created yet in this session.");
     return;
@@ -135,6 +191,7 @@ async function openOutputFolder(): Promise<void> {
   try {
     await vscode.workspace.fs.stat(vscode.Uri.file(lastZipPath));
   } catch {
+    debugLog("zip: last zip missing", { details: { lastZipPath } });
     vscode.window.showWarningMessage(`Export2AI: Zip file no longer exists: ${lastZipPath}`);
     lastZipPath = undefined;
     return;
@@ -145,9 +202,9 @@ async function openOutputFolder(): Promise<void> {
 
 function registerModelTargetCommands(context: vscode.ExtensionContext): void {
   const openSettings = () => {
-    void openOwnExtensionSettings(context, outputChannel).catch(error => {
+    void openOwnExtensionSettings(context).catch(error => {
       const message = error instanceof Error ? error.message : String(error);
-      outputChannel?.appendLine(`openSettings unhandled: ${message}`);
+      debugError("settings: unhandled openSettings failure", error, { show: true });
       void vscode.window.showErrorMessage(`Export2AI: Failed to open settings: ${message}`);
     });
   };
@@ -173,9 +230,9 @@ function registerZipHandlers(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("export2ai.copyProjectStructure", (uri?: vscode.Uri) => copyProjectStructure(uri)),
     vscode.commands.registerCommand("export2ai.openOutputFolder", openOutputFolder),
     vscode.commands.registerCommand("export2ai.openSettings", () => {
-      void openOwnExtensionSettings(context, outputChannel).catch(error => {
+      void openOwnExtensionSettings(context).catch(error => {
         const message = error instanceof Error ? error.message : String(error);
-        outputChannel?.appendLine(`openSettings unhandled: ${message}`);
+        debugError("settings: unhandled openSettings failure", error, { show: true });
         void vscode.window.showErrorMessage(`Export2AI: Failed to open settings: ${message}`);
       });
     })
@@ -184,9 +241,21 @@ function registerZipHandlers(context: vscode.ExtensionContext): void {
 
 export function activate(context: vscode.ExtensionContext): void {
   outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
+  setDebugOutputChannel(outputChannel);
   context.subscriptions.push(outputChannel);
+  debugLog("extension: activate", {
+    show: false,
+    details: {
+      extensionId: context.extension.id,
+      version: context.extension.packageJSON?.version,
+      workspaceFolders: vscode.workspace.workspaceFolders?.map(folder => folder.uri.fsPath) ?? []
+    }
+  });
   registerZipHandlers(context);
   registerModelTargetCommands(context);
+  debugLog("extension: commands registered", {
+    details: { modelTargetCommands: MENU_TARGET_MODELS.length + 1 }
+  });
 
   // The "Target model: …" menu rows use config.export2ai.llmModel when-clauses,
   // which VS Code re-evaluates automatically — no manual context sync needed.
@@ -194,18 +263,19 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(tokenEstimateManager);
 
   if (process.env.EXPORT2AI_AUTO_TEST_SETTINGS === "1") {
-    outputChannel.appendLine("Export2AI: scheduling automatic settings-navigation test...");
+    debugLog("settings: automatic navigation test scheduled", { show: true, details: { delayMs: 3500 } });
     setTimeout(() => {
-      void openOwnExtensionSettings(context, outputChannel).catch(error => {
-        const message = error instanceof Error ? error.message : String(error);
-        outputChannel?.appendLine(`auto settings test failed: ${message}`);
+      void openOwnExtensionSettings(context).catch(error => {
+        debugError("settings: automatic navigation test failed", error, { show: true });
       });
     }, 3500);
   }
 }
 
 export function deactivate(): void {
+  debugLog("extension: deactivate");
   tokenEstimateManager?.dispose();
   tokenEstimateManager = undefined;
+  setDebugOutputChannel(undefined);
   outputChannel = undefined;
 }

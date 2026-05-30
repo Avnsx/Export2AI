@@ -17,6 +17,7 @@ export interface Export2AIConfiguration {
   maxDepth: number;
   fileConcurrency: number;
   outputFormat: "plaintext" | "markdown" | "xml";
+  debug: boolean;
 }
 
 export interface FileContent {

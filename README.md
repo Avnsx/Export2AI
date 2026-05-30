@@ -34,8 +34,6 @@ npm run package
 
 Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick `export2ai-1.2.4.vsix`.
 
-**Or** press **F5** in this repo to launch an Extension Development Host with the extension loaded.
-
 ### 2️⃣ Zip your project
 
 1. Open a folder in Cursor or VS Code.
@@ -107,8 +105,8 @@ This avoids slow global Settings search, which could freeze Cursor when filterin
 ### Troubleshooting settings navigation
 
 1. Enable **`export2ai.debug`** in `settings.json` if needed.
-2. Open **View → Output → Export2AI** and click the settings button again.
-3. Confirm the log shows `settings query = @ext:…` matching your extension ID (`publisher.name` from the manifest).
+2. Open **View → Output → Export2AI** and repeat the workflow. Debug lines are written only while the setting is on and use the local PC's short date/time format, e.g. `[Export2AI 05/30/26, 09:05:07 PM] ...`.
+3. For settings problems, confirm the log shows `settingsQuery=@ext:...` matching your extension ID (`publisher.name` from the manifest).
 4. If direct navigation fails, use the fallback actions (**Copy Extension ID**, **Open Extensions View**) and open settings from the extension’s gear icon.
 
 | Setting | What it does | Default |
@@ -131,7 +129,7 @@ This avoids slow global Settings search, which could freeze Cursor when filterin
 | `export2ai.includeManifest` | Add `_EXPORT2AI_MANIFEST.txt` inside zip | `true` |
 | `export2ai.compressionLevel` | Zip file pack tightness 0 (fast) – 9 (smallest upload); does not change token count after extract | `9` |
 | `export2ai.copyPathAfterCreate` | Copy zip path to clipboard after create | `true` |
-| `export2ai.debug` | Log settings-navigation diagnostics to Output | `false` |
+| `export2ai.debug` | Log full extension diagnostics to Output (activation, commands, zip/copy, token scans, settings navigation) | `false` |
 
 ---
 

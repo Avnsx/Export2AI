@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
+import { debugError, debugLog, isDebugLoggingEnabled } from "./debugLogger";
 import { buildExtensionSettingsQuery, resolveExtensionId } from "./extensionId";
 
 export { buildExtensionSettingsQuery, resolveExtensionId } from "./extensionId";
-
-export const OUTPUT_CHANNEL_NAME = "Export2AI";
+export { OUTPUT_CHANNEL_NAME } from "./debugLogger";
 
 /** While true, token rescans defer so settings navigation is not competing with file scans. */
 export let settingsNavigationInProgress = false;
@@ -26,36 +26,13 @@ function notifySettingsNavigationFinished(): void {
     try {
       callback();
     } catch (error) {
-      console.error("Export2AI: settings navigation listener failed", error);
+      debugError("settings: navigation listener failed", error);
     }
   }
 }
 
 function nowMs(): number {
   return Date.now();
-}
-
-function logLine(
-  output: vscode.OutputChannel | undefined,
-  message: string,
-  force = false,
-  debug = false
-): void {
-  if (force || debug) {
-    console.log(`Export2AI: ${message}`);
-  }
-  if (!output || (!force && !debug)) {
-    return;
-  }
-  output.appendLine(`[${new Date().toISOString()}] ${message}`);
-}
-
-function logDiagnostic(
-  output: vscode.OutputChannel | undefined,
-  message: string,
-  debug: boolean
-): void {
-  logLine(output, message, false, debug);
 }
 
 function countContributedCommands(context: vscode.ExtensionContext): number {
@@ -87,24 +64,16 @@ async function raceCommand(
  * Opens this extension's settings via the `@ext:publisher.name` route (fast, no global search).
  * Falls back to extension details / extensions view without blocking the UI.
  */
-export async function openOwnExtensionSettings(
-  context: vscode.ExtensionContext,
-  outputChannel?: vscode.OutputChannel
-): Promise<void> {
+export async function openOwnExtensionSettings(context: vscode.ExtensionContext): Promise<void> {
   const configTarget = vscode.workspace.workspaceFolders?.[0]?.uri;
-  const debug = vscode.workspace.getConfiguration("export2ai", configTarget).get<boolean>("debug", false);
   const started = nowMs();
-
-  if (debug && outputChannel) {
-    outputChannel.show(true);
-  }
 
   let extensionId: string;
   try {
     extensionId = resolveExtensionId(context);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    outputChannel?.appendLine(message);
+    debugError("settings: extension id resolution failed", error, { resource: configTarget, show: true });
     await vscode.window.showErrorMessage(`Export2AI: ${message}`);
     return;
   }
@@ -112,28 +81,34 @@ export async function openOwnExtensionSettings(
   const pkg = context.extension.packageJSON as { publisher?: string; name?: string };
   const settingsQuery = buildExtensionSettingsQuery(extensionId);
   const commandCount = countContributedCommands(context);
+  const debug = isDebugLoggingEnabled(configTarget);
 
-  logLine(outputChannel, `settings navigation start (debug=${debug})`, true, debug);
-  logDiagnostic(outputChannel, `context.extension.id = ${context.extension.id}`, debug);
-  logDiagnostic(outputChannel, `packageJSON.publisher = ${pkg.publisher ?? "(missing)"}`, debug);
-  logDiagnostic(outputChannel, `packageJSON.name = ${pkg.name ?? "(missing)"}`, debug);
-  logDiagnostic(outputChannel, `resolved extensionId = ${extensionId}`, debug);
-  logDiagnostic(outputChannel, `settings query = ${settingsQuery}`, debug);
-  logDiagnostic(outputChannel, `contributed commands in manifest = ${commandCount}`, debug);
-  logDiagnostic(
-    outputChannel,
-    commandCount > 500
-      ? "warning: large command manifest may slow Cursor/VS Code settings UI"
-      : "manifest command count looks normal for settings navigation",
-    debug
-  );
+  debugLog("settings: navigation start", {
+    resource: configTarget,
+    show: true,
+    details: {
+      debug,
+      contextExtensionId: context.extension.id,
+      packagePublisher: pkg.publisher ?? "(missing)",
+      packageName: pkg.name ?? "(missing)",
+      resolvedExtensionId: extensionId,
+      settingsQuery,
+      contributedCommands: commandCount,
+      manifestStatus: commandCount > 500
+        ? "warning: large command manifest may slow Cursor/VS Code settings UI"
+        : "normal"
+    }
+  });
 
   settingsNavigationInProgress = true;
   try {
     // Yield so the status-bar click handler returns before the workbench opens Settings.
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
-    logDiagnostic(outputChannel, "navigation: workbench.action.openSettings (@ext)", debug);
+    debugLog("settings: navigation command", {
+      resource: configTarget,
+      details: { command: "workbench.action.openSettings", args: settingsQuery }
+    });
     const openSettings = await raceCommand(
       "workbench.action.openSettings",
       [settingsQuery],
@@ -141,46 +116,79 @@ export async function openOwnExtensionSettings(
     );
 
     if (openSettings.ok) {
-      logLine(
-        outputChannel,
-        `navigation success: openSettings @ext in ${openSettings.elapsedMs}ms (total ${nowMs() - started}ms)`,
-        true,
-        debug
-      );
+      debugLog("settings: navigation success", {
+        resource: configTarget,
+        details: {
+          method: "workbench.action.openSettings",
+          elapsedMs: openSettings.elapsedMs,
+          totalMs: nowMs() - started
+        }
+      });
       return;
     }
 
-    outputChannel?.appendLine(`openSettings @ext failed after ${openSettings.elapsedMs}ms: ${openSettings.error}`);
-    logDiagnostic(outputChannel, `navigation: openSettings failed — ${openSettings.error}`, debug);
+    debugLog("settings: navigation failed", {
+      resource: configTarget,
+      details: {
+        method: "workbench.action.openSettings",
+        elapsedMs: openSettings.elapsedMs,
+        error: openSettings.error
+      }
+    });
 
-    logDiagnostic(outputChannel, "navigation: extension.open (fallback)", debug);
+    debugLog("settings: navigation fallback", {
+      resource: configTarget,
+      details: { command: "extension.open", extensionId }
+    });
     const openExtension = await raceCommand("extension.open", [extensionId], 10000);
     if (openExtension.ok) {
-      logLine(
-        outputChannel,
-        `navigation success: extension.open in ${openExtension.elapsedMs}ms (total ${nowMs() - started}ms)`,
-        true,
-        debug
-      );
+      debugLog("settings: navigation success", {
+        resource: configTarget,
+        details: {
+          method: "extension.open",
+          elapsedMs: openExtension.elapsedMs,
+          totalMs: nowMs() - started
+        }
+      });
       return;
     }
 
-    outputChannel?.appendLine(`extension.open failed after ${openExtension.elapsedMs}ms: ${openExtension.error}`);
-    logDiagnostic(outputChannel, `navigation: extension.open failed — ${openExtension.error}`, debug);
+    debugLog("settings: navigation failed", {
+      resource: configTarget,
+      details: {
+        method: "extension.open",
+        elapsedMs: openExtension.elapsedMs,
+        error: openExtension.error
+      }
+    });
 
-    logDiagnostic(outputChannel, "navigation: vscode.env.openExternal vscode:extension/…", debug);
+    debugLog("settings: navigation fallback", {
+      resource: configTarget,
+      details: { command: "vscode.env.openExternal", uri: `vscode:extension/${extensionId}` }
+    });
     try {
       const uri = vscode.Uri.parse(`vscode:extension/${extensionId}`);
       const opened = await vscode.env.openExternal(uri);
       if (opened) {
-        logLine(outputChannel, `navigation success: openExternal (total ${nowMs() - started}ms)`, true, debug);
+        debugLog("settings: navigation success", {
+          resource: configTarget,
+          details: {
+            method: "vscode.env.openExternal",
+            totalMs: nowMs() - started
+          }
+        });
         return;
       }
-      outputChannel?.appendLine("vscode.env.openExternal returned false.");
+      debugLog("settings: navigation failed", {
+        resource: configTarget,
+        details: { method: "vscode.env.openExternal", error: "returned false" }
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      outputChannel?.appendLine(`openExternal failed: ${message}`);
-      logDiagnostic(outputChannel, `navigation: openExternal failed — ${message}`, debug);
+      debugError("settings: openExternal failed", error, {
+        resource: configTarget,
+        details: { method: "vscode.env.openExternal", message }
+      });
     }
 
     const copyId = "Copy Extension ID";
@@ -193,11 +201,19 @@ export async function openOwnExtensionSettings(
 
     if (choice === copyId) {
       await vscode.env.clipboard.writeText(extensionId);
+      debugLog("settings: copied extension id", {
+        resource: configTarget,
+        details: { extensionId }
+      });
       vscode.window.showInformationMessage(`Export2AI: copied extension ID ${extensionId}`);
       return;
     }
 
     if (choice === openExtensions) {
+      debugLog("settings: opening extensions view fallback", {
+        resource: configTarget,
+        details: { extensionId }
+      });
       await raceCommand("workbench.view.extensions", undefined, 5000);
       await raceCommand("workbench.extensions.action.showExtensionsWithIds", [[extensionId]], 5000);
     }
@@ -205,18 +221,20 @@ export async function openOwnExtensionSettings(
     setTimeout(() => {
       settingsNavigationInProgress = false;
       notifySettingsNavigationFinished();
-      logLine(
-        outputChannel,
-        `settings navigation cooldown finished (${SETTINGS_NAV_COOLDOWN_MS}ms, total ${nowMs() - started}ms)`,
-        true,
-        debug
-      );
+      debugLog("settings: navigation cooldown finished", {
+        resource: configTarget,
+        details: {
+          cooldownMs: SETTINGS_NAV_COOLDOWN_MS,
+          totalMs: nowMs() - started
+        }
+      });
     }, SETTINGS_NAV_COOLDOWN_MS);
-    logLine(
-      outputChannel,
-      `settings navigation finished — deferring token scans ${SETTINGS_NAV_COOLDOWN_MS}ms (total ${nowMs() - started}ms)`,
-      true,
-      debug
-    );
+    debugLog("settings: navigation finished; token scans deferred", {
+      resource: configTarget,
+      details: {
+        cooldownMs: SETTINGS_NAV_COOLDOWN_MS,
+        totalMs: nowMs() - started
+      }
+    });
   }
 }

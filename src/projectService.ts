@@ -7,6 +7,7 @@ import { IgnoreUtils } from "./utils/ignoreUtils";
 import { ProjectTreeGenerator } from "./utils/projectTree";
 import { TokenCounter } from "./utils/tokenCounter";
 import { UriUtils } from "./utils/uriUtils";
+import { debugError, debugLog } from "./utils/debugLogger";
 
 type IgnoreInstance = ReturnType<typeof ignore>;
 
@@ -39,21 +40,38 @@ export async function prepareIgnoreContext(
   ig: IgnoreInstance;
   isExcludedByResourcePath: (resourceUri: vscode.Uri) => boolean;
 }> {
+  debugLog("ignore: preparing context", {
+    resource: workspaceFolder.uri,
+    details: {
+      workspace: workspaceFolder.uri.fsPath,
+      ignoreGitIgnore: config.ignoreGitIgnore,
+      ignoreDotFiles: config.ignoreDotFiles,
+      ignoreDollarFiles: config.ignoreDollarFiles,
+      excludePatterns: config.excludePatterns,
+      excludePaths: config.excludePaths
+    }
+  });
   const context = createIgnoreContext(workspaceFolder, config);
 
   if (config.ignoreGitIgnore) {
     await IgnoreUtils.addGitIgnoreRules(workspaceFolder.uri, context.ig);
+    debugLog("ignore: gitignore rules merged", {
+      resource: workspaceFolder.uri,
+      details: { workspace: workspaceFolder.uri.fsPath }
+    });
   }
 
   return context;
 }
 
 export async function copyProjectStructure(rootUri?: vscode.Uri): Promise<void> {
+  const started = Date.now();
   const workspaceFolder = rootUri
     ? vscode.workspace.getWorkspaceFolder(rootUri)
     : vscode.workspace.workspaceFolders?.[0];
 
   if (!workspaceFolder) {
+    debugLog("copy-structure: command aborted", { details: { reason: "no workspace folder", requestedUri: rootUri?.toString() } });
     vscode.window.showErrorMessage("Export2AI: No workspace folder found.");
     return;
   }
@@ -68,6 +86,14 @@ export async function copyProjectStructure(rootUri?: vscode.Uri): Promise<void> 
   }
 
   const config = getConfiguration(workspaceFolder.uri);
+  debugLog("copy-structure: command start", {
+    resource: workspaceFolder.uri,
+    details: {
+      target: targetUri.fsPath,
+      workspace: workspaceFolder.uri.fsPath,
+      config
+    }
+  });
 
   try {
     await vscode.window.withProgress(
@@ -98,18 +124,46 @@ export async function copyProjectStructure(rootUri?: vscode.Uri): Promise<void> 
           config.outputFormat,
           rootName + projectTree
         );
+        debugLog("copy-structure: tree generated", {
+          resource: workspaceFolder.uri,
+          details: {
+            target: targetUri.fsPath,
+            outputFormat: config.outputFormat,
+            characters: formatted.length
+          }
+        });
 
         progress.report({ message: "Copying to clipboard..." });
         await vscode.env.clipboard.writeText(formatted);
 
         if (config.enableTokenCounting) {
           const tokenInfo = TokenCounter.countTokens(formatted, config.llmModel);
+          debugLog("copy-structure: copied with token estimate", {
+            resource: workspaceFolder.uri,
+            details: {
+              target: targetUri.fsPath,
+              outputFormat: config.outputFormat,
+              tokenCount: tokenInfo.inputTokens,
+              tokenApproximate: tokenInfo.approximate,
+              method: tokenInfo.method,
+              model: config.llmModel,
+              elapsedMs: Date.now() - started
+            }
+          });
           vscode.window.showInformationMessage(
             `Export2AI copied project structure (${config.outputFormat}) ${TokenCounter.formatTokenLabel(tokenInfo.inputTokens, tokenInfo.approximate)}`
           );
           return;
         }
 
+        debugLog("copy-structure: copied without token estimate", {
+          resource: workspaceFolder.uri,
+          details: {
+            target: targetUri.fsPath,
+            outputFormat: config.outputFormat,
+            elapsedMs: Date.now() - started
+          }
+        });
         vscode.window.showInformationMessage(
           `Export2AI copied project structure (${config.outputFormat}) to clipboard.`
         );
@@ -117,11 +171,19 @@ export async function copyProjectStructure(rootUri?: vscode.Uri): Promise<void> 
     );
   } catch (error) {
     if (error instanceof vscode.CancellationError) {
+      debugLog("copy-structure: command cancelled", {
+        resource: workspaceFolder.uri,
+        details: { target: targetUri.fsPath, elapsedMs: Date.now() - started }
+      });
       vscode.window.showInformationMessage("Export2AI: Copy project structure cancelled.");
       return;
     }
 
     const message = error instanceof Error ? error.message : String(error);
+    debugError("copy-structure: command failed", error, {
+      resource: workspaceFolder.uri,
+      details: { target: targetUri.fsPath, elapsedMs: Date.now() - started }
+    });
     vscode.window.showErrorMessage(`Export2AI failed: ${message}`);
   }
 }

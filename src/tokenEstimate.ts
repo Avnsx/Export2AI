@@ -4,6 +4,7 @@ import { getConfiguration } from "./config";
 import { FileContent } from "./types";
 import { TokenCounter } from "./utils/tokenCounter";
 import { onSettingsNavigationFinished, settingsNavigationInProgress } from "./utils/extensionSettings";
+import { debugError, debugLog } from "./utils/debugLogger";
 
 /** Defer first full-repo scan so cold-start (e.g. opening Settings) stays responsive. */
 const INITIAL_SCAN_DELAY_MS = 5000;
@@ -33,24 +34,54 @@ export class TokenEstimateManager implements vscode.Disposable {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     const config = getConfiguration(workspaceFolder?.uri);
     this.enabled = config.enableTokenCounting;
+    debugLog("token-estimate: manager initialized", {
+      resource: workspaceFolder?.uri,
+      details: {
+        enabled: this.enabled,
+        initialScanDelayMs: INITIAL_SCAN_DELAY_MS,
+        workspace: workspaceFolder?.uri.fsPath
+      }
+    });
 
     void vscode.commands.executeCommand("setContext", "export2ai.enableTokenCounting", this.enabled);
 
     this.disposables.push(
       onSettingsNavigationFinished(() => {
+        debugLog("token-estimate: refresh scheduled after settings navigation", {
+          resource: workspaceFolder?.uri,
+          details: { delayMs: POST_SETTINGS_REFRESH_DELAY_MS }
+        });
         setTimeout(() => this.scheduleRefresh(), POST_SETTINGS_REFRESH_DELAY_MS);
       }),
       vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration("export2ai")) {
+          debugLog("token-estimate: configuration changed", {
+            resource: vscode.workspace.workspaceFolders?.[0]?.uri,
+            details: { section: "export2ai" }
+          });
           this.cache.clear();
           this.fullyScannedRoots.clear();
           this.scheduleRefresh();
         }
       }),
-      vscode.workspace.onDidSaveTextDocument(() => this.scheduleRefresh()),
-      vscode.workspace.onDidCreateFiles(() => this.scheduleRefresh()),
-      vscode.workspace.onDidDeleteFiles(() => this.scheduleRefresh()),
-      vscode.workspace.onDidRenameFiles(() => this.scheduleRefresh()),
+      vscode.workspace.onDidSaveTextDocument(document => {
+        debugLog("token-estimate: file saved", { details: { file: document.uri.fsPath } });
+        this.scheduleRefresh();
+      }),
+      vscode.workspace.onDidCreateFiles(event => {
+        debugLog("token-estimate: files created", { details: { files: event.files.map(file => file.fsPath) } });
+        this.scheduleRefresh();
+      }),
+      vscode.workspace.onDidDeleteFiles(event => {
+        debugLog("token-estimate: files deleted", { details: { files: event.files.map(file => file.fsPath) } });
+        this.scheduleRefresh();
+      }),
+      vscode.workspace.onDidRenameFiles(event => {
+        debugLog("token-estimate: files renamed", {
+          details: { files: event.files.map(file => ({ oldUri: file.oldUri.fsPath, newUri: file.newUri.fsPath })) }
+        });
+        this.scheduleRefresh();
+      }),
       vscode.window.registerFileDecorationProvider({
         onDidChangeFileDecorations: this.decorationEmitter.event,
         provideFileDecoration: (uri) => this.provideDecoration(uri)
@@ -60,7 +91,14 @@ export class TokenEstimateManager implements vscode.Disposable {
     // Defer the first scan so cold-start (e.g. opening Settings) is not competing with a full-repo token walk.
     this.initialScanTimer = setTimeout(() => {
       if (!settingsNavigationInProgress) {
+        debugLog("token-estimate: initial scan timer fired", {
+          resource: vscode.workspace.workspaceFolders?.[0]?.uri
+        });
         this.scheduleRefresh();
+      } else {
+        debugLog("token-estimate: initial scan deferred by settings navigation", {
+          resource: vscode.workspace.workspaceFolders?.[0]?.uri
+        });
       }
     }, INITIAL_SCAN_DELAY_MS);
   }
@@ -72,11 +110,16 @@ export class TokenEstimateManager implements vscode.Disposable {
   public async estimateForUri(uri: vscode.Uri): Promise<number | undefined> {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
     if (!workspaceFolder) {
+      debugLog("token-estimate: estimate skipped", { details: { reason: "no workspace folder", uri: uri.fsPath } });
       return undefined;
     }
 
     const config = getConfiguration(workspaceFolder.uri);
     if (!config.enableTokenCounting) {
+      debugLog("token-estimate: estimate skipped", {
+        resource: workspaceFolder.uri,
+        details: { reason: "token counting disabled", uri: uri.fsPath }
+      });
       return undefined;
     }
 
@@ -102,15 +145,27 @@ export class TokenEstimateManager implements vscode.Disposable {
     const cacheKey = uri.fsPath.toLowerCase();
     const cached = this.cache.get(cacheKey);
     if (cached !== undefined) {
+      debugLog("token-estimate: cache hit", {
+        resource: workspaceFolder.uri,
+        details: { uri: uri.fsPath, count: cached.count, approximate: cached.approximate, method: cached.methodLabel }
+      });
       return cached.count;
     }
 
     const inflight = this.pending.get(cacheKey);
     if (inflight) {
+      debugLog("token-estimate: awaiting in-flight estimate", {
+        resource: workspaceFolder.uri,
+        details: { uri: uri.fsPath }
+      });
       return inflight;
     }
 
     const config = getConfiguration(workspaceFolder.uri);
+    debugLog("token-estimate: estimate start", {
+      resource: workspaceFolder.uri,
+      details: { uri: uri.fsPath, model: config.llmModel }
+    });
     const task = this.getTokenInfo(uri, workspaceFolder, config)
       .then(async tokenInfo => {
         const estimate = {
@@ -129,11 +184,23 @@ export class TokenEstimateManager implements vscode.Disposable {
             estimate.methodLabel
           );
         }
+        debugLog("token-estimate: estimate finished", {
+          resource: workspaceFolder.uri,
+          details: {
+            uri: uri.fsPath,
+            count: estimate.count,
+            approximate: estimate.approximate,
+            method: estimate.methodLabel
+          }
+        });
         return estimate.count;
       })
       .catch(error => {
         this.pending.delete(cacheKey);
-        console.error(`Export2AI: token estimate failed for ${cacheKey}`, error);
+        debugError("token-estimate: estimate failed", error, {
+          resource: workspaceFolder.uri,
+          details: { cacheKey, uri: uri.fsPath }
+        });
         throw error;
       });
 
@@ -158,8 +225,13 @@ export class TokenEstimateManager implements vscode.Disposable {
   ): Promise<FileContent[]> {
     const { prepareIgnoreContext } = await import("./projectService");
     const { FileProcessor } = await import("./utils/fileProcessor");
+    const started = Date.now();
+    debugLog("token-estimate: collect files start", {
+      resource: workspaceFolder.uri,
+      details: { root: rootUri.fsPath, workspace: workspaceFolder.uri.fsPath, model: config.llmModel }
+    });
     const { ig, isExcludedByResourcePath } = await prepareIgnoreContext(workspaceFolder, config);
-    return FileProcessor.collectFiles(rootUri, rootUri, workspaceFolder.uri, ig, {
+    const files = await FileProcessor.collectFiles(rootUri, rootUri, workspaceFolder.uri, ig, {
       maxFileSize: config.maxFileSize,
       compressCode: config.compressCode,
       removeComments: config.removeComments,
@@ -167,6 +239,11 @@ export class TokenEstimateManager implements vscode.Disposable {
       zipOutputPath: "",
       fileConcurrency: config.fileConcurrency
     });
+    debugLog("token-estimate: collect files finished", {
+      resource: workspaceFolder.uri,
+      details: { root: rootUri.fsPath, files: files.length, elapsedMs: Date.now() - started }
+    });
+    return files;
   }
 
   /**
@@ -254,6 +331,10 @@ export class TokenEstimateManager implements vscode.Disposable {
       try {
         const stat = await vscode.workspace.fs.stat(uri);
         if (stat.type & vscode.FileType.Directory) {
+          debugLog("token-estimate: decoration fallback scan", {
+            resource: workspaceFolder.uri,
+            details: { uri: uri.fsPath }
+          });
           await this.estimateAndCache(uri, workspaceFolder, this.enabled);
         }
       } catch {
@@ -272,6 +353,9 @@ export class TokenEstimateManager implements vscode.Disposable {
 
   private scheduleRefresh(): void {
     if (settingsNavigationInProgress) {
+      debugLog("token-estimate: refresh skipped during settings navigation", {
+        resource: vscode.workspace.workspaceFolders?.[0]?.uri
+      });
       return;
     }
 
@@ -280,15 +364,20 @@ export class TokenEstimateManager implements vscode.Disposable {
     }
 
     this.debounceTimer = setTimeout(() => {
+      debugLog("token-estimate: refresh debounce fired", {
+        resource: vscode.workspace.workspaceFolders?.[0]?.uri
+      });
       void this.refreshWorkspaceEstimates();
     }, 750);
   }
 
   private async refreshWorkspaceEstimates(): Promise<void> {
     const generation = ++this.refreshGeneration;
+    const started = Date.now();
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
       this.enabled = false;
+      debugLog("token-estimate: refresh skipped", { details: { reason: "no workspace folder", generation } });
       if (generation === this.refreshGeneration) {
         await this.publishEstimate(0, false, true);
       }
@@ -297,6 +386,10 @@ export class TokenEstimateManager implements vscode.Disposable {
 
     const config = getConfiguration(workspaceFolder.uri);
     this.enabled = config.enableTokenCounting;
+    debugLog("token-estimate: refresh start", {
+      resource: workspaceFolder.uri,
+      details: { generation, enabled: this.enabled, model: config.llmModel, config }
+    });
     await vscode.commands.executeCommand("setContext", "export2ai.enableTokenCounting", this.enabled);
 
     if (!this.enabled) {
@@ -306,6 +399,10 @@ export class TokenEstimateManager implements vscode.Disposable {
       if (generation === this.refreshGeneration) {
         await this.publishEstimate(0, false, true);
       }
+      debugLog("token-estimate: refresh disabled token counting", {
+        resource: workspaceFolder.uri,
+        details: { generation, elapsedMs: Date.now() - started }
+      });
       return;
     }
 
@@ -315,6 +412,10 @@ export class TokenEstimateManager implements vscode.Disposable {
       // in-flight fallback scans started during the initial window.
       const files = await this.collectFilesUnder(workspaceFolder.uri, workspaceFolder, config);
       if (generation !== this.refreshGeneration) {
+        debugLog("token-estimate: stale refresh dropped", {
+          resource: workspaceFolder.uri,
+          details: { generation, activeGeneration: this.refreshGeneration }
+        });
         return;
       }
 
@@ -326,8 +427,23 @@ export class TokenEstimateManager implements vscode.Disposable {
       // Refresh every visible folder badge in one event. Firing `undefined` triggers a full
       // decoration refresh without hitting VS Code's 250-resource per-event cap.
       this.decorationEmitter.fire(undefined);
+      debugLog("token-estimate: refresh finished", {
+        resource: workspaceFolder.uri,
+        details: {
+          generation,
+          files: files.length,
+          rootCount: root.count,
+          approximate: root.approximate,
+          method: root.methodLabel,
+          cachedFolders: this.cache.size,
+          elapsedMs: Date.now() - started
+        }
+      });
     } catch (error) {
-      console.error("Export2AI: token estimate failed", error);
+      debugError("token-estimate: refresh failed", error, {
+        resource: workspaceFolder.uri,
+        details: { generation, elapsedMs: Date.now() - started }
+      });
     }
   }
 
@@ -359,6 +475,10 @@ export class TokenEstimateManager implements vscode.Disposable {
   }
 
   public dispose(): void {
+    debugLog("token-estimate: manager disposed", {
+      resource: vscode.workspace.workspaceFolders?.[0]?.uri,
+      details: { cacheEntries: this.cache.size, pending: this.pending.size }
+    });
     if (this.initialScanTimer) {
       clearTimeout(this.initialScanTimer);
     }

@@ -76,10 +76,22 @@ export2ai.openSettings / status bar click
   → workbench.action.openSettings("@ext:{id}")
   → fallbacks: extension.open → vscode:extension/ URI → user prompts
   → settingsNavigationInProgress guard during navigation (+ 5s cooldown after)
-  → Export2AI output channel when export2ai.debug
+  → Export2AI output channel diagnostics when export2ai.debug is on
 ```
 
 See **[agent-chokepoints.md](./agent-chokepoints.md)** for why these guards exist.
+
+## Data flow: debug logging
+
+```
+High-level extension work
+  → debugLog() / debugError() [debugLogger.ts]
+  → live read of export2ai.debug
+  → View -> Output -> Export2AI
+  → [Export2AI {local short date/time}] scope: message key=value
+```
+
+Debug mode covers activation/deactivation, command registration, settings navigation, zip creation, copy-structure, token estimate refreshes, ignore setup, and file collection. Routine debug entries are skipped when `export2ai.debug` is off; user-facing errors still surface through notifications/errors.
 
 ## Ignore pipeline
 

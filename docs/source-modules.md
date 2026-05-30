@@ -29,7 +29,8 @@
 | `modelRegistry.ts` | `MODEL_REGISTRY`, `detectFamily`, `DEFAULT_LLM_MODEL` |
 | `modelFormat.ts` | Model file slug, command-id slug, compact folder-name + timestamp helpers, zip filename builder |
 | `menuTargetModels.ts` | `MENU_TARGET_MODELS` — models with config-scoped Explorer menu rows |
-| `extensionSettings.ts` | `openOwnExtensionSettings()`, navigation guards, output channel |
+| `debugLogger.ts` | Shared `export2ai.debug` logger; local timestamp formatting; Export2AI output channel routing |
+| `extensionSettings.ts` | `openOwnExtensionSettings()`, navigation guards, settings fallbacks |
 | `extensionId.ts` | `resolveExtensionId`, `buildExtensionSettingsQuery` |
 | `systemExplorer.ts` | Reveal zip in OS file manager (WSL fallback) |
 | `uriUtils.ts` | Path / URI helpers |

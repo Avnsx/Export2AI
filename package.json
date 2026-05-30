@@ -826,7 +826,7 @@
             "type": "boolean",
             "default": false,
             "order": 0,
-            "description": "Log Export2AI settings navigation to the Export2AI output channel (View → Output)."
+            "description": "Log full Export2AI diagnostics to the Export2AI output channel (View → Output). When off, routine debug entries are not written."
           },
           "export2ai.exclude": {
             "type": "array",

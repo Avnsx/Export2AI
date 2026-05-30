@@ -141,6 +141,14 @@ assert.strictEqual(
   "combined label uses exact version date when present"
 );
 
+const packageManifest = require("../package.json");
+const debugSetting = getConfigurationProperty(packageManifest, "export2ai.debug");
+assert.strictEqual(debugSetting.default, false, "debug logging defaults off");
+assert(
+  debugSetting.description.includes("full Export2AI diagnostics"),
+  "debug setting describes full-extension diagnostics"
+);
+
 const partialManifest = {
   version: "1.2.2",
   contributes: {

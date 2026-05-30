@@ -9,6 +9,7 @@ import { FileProcessor } from "./utils/fileProcessor";
 import { buildZipArchiveFileName, formatCompactTimestamp } from "./utils/modelFormat";
 import { TokenCounter } from "./utils/tokenCounter";
 import { UriUtils } from "./utils/uriUtils";
+import { debugError, debugLog } from "./utils/debugLogger";
 
 export interface ZipResult {
   zipPath: string;
@@ -32,9 +33,22 @@ async function collectFiles(
   zipOutputPath: string,
   options: ZipOptions
 ): Promise<FileContent[]> {
+  const started = Date.now();
+  debugLog("file-collection: start", {
+    resource: workspaceFolder.uri,
+    details: {
+      source: sourceUri.fsPath,
+      workspace: workspaceFolder.uri.fsPath,
+      zipOutputPath,
+      maxFileSize: config.maxFileSize,
+      compressCode: config.compressCode,
+      removeComments: config.removeComments,
+      fileConcurrency: config.fileConcurrency
+    }
+  });
   const { ig, isExcludedByResourcePath } = await prepareIgnoreContext(workspaceFolder, config);
 
-  return FileProcessor.collectFiles(
+  const files = await FileProcessor.collectFiles(
     sourceUri,
     sourceUri,
     workspaceFolder.uri,
@@ -50,6 +64,15 @@ async function collectFiles(
       onProgress: options.onProgress
     }
   );
+  debugLog("file-collection: finished", {
+    resource: workspaceFolder.uri,
+    details: {
+      source: sourceUri.fsPath,
+      files: files.length,
+      elapsedMs: Date.now() - started
+    }
+  });
+  return files;
 }
 
 export async function createZipArchive(
@@ -66,6 +89,18 @@ export async function createZipArchive(
   const zipFileName = buildZipArchiveFileName(sourceName, config.llmModel, timestamp);
   const zipUri = vscode.Uri.joinPath(workspaceFolder.uri, zipFileName);
   const zipPath = zipUri.fsPath;
+  const started = Date.now();
+
+  debugLog("zip-service: create start", {
+    resource: workspaceFolder.uri,
+    details: {
+      source: sourcePath,
+      workspace: workspaceFolder.uri.fsPath,
+      zipPath,
+      zipFileName,
+      config
+    }
+  });
 
   options.onProgress?.({
     filesProcessed: 0,
@@ -80,6 +115,16 @@ export async function createZipArchive(
     : null;
   const tokenCount = tokenInfo?.inputTokens ?? null;
   const tokenApproximate = tokenInfo?.approximate ?? true;
+  debugLog("zip-service: token count complete", {
+    resource: workspaceFolder.uri,
+    details: {
+      enabled: config.enableTokenCounting,
+      model: config.llmModel,
+      tokenCount,
+      tokenApproximate,
+      method: tokenInfo?.method
+    }
+  });
 
   let totalBytes = 0;
   for (const file of files) {
@@ -94,6 +139,16 @@ export async function createZipArchive(
   });
 
   try {
+    debugLog("zip-service: writing archive", {
+      resource: workspaceFolder.uri,
+      details: {
+        zipPath,
+        files: files.length,
+        processedBytes: totalBytes,
+        compressionLevel: config.compressionLevel,
+        includeManifest: config.includeManifest
+      }
+    });
     const output = fs.createWriteStream(zipPath);
     const archive = new ZipArchive({ zlib: { level: config.compressionLevel } });
     archive.pipe(output);
@@ -133,8 +188,22 @@ export async function createZipArchive(
     if (stat.size === 0) {
       throw new Error("Archive file is empty after writing.");
     }
+    debugLog("zip-service: archive written", {
+      resource: workspaceFolder.uri,
+      details: {
+        zipPath,
+        archiveBytes: stat.size,
+        files: files.length,
+        processedBytes: totalBytes,
+        elapsedMs: Date.now() - started
+      }
+    });
   } catch (error) {
     await fs.promises.rm(zipPath, { force: true }).catch(() => undefined);
+    debugError("zip-service: archive write failed", error, {
+      resource: workspaceFolder.uri,
+      details: { zipPath, elapsedMs: Date.now() - started }
+    });
     throw error;
   }
 

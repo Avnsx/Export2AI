@@ -7,6 +7,7 @@ import { AsyncPool, DirectoryQueue } from "./asyncPool";
 import { IgnoreUtils } from "./ignoreUtils";
 import { UriUtils } from "./uriUtils";
 import { stripCommentsForFile } from "./commentStripper";
+import { debugError, debugLog } from "./debugLogger";
 
 type IgnoreInstance = ReturnType<typeof ignore>;
 
@@ -23,8 +24,13 @@ export class FileProcessor {
     ig: IgnoreInstance,
     options: CollectFilesOptions
   ): Promise<FileContent[]> {
+    const started = Date.now();
     const pendingFiles: PendingFile[] = [];
     const directoryQueue = new DirectoryQueue();
+    let directoriesVisited = 0;
+    let ignoredDirectories = 0;
+    let ignoredEntries = 0;
+    let excludedEntries = 0;
     directoryQueue.enqueue(sourceUri);
 
     while (directoryQueue.size > 0) {
@@ -36,13 +42,16 @@ export class FileProcessor {
       if (!dirUri) {
         break;
       }
+      directoriesVisited += 1;
 
       const relativeDirPath = UriUtils.relativePath(rootUri, dirUri);
       if (relativeDirPath && IgnoreUtils.isIgnored(ig, relativeDirPath, true)) {
+        ignoredDirectories += 1;
         continue;
       }
 
       if (options.isExcludedByResourcePath(dirUri)) {
+        excludedEntries += 1;
         continue;
       }
 
@@ -50,7 +59,9 @@ export class FileProcessor {
       try {
         entries = await vscode.workspace.fs.readDirectory(dirUri);
       } catch (error) {
-        console.error(`Export2AI: failed to read directory ${dirUri.toString()}`, error);
+        debugError("file-processor: failed to read directory", error, {
+          details: { directory: dirUri.toString(), root: rootUri.toString() }
+        });
         continue;
       }
 
@@ -64,10 +75,12 @@ export class FileProcessor {
         const isDirectory = Boolean(fileType & vscode.FileType.Directory);
 
         if (IgnoreUtils.isIgnored(ig, relativePath, isDirectory)) {
+          ignoredEntries += 1;
           continue;
         }
 
         if (options.isExcludedByResourcePath(fileUri)) {
+          excludedEntries += 1;
           continue;
         }
 
@@ -81,6 +94,19 @@ export class FileProcessor {
 
     const concurrency = Math.max(1, options.fileConcurrency ?? 4);
     let processedCount = 0;
+    debugLog("file-processor: discovery finished", {
+      details: {
+        root: rootUri.fsPath,
+        source: sourceUri.fsPath,
+        workspace: workspaceUri.fsPath,
+        directoriesVisited,
+        ignoredDirectories,
+        ignoredEntries,
+        excludedEntries,
+        candidateFiles: pendingFiles.length,
+        concurrency
+      }
+    });
 
     const processed = await AsyncPool.map(
       pendingFiles,
@@ -102,7 +128,16 @@ export class FileProcessor {
       }
     );
 
-    return processed.filter((file): file is FileContent => file !== null);
+    const files = processed.filter((file): file is FileContent => file !== null);
+    debugLog("file-processor: processing finished", {
+      details: {
+        root: rootUri.fsPath,
+        includedFiles: files.length,
+        skippedFiles: processed.length - files.length,
+        elapsedMs: Date.now() - started
+      }
+    });
+    return files;
   }
 
   public static async processFile(
@@ -159,7 +194,9 @@ export class FileProcessor {
         };
       }
     } catch (error) {
-      console.error(`Export2AI: error processing ${fileUri.toString()}`, error);
+      debugError("file-processor: error processing file", error, {
+        details: { file: fileUri.toString(), relativePath }
+      });
       return null;
     }
   }

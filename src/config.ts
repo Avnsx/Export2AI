@@ -41,6 +41,7 @@ export function getConfiguration(resource?: vscode.Uri): Export2AIConfiguration 
     maxFileSize: Math.max(0, config.get<number>("maxFileSize", 1024 * 1024)),
     maxDepth: Math.max(0, config.get<number>("maxDepth", 5)),
     fileConcurrency: Math.min(32, Math.max(1, config.get<number>("fileConcurrency", 4))),
-    outputFormat: config.get<"plaintext" | "markdown" | "xml">("outputFormat", "markdown")
+    outputFormat: config.get<"plaintext" | "markdown" | "xml">("outputFormat", "markdown"),
+    debug: config.get<boolean>("debug", false)
   };
 }

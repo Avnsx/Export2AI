@@ -73,6 +73,7 @@ Detailed flows: **[docs/architecture.md](./docs/architecture.md)**
 - **Token estimate:** `TokenEstimateManager` in `tokenEstimate.ts` (deferred scan; single-pass folder aggregation; status bar + decoration badge)
 - **Copy structure:** `projectService.ts` → `projectTree.ts` + `formatters.ts`
 - **Settings nav:** `extensionSettings.ts` + `@ext:` route with fallbacks
+- **Debug logging:** `debugLogger.ts` gates full-extension diagnostics behind `export2ai.debug` and writes local-time lines to the Export2AI output channel
 - **Comments:** `commentStripper.ts` + `commentProfiles.ts` when `removeComments` is on
 - **Target model UI:** `modelFormat.ts` + generated model-target menus (config `when`-clauses)
 

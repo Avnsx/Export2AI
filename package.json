@@ -1,0 +1,350 @@
+{
+  "name": "export2ai",
+  "displayName": "Export2AI",
+  "version": "1.2.3",
+  "description": "Create compact AI-ready zip archives from the current Cursor or VS Code workspace.",
+  "main": "./out/extension.js",
+  "type": "commonjs",
+  "publisher": "local",
+  "author": "",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Avnsx/export2ai.git"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "zip",
+    "archive",
+    "chatgpt",
+    "cursor",
+    "workspace",
+    "repository",
+    "ai"
+  ],
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "export2ai.zipWorkspace",
+        "title": "Zip Current Workspace",
+        "category": "Export2AI",
+        "icon": "$(file-zip)"
+      },
+      {
+        "command": "export2ai.zipSelectedFolder",
+        "title": "Zip Folder",
+        "category": "Export2AI",
+        "icon": "$(file-zip)"
+      },
+      {
+        "command": "export2ai.openOutputFolder",
+        "title": "Open Last Zip",
+        "category": "Export2AI",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "export2ai.openSettings",
+        "title": "Settings",
+        "category": "Export2AI",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "export2ai.copyProjectStructure",
+        "title": "Copy Project Structure",
+        "category": "Export2AI",
+        "icon": "$(list-tree)"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "export2ai.submenu",
+        "label": "Export2AI",
+        "icon": "$(file-zip)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "export2ai.zipWorkspace"
+        },
+        {
+          "command": "export2ai.zipSelectedFolder"
+        },
+        {
+          "command": "export2ai.openOutputFolder"
+        },
+        {
+          "command": "export2ai.openSettings"
+        },
+        {
+          "command": "export2ai.copyProjectStructure"
+        }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "export2ai.submenu",
+          "when": "explorerResourceIsFolder",
+          "group": "7_modification@50"
+        },
+        {
+          "command": "export2ai.copyProjectStructure",
+          "when": "!explorerResourceIsFolder && !explorerResourceIsRoot",
+          "group": "7_modification@51"
+        }
+      ],
+      "export2ai.submenu": [],
+      "view/title": [
+        {
+          "submenu": "export2ai.submenu",
+          "when": "view == workbench.explorer.fileView",
+          "group": "navigation@90"
+        }
+      ]
+    },
+    "configuration": [
+      {
+        "title": "Export2AI",
+        "order": 0,
+        "properties": {
+          "export2ai.extensionInfo": {
+            "type": "string",
+            "default": "Extension version v.1.2.3 · Last updated May 30, 2026",
+            "readOnly": true,
+            "order": -100
+          }
+        }
+      },
+      {
+        "title": "Token estimates",
+        "id": "tokenEstimates",
+        "order": 10,
+        "properties": {
+          "export2ai.enableTokenCounting": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "description": "Estimate token usage and show counts in the Explorer menu, status bar, and zip notifications."
+          },
+          "export2ai.llmModel": {
+            "type": "string",
+            "default": "gpt-5.5",
+            "order": 1,
+            "description": "Target AI model for offline token estimates, menu labels, zip filenames, and the in-zip manifest.",
+            "markdownDescription": "Target AI model for **offline token estimates** when zipping or copying project structure. Export2AI picks a tokenizer from this name — nothing is sent to any API.\n\n**OpenAI (ChatGPT)** — exact offline count (no `~`). Names starting with `gpt-`, `o1`, `o3`, or `o4` work:\n- Modern: `gpt-5.5` *(default)*, `gpt-5.5-pro`, `gpt-5.4`, `gpt-4o`, `gpt-4.1`, `o3-mini`, `o4-mini`\n- Legacy: `gpt-4`, `gpt-3.5-turbo` *(uses a separate exact cl100k tokenizer)*\n\n**Anthropic (Claude)** — approximate count (shown with a `~` prefix). Any name starting with `claude` works:\n- **Opus 4.7+:** `claude-opus-4-8`, `claude-opus-4-7` — updated tokenizer (offline uplift on legacy baseline; dated IDs like `claude-opus-4-8-20260528` also match)\n- **Other Claude:** `claude-sonnet-4-6`, `claude-opus-4-6`, `claude-haiku-4-5` — legacy Claude tokenizer (~1–2% off)\n\n**Google, xAI, others** — rough `characters ÷ 4` estimate only (e.g. `gemini-2.5-pro`, `grok-3`). Exact tokenizers for these families are not bundled yet.\n\nUse the same model name you plan to paste or upload the zip into. Partial names match by prefix (e.g. `gpt-5.5-thinking` → o200k tokenizer)."
+          }
+        }
+      },
+      {
+        "title": "File collection",
+        "id": "fileCollection",
+        "order": 20,
+        "properties": {
+          "export2ai.ignoreGitIgnore": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "description": "Merge workspace .gitignore rules into the exclude list when collecting files."
+          },
+          "export2ai.ignoreDotFiles": {
+            "type": "boolean",
+            "default": true,
+            "order": 1,
+            "description": "Skip files and folders whose names start with a dot (.)."
+          },
+          "export2ai.ignoreDollarFiles": {
+            "type": "boolean",
+            "default": true,
+            "order": 2,
+            "description": "Skip $* and **/$* paths (common temp-file patterns)."
+          },
+          "export2ai.excludePatterns": {
+            "type": "array",
+            "default": [
+              "node_modules",
+              "*.log",
+              "*.tmp",
+              "*.temp",
+              "*.bak",
+              "dist",
+              "build",
+              "out",
+              ".git",
+              "*-chatgpt-context-*.zip",
+              "*-*-context-*.zip"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "order": 3,
+            "description": "Glob patterns excluded from every zip (e.g. node_modules, build output, prior Export2AI zips)."
+          },
+          "export2ai.excludePaths": {
+            "type": "array",
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "order": 4,
+            "description": "Workspace-relative paths to exclude entirely (folders or files)."
+          },
+          "export2ai.maxFileSize": {
+            "type": "number",
+            "default": 1048576,
+            "order": 5,
+            "description": "Maximum file size in bytes to include in the zip. Larger files become a placeholder entry. Default: 1 MB."
+          },
+          "export2ai.fileConcurrency": {
+            "type": "number",
+            "default": 4,
+            "minimum": 1,
+            "maximum": 32,
+            "order": 6,
+            "description": "Parallel file reads when scanning large folders (clamped 1–32 at runtime)."
+          }
+        }
+      },
+      {
+        "title": "Zip archive",
+        "id": "zipArchive",
+        "order": 30,
+        "properties": {
+          "export2ai.compressCode": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "description": "Trim trailing whitespace and collapse extra blank lines in text files before zipping."
+          },
+          "export2ai.compressionLevel": {
+            "type": "number",
+            "default": 9,
+            "minimum": 0,
+            "maximum": 9,
+            "order": 1,
+            "description": "Zip compression level. 0 = store/fastest; 9 = smallest archive."
+          },
+          "export2ai.includeManifest": {
+            "type": "boolean",
+            "default": true,
+            "order": 2,
+            "description": "Add _EXPORT2AI_MANIFEST.txt inside the archive (target model, options, file list summary)."
+          },
+          "export2ai.copyPathAfterCreate": {
+            "type": "boolean",
+            "default": true,
+            "order": 3,
+            "description": "Copy the new zip path to the clipboard after creation."
+          }
+        }
+      },
+      {
+        "title": "Comments",
+        "id": "comments",
+        "order": 40,
+        "properties": {
+          "export2ai.removeComments": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "description": "Remove comments from source files in the zip (per extension; see Comment Strip Languages).",
+            "markdownDescription": "When enabled, Export2AI removes comments **per file extension** before adding source files to the zip.\n\nThe stripper is **string-aware**: line comments, block comments, and nested blocks are handled per syntax family. String literals, template literals, and shebang lines are preserved where possible.\n\n**18 syntax families** cover **175 extensions** (plus special names like `Dockerfile` and `Makefile`).\n\nPlain text, `.json`, `.md`, and unknown extensions are **not** modified.\n\nSee **Comment Strip Languages** below for the full per-family extension map."
+          },
+          "export2ai.commentStripLanguages": {
+            "type": "string",
+            "default": "18 syntax families · 175 file extensions (see description below for full map)",
+            "readOnly": true,
+            "order": 1,
+            "markdownDescription": "Read-only reference synced at build time from `commentProfiles.ts`. Export2AI picks a syntax family from the file extension (or special filename) and applies the matching comment rules when **Remove Comments** is on.\n\n**18 syntax families · 175 mapped extensions**\n\n| Comment syntax | Languages | Example extensions |\n|----------------|-----------|---------------------|\n| `//` · `/* */` | C, C++, C#, Java, JavaScript, TypeScript, Go, Rust, Swift, Kotlin, … (39) | `.c`, `.cc`, `.cjs`, `.cpp`, `.cs`, `.cu`, `.cuda`, `.cxx`, `.dart`, `.glsl`, +29 more |\n| `//` · `#` · `/* */` | PHP (6) | `.php`, `.php3`, `.php4`, `.php5`, `.phps`, `.phtml` |\n| `#` | Python, Ruby, Shell, Perl, YAML, TOML, Terraform, Dockerfile, … (61) | `.awk`, `.bash`, `.cfg`, `.clj`, `.cljc`, `.cljs`, `.cmake`, `.coffee`, `.conf`, `.containerfile`, +51 more |\n| `;` | Assembly (GAS/NASM-style) (3) | `.asm`, `.il`, `.s` |\n| `--` · `/* */` | SQL, MySQL, PostgreSQL, PL/SQL (9) | `.cql`, `.ddl`, `.dml`, `.eql`, `.mysql`, `.pgsql`, `.plsql`, `.psql`, `.sql` |\n| `<!-- -->` | HTML, XML, SVG, XAML, MSBuild project files (18) | `.csproj`, `.fsproj`, `.ftl`, `.htm`, `.html`, `.props`, `.svg`, `.targets`, `.vbproj`, `.vm`, +8 more |\n| `/* */` | CSS, SCSS, Sass, Less (5) | `.css`, `.less`, `.sass`, `.scss`, `.styl` |\n| `--` · `--[[ ]]` | Lua (1) | `.lua` |\n| `--` · `{- -}` | Haskell (2) | `.hs`, `.lhs` |\n| `(* *)` | OCaml, F#, Standard ML (9) | `.fs`, `.fsx`, `.fsxi`, `.fun`, `.ml`, `.mli`, `.mll`, `.mly`, `.sig` |\n| `'` | Visual Basic, VBScript (3) | `.bas`, `.vb`, `.vbs` |\n| `%` · `%{ %}` | MATLAB, Octave (2) | `.mat`, `.octave` |\n| `%` | Erlang (2) | `.erl`, `.hrl` |\n| `#` · `<# #>` | PowerShell (3) | `.ps1`, `.psd1`, `.psm1` |\n| `REM` · `::` (line start) | Windows Batch (.bat, .cmd) (2) | `.bat`, `.cmd` |\n| `;` | Lisp, Scheme, Racket (3) | `.lisp`, `.scm`, `.ss` |\n| `\"` | Vim script (1) | `.vim` |\n| `%` | LaTeX, TeX, BibTeX (6) | `.bbl`, `.bib`, `.cls`, `.latex`, `.sty`, `.tex` |\n\n**Also recognized (no dot extension):** `Dockerfile`, `Makefile`, `CMakeLists.txt`, `.env*`.\n\n**Never stripped:** `.json`, `.md`, plain text, binary files, and extensions not listed above.\n\n**Limitations:** nested strings, regex literals, and some edge-case encodings may still lose inner text; JSON-with-comments (`.jsonc`) uses the C-family profile.",
+            "description": "Supported comment syntax families and mapped file extensions (read-only; synced from build)."
+          }
+        }
+      },
+      {
+        "title": "Copy structure",
+        "id": "copyStructure",
+        "order": 50,
+        "properties": {
+          "export2ai.maxDepth": {
+            "type": "number",
+            "default": 5,
+            "order": 0,
+            "description": "Maximum folder depth when copying project structure to the clipboard."
+          },
+          "export2ai.outputFormat": {
+            "type": "string",
+            "enum": [
+              "plaintext",
+              "markdown",
+              "xml"
+            ],
+            "default": "markdown",
+            "order": 1,
+            "description": "Output format for the copied project tree."
+          }
+        }
+      },
+      {
+        "title": "Advanced",
+        "id": "advanced",
+        "order": 60,
+        "properties": {
+          "export2ai.debug": {
+            "type": "boolean",
+            "default": false,
+            "order": 0,
+            "description": "Log Export2AI settings navigation to the Export2AI output channel (View → Output)."
+          },
+          "export2ai.exclude": {
+            "type": "array",
+            "default": [],
+            "order": 90,
+            "deprecationMessage": "Use export2ai.excludePatterns instead.",
+            "description": "Deprecated. Use export2ai.excludePatterns."
+          },
+          "export2ai.outputFolder": {
+            "type": "string",
+            "default": ".",
+            "order": 91,
+            "deprecationMessage": "Ignored. Zips are always written to the workspace root.",
+            "description": "Deprecated. Zips are always created in the workspace root."
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "generate:menus": "node scripts/generate-all-menus.js",
+    "merge:package": "node scripts/merge-package.js",
+    "precompile": "npm run generate:menus",
+    "compile": "tsc -p ./",
+    "postcompile": "node scripts/sync-comment-settings.js && npm run merge:package",
+    "watch": "tsc -watch -p ./",
+    "package": "npm run compile && node --disable-warning=DEP0040 ./node_modules/@vscode/vsce/vsce package",
+    "vscode:prepublish": "node scripts/verify-build.js",
+    "slim:package": "node scripts/slim-package.js",
+    "test:live": "node scripts/live-test.js",
+    "test:tokens": "node scripts/test-token-format.js",
+    "test:comments": "node scripts/test-comment-strip.js",
+    "test:menu-merge": "node scripts/test-menu-merge.js",
+    "test:model-format": "node scripts/test-model-format.js",
+    "test:settings-nav": "node scripts/test-extension-settings.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/tokenizer": "^0.0.4",
+    "archiver": "^8.0.0",
+    "gpt-tokenizer": "^3.4.0",
+    "ignore": "^7.0.5",
+    "isbinaryfile": "^5.0.6"
+  },
+  "devDependencies": {
+    "@types/archiver": "^7.0.0",
+    "@types/node": "^25.9.1",
+    "@types/vscode": "^1.105.0",
+    "@vscode/vsce": "^3.9.1",
+    "typescript": "^6.0.3"
+  }
+}

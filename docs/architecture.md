@@ -1,0 +1,155 @@
+# Architecture
+
+## Purpose
+
+Export2AI creates AI-ready zip archives from workspace folders. It applies ignore rules, optional whitespace compression, language-aware comment stripping, and offline token estimates. A secondary feature copies project tree structure to the clipboard.
+
+## Entry point
+
+`src/extension.ts` — registers commands, owns session state (`lastZipPath`), wires `TokenEstimateManager`, and delegates zip creation to `zipService.ts`.
+
+## Data flow: zip creation
+
+```
+User command (zipFolder)
+  → getConfiguration()                    [config.ts]
+  → TokenEstimateManager.updateContextForUri()  [optional]
+  → createZipArchive()                    [zipService.ts]
+       → prepareIgnoreContext()           [projectService.ts]
+       → FileProcessor.collectFiles()     [fileProcessor.ts]
+            → stripCommentsForFile()      [commentStripper.ts] if removeComments
+            → compress whitespace         if compressCode
+       → TokenCounter.countFilesContent() if enableTokenCounting
+       → archiver ZipArchive → workspace root *.zip
+  → revealInSystemExplorer() / notification / clipboard
+```
+
+Zip naming: `{folderName}-{model-slug}-context-{ISO-timestamp}.zip` in the workspace root.
+
+Optional manifest: `_EXPORT2AI_MANIFEST.txt` when `includeManifest` is true.
+
+## Data flow: token estimate
+
+```
+TokenEstimateManager [tokenEstimate.ts]
+  → initial scan deferred 5s (avoids cold-start vs settings navigation)
+  → debounced refresh on file save/create/delete/rename/config change
+  → skips/reschedules while settingsNavigationInProgress
+  → onSettingsNavigationFinished() → scheduleRefresh() (+ 1.5s extra delay)
+  → refreshGeneration counter drops stale publish results
+  → FileProcessor.collectFiles() + TokenCounter.countFilesContent()
+  → setContext: export2ai.enableTokenCounting (drives menu visibility)
+  → status bar (model + exact tokens; click → openSettings)
+  → Explorer file-decoration badge per folder (formatTokenBadge) + rich tooltip
+```
+
+The token estimate is surfaced in **three** places — status bar, Explorer decoration badge, and the post-zip notification. There are **no per-count menu commands** (see "Why there is no token-bucket menu" below).
+
+## Data flow: copy project structure
+
+```
+export2ai.copyProjectStructure
+  → prepareIgnoreContext()
+  → ProjectTreeGenerator [projectTree.ts]
+  → OutputFormatter [formatters.ts] (plaintext | markdown | xml)
+  → clipboard (+ token label if counting enabled)
+```
+
+## Data flow: settings navigation
+
+```
+export2ai.openSettings / status bar click
+  → openOwnExtensionSettings() [extensionSettings.ts]
+  → resolveExtensionId() [extensionId.ts]
+  → workbench.action.openSettings("@ext:{id}")
+  → fallbacks: extension.open → vscode:extension/ URI → user prompts
+  → settingsNavigationInProgress guard during navigation (+ 5s cooldown after)
+  → Export2AI output channel when export2ai.debug
+```
+
+See **[agent-chokepoints.md](./agent-chokepoints.md)** for why these guards exist.
+
+## Ignore pipeline
+
+Shared by zip and copy-structure:
+
+1. `excludePatterns` → `ignore` package globs
+2. Optional `.gitignore` merge (`ignoreGitIgnore`)
+3. Optional dot-file rule (`.*`) when `ignoreDotFiles`
+4. Optional `$*` / `**/$*` when `ignoreDollarFiles`
+5. `excludePaths` → workspace-relative or absolute path exclusion
+6. Binary check via `isbinaryfile`
+7. `maxFileSize` cap (placeholder text if exceeded)
+8. Skip output zip path if it appears during collection
+
+## Commands
+
+| Command ID | Purpose |
+|------------|---------|
+| `export2ai.zipWorkspace` | Zip entire workspace root |
+| `export2ai.zipSelectedFolder` | Zip right-clicked folder (the single zip row in the submenu) |
+| `export2ai.modelTarget.*` | Generated (~17); shows **Target model: …** when `config.export2ai.llmModel` matches; hidden from Command Palette |
+| `export2ai.zipFor.*` | Generated (~17); **Zip Folder for {model}** when token counting off; hidden from Command Palette |
+| `export2ai.copyProjectStructure` | Clipboard tree (+ token label if counting on) |
+| `export2ai.openOutputFolder` | Open last zip in OS file manager (session-scoped) |
+| `export2ai.openSettings` | Open extension settings via `@ext:` route |
+
+The manifest holds **~39 commands total** — there is no longer a per-token-count command set. Generated `modelTarget.*` / `zipFor.*` commands are hidden from the Command Palette with `when: false` so it stays clean.
+
+### Settings navigation (no hang)
+
+- Opens via `@ext:publisher.name` (not global settings search)
+- Command handler returns immediately (`void openOwnExtensionSettings(...)`)
+- Token scans paused while `settingsNavigationInProgress` is true
+- **5s cooldown** after navigation before scans resume
+- Initial workspace scan deferred **5s** on cold start
+- Explorer decoration scans skipped during settings navigation
+
+Static submenu items (settings, copy structure, open last zip) come from `scripts/submenu-base.json`. Generated menus come from `scripts/generate-all-menus.js`.
+
+### Target model in UI
+
+Unified display of `export2ai.llmModel`: **[target-model-ui.md](./target-model-ui.md)**
+
+## Why there is no token-bucket menu (removed in 1.2.3)
+
+VS Code **cannot** set context-menu titles at runtime — a menu row's label is the static `title` from `contributes.commands`. Earlier versions worked around this by pre-generating **~10,900** `export2ai.zip.bucket.{N}` commands (one per token range) and toggling visibility with a `when: export2ai.tokenBucket == N` clause.
+
+That approach was removed because it was **pure cost with no surviving benefit**:
+
+- **Command Palette pollution** — VS Code lists every command that has a `title` in the palette by default. 10,900 `Zip (~N tokens…)` rows flooded it.
+- **Manifest bloat** — `package.json` ballooned to ~1.9–4 MB, which slows the Settings UI, npm task detection, and extension-host parse (the original Cursor hang).
+- **No menu surface left** — the Explorer submenu can only render a handful of rows, so the bucket rows were already dropped from the submenu; the `setContext('export2ai.tokenBucket', …)` had no consumer.
+- **Already covered elsewhere** — the exact token count shows in the **status bar**, the per-folder **Explorer decoration badge** (`formatTokenBadge`), and the **post-zip notification**.
+
+Result: the manifest is ~32 KB with ~39 commands. **Do not reintroduce a per-count command set.** If a future requirement truly needs an in-menu count, use a *small* coarse bucket set (≤ ~25 rows) and hide the commands from the palette — never thousands.
+
+## Token counting
+
+`src/utils/tokenCounter.ts` → `selectTokenizer(model)`:
+
+| `TokenCountMethod` | When | `approximate` |
+|--------------------|------|---------------|
+| `openai-o200k` | Modern GPT (`gpt-5.5`, `gpt-4o`, `o3-mini`, …) | `false` |
+| `openai-cl100k` | Legacy GPT (`gpt-4`, `gpt-3.5-*`) | `false` |
+| `anthropic-opus-modern` | `claude-opus-4-7*`, `claude-opus-4-8*` | `true` |
+| `anthropic-legacy` | Other `claude-*` | `true` |
+| `chars-heuristic` | gemini, grok, deepseek, unknown | `true` |
+
+Dependencies: `@anthropic-ai/tokenizer`, `gpt-tokenizer`. **No network calls** for counting.
+
+Default model: `gpt-5.5` (`DEFAULT_LLM_MODEL` in `modelRegistry.ts`).
+
+Display helpers: `src/utils/tokenFormat.ts` (`TOKENIZER_COMPATIBILITY_CHART`, tooltips, settings footer).
+
+## Runtime dependencies
+
+| Package | Use |
+|---------|-----|
+| `archiver` | Zip creation (`ZipArchive`) |
+| `ignore` | Glob / gitignore matching |
+| `isbinaryfile` | Skip binary content |
+| `gpt-tokenizer` | OpenAI exact counts |
+| `@anthropic-ai/tokenizer` | Claude legacy counts |
+
+(`minimatch` may appear transitively via archiver; not a direct dependency.)

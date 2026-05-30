@@ -1,0 +1,17 @@
+.vscode/**
+.vscode-test/**
+src/**
+.gitignore
+tsconfig.json
+**/*.ts
+**/*.map
+!out/**
+node_modules/@types/**
+node_modules/typescript/**
+node_modules/@vscode/**
+node_modules/@types/**
+**/.github/**
+**/*.vsix
+*-chatgpt-context-*.zip
+package.slim.json
+scripts/**

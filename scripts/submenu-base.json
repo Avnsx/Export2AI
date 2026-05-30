@@ -1,0 +1,14 @@
+[
+  {
+    "command": "export2ai.copyProjectStructure",
+    "group": "1_zip@2"
+  },
+  {
+    "command": "export2ai.openOutputFolder",
+    "group": "2_zip@2"
+  },
+  {
+    "command": "export2ai.openSettings",
+    "group": "3_zip@3"
+  }
+]

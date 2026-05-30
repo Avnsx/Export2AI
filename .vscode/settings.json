@@ -1,0 +1,10 @@
+{
+  "export2ai.enableTokenCounting": true,
+  "export2ai.ignoreGitIgnore": true,
+  "export2ai.ignoreDotFiles": true,
+  "export2ai.ignoreDollarFiles": true,
+  "export2ai.compressCode": true,
+  "export2ai.removeComments": true,
+  "export2ai.debug": true,
+  "npm.autoDetect": "off"
+}

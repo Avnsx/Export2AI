@@ -134,8 +134,8 @@ async function createZip(sourcePath, workspaceRoot, config) {
     ignoreDollarFiles: true,
     excludePatterns: ["node_modules", "*.log", "*.tmp", "dist", "build", "out", "*-chatgpt-context-*.zip", "*-*-context-*.zip"],
     excludePaths: [],
-    compressCode: true,
-    removeComments: true,
+    compressCode: false,
+    removeComments: false,
     maxFileSize: 1024 * 1024,
     compressionLevel: 9,
     llmModel: DEFAULT_LLM_MODEL
@@ -166,7 +166,17 @@ async function createZip(sourcePath, workspaceRoot, config) {
   console.assert(!hasDollarFile, "dollar files should be excluded when ignoreDollarFiles=true");
   console.assert(!hasTmp, "tmp files should be excluded");
   console.assert(srcFile, "extension.ts should be included");
-  console.assert(processorFile && !processorFile.content.includes("// Fall through"), "comments should be removed");
+  if (config.removeComments) {
+    console.assert(
+      processorFile && !processorFile.content.includes("// Fall through"),
+      "comments should be removed when removeComments=true"
+    );
+  } else {
+    console.assert(
+      processorFile && processorFile.content.includes("// Fall through"),
+      "comments should be preserved when removeComments=false"
+    );
+  }
   console.assert(result.tokenCount > 0, "token count should be positive");
   console.assert(!result.tokenApproximate, "default tokenizer should be exact (gpt-5.5 o200k)");
 

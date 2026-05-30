@@ -96,6 +96,17 @@ See **[agent-chokepoints.md](./agent-chokepoints.md)** for full detail. Short ve
 - **`package.json` is ~32 KB** — if it balloons into the MB range, you reintroduced a generated-command explosion
 - **Never generate per-token-count commands** — the count lives in the status bar / decoration badge / notification (`test:tokens` enforces zero bucket commands)
 
+## Releases (GitHub)
+
+Push a semver tag to trigger [`.github/workflows/release.yml`](../.github/workflows/release.yml):
+
+```bash
+git tag v1.2.4
+git push origin v1.2.4
+```
+
+The workflow compiles, runs tests, builds `export2ai-{version}.vsix`, generates release notes from `CHANGELOG.md` via `scripts/release-notes.js`, and attaches the VSIX to a GitHub Release. Optional marketplace publish when `VSCE_PAT` / `OVSX_PAT` secrets are set.
+
 ## Release checklist
 
 - [ ] `npm run compile` succeeds

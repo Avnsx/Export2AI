@@ -371,6 +371,10 @@ function formatExtensionSample(profileId: string, max = 10): string {
   return rest > 0 ? `${shown.join(", ")}, +${rest} more` : shown.join(", ");
 }
 
+/** Plain-text intro for Remove comments — synced to settings `description` via extension-metadata.js */
+export const REMOVE_COMMENTS_USER_DESCRIPTION =
+  "Strips comments from exported files to save space, but removes rationale, warnings, edge-case explanations, and useful developer context; keep it OFF for debugging or agent handoff.";
+
 export function buildCommentStripSettingsMarkdown(): string {
   const totalExts = Object.keys(EXTENSION_TO_PROFILE).length;
   return [

@@ -39,8 +39,8 @@ TokenEstimateManager [tokenEstimate.ts]
   → refreshGeneration counter drops stale publish results
   → FileProcessor.collectFiles() + TokenCounter.countFilesContent()
   → setContext: export2ai.enableTokenCounting (drives menu visibility)
-  → status bar (model + exact tokens; click → openSettings)
-  → Explorer file-decoration badge per folder (formatTokenBadge) + rich tooltip
+  → status bar (model + `(est. N tokens)`; click → openSettings; compact tooltip on hover)
+  → Explorer file-decoration badge per folder (formatTokenBadge; badge only)
 ```
 
 The token estimate is surfaced in **three** places — status bar, Explorer decoration badge, and the post-zip notification. There are **no per-count menu commands** (see "Why there is no token-bucket menu" below).
@@ -140,7 +140,7 @@ Dependencies: `@anthropic-ai/tokenizer`, `gpt-tokenizer`. **No network calls** f
 
 Default model: `gpt-5.5` (`DEFAULT_LLM_MODEL` in `modelRegistry.ts`).
 
-Display helpers: `src/utils/tokenFormat.ts` (`TOKENIZER_COMPATIBILITY_CHART`, tooltips, settings footer).
+Display helpers: `src/utils/tokenFormat.ts` (`formatTokenUsageLabel`, `formatStatusBarZipLabel`, `formatTokenTooltip`, settings footer).
 
 ## Runtime dependencies
 

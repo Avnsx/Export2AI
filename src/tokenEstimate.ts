@@ -79,8 +79,8 @@ export class TokenEstimateManager implements vscode.Disposable {
   }
 
   public async updateContextForUri(uri: vscode.Uri): Promise<void> {
-    const cached = this.cache.get(uri.fsPath.toLowerCase());
     const count = await this.estimateForUri(uri);
+    const cached = this.cache.get(uri.fsPath.toLowerCase());
     await this.publishEstimate(
       count ?? 0,
       this.enabled,
@@ -116,12 +116,14 @@ export class TokenEstimateManager implements vscode.Disposable {
         this.cache.set(cacheKey, estimate);
         this.pending.delete(cacheKey);
         this.decorationEmitter.fire(uri);
-        await this.publishEstimate(
-          estimate.count,
-          enabled,
-          estimate.approximate,
-          estimate.methodLabel
-        );
+        if (this.isWorkspaceRoot(uri, workspaceFolder)) {
+          await this.publishEstimate(
+            estimate.count,
+            enabled,
+            estimate.approximate,
+            estimate.methodLabel
+          );
+        }
         return estimate.count;
       })
       .catch(error => {
@@ -182,24 +184,15 @@ export class TokenEstimateManager implements vscode.Disposable {
 
     const cached = this.cache.get(uri.fsPath.toLowerCase());
     if (cached !== undefined) {
-      void this.publishEstimate(
-        cached.count,
-        this.enabled,
-        cached.approximate,
-        cached.methodLabel
-      );
-      const config = getConfiguration(workspaceFolder.uri);
       const badge = formatTokenBadge(cached.count);
-      return {
-        badge,
-        tooltip: formatTokenTooltip(
-          cached.count,
-          cached.approximate,
-          cached.methodLabel,
-          config.llmModel
-        )
-      };
+      return badge ? { badge } : undefined;
     }
+  }
+
+  /** Status bar reflects the workspace root estimate, not per-folder decoration scans. */
+  private isWorkspaceRoot(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder): boolean {
+    return uri.toString() === workspaceFolder.uri.toString()
+      || uri.fsPath.toLowerCase() === workspaceFolder.uri.fsPath.toLowerCase();
   }
 
   private scheduleRefresh(): void {

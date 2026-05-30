@@ -116,9 +116,16 @@ function applyCommentStripSettings(manifest, commentStripModule) {
 
   const removeComments = findConfigurationSetting(manifest, "export2ai.removeComments");
   if (removeComments && typeof buildCommentStripSettingsMarkdown === "function") {
-    removeComments.setting.markdownDescription = buildCommentStripSettingsMarkdown();
-    removeComments.setting.description =
-      "Remove comments from source files in the zip (per extension; see Comment Strip Languages).";
+    const userDescription =
+      commentStripModule.REMOVE_COMMENTS_USER_DESCRIPTION
+      ?? "Strips comments from exported files to save space, but removes rationale, warnings, edge-case explanations, and useful developer context; keep it OFF for debugging or agent handoff.";
+    const technicalMarkdown = buildCommentStripSettingsMarkdown();
+    removeComments.setting.description = userDescription;
+    removeComments.setting.markdownDescription = [
+      userDescription.replace("keep it OFF", "keep it **OFF**"),
+      "",
+      technicalMarkdown
+    ].join("\n");
   }
 
   const languagesRef = findConfigurationSetting(manifest, "export2ai.commentStripLanguages");

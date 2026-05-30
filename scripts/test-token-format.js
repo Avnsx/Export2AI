@@ -8,8 +8,7 @@ const {
   formatTokenUsageLabel,
   formatStatusBarZipLabel,
   formatTokenBadge,
-  formatTokenTooltip,
-  TOKENIZER_COMPATIBILITY_CHART
+  formatTokenTooltip
 } = require("../out/utils/tokenFormat");
 const { TokenCounter } = require("../out/utils/tokenCounter");
 const { DEFAULT_LLM_MODEL, usesOpenAiCl100k, usesAnthropicOpusModernTokenizer, resolveModel } = require("../out/utils/modelRegistry");
@@ -98,21 +97,21 @@ function testFormatters() {
   assert(formatTokenCount(47382, { approximate: false }) === "47,382", "exact count no tilde");
   assert(formatTokenCount(0) === "0", "zero count");
   assert(
-    formatTokenUsageLabel(12500, { approximate: true }) === "(~12,500 tokens will be used)",
+    formatTokenUsageLabel(12500, { approximate: true }) === "(est. ~12,500 tokens)",
     "usage label approx"
   );
   assert(
-    formatTokenUsageLabel(12500, { approximate: false }) === "(12,500 tokens will be used)",
+    formatTokenUsageLabel(12500, { approximate: false }) === "(est. 12,500 tokens)",
     "usage label exact"
   );
   assert(
     formatStatusBarZipLabel("gpt-5.5", 47382, true)
-      === "gpt-5.5 · (~47,382 tokens will be used)",
+      === "gpt-5.5 · (est. ~47,382 tokens)",
     "status bar label approx with model"
   );
   assert(
     formatStatusBarZipLabel("claude-opus-4-8", 47382, false)
-      === "claude-opus-4-8 · (47,382 tokens will be used)",
+      === "claude-opus-4-8 · (est. 47,382 tokens)",
     "status bar label exact with model"
   );
   assert(formatTokenBadge(47382) === "47", "badge 47k truncated to 2 chars");
@@ -121,19 +120,23 @@ function testFormatters() {
 
   const tooltip = formatTokenTooltip(47382, false, "exact", DEFAULT_LLM_MODEL);
   assert(tooltip.includes("47,382") && !tooltip.includes("~47,382"), "tooltip exact count");
-  assert(tooltip.includes("Compatible models"), "tooltip chart");
-  assert(tooltip.includes("gpt-5.5"), "tooltip default model");
-  assert(tooltip.includes("claude-opus-4-8"), "tooltip opus 4.8 example");
-  assert(tooltip.includes("gpt-4o"), "tooltip openai example");
+  assert(tooltip.includes("Active model: gpt-5.5"), "tooltip active model");
+  assert(tooltip.includes("exact offline estimate"), "tooltip accuracy hint");
+  assert(!tooltip.includes("Compatible models"), "tooltip has no model chart");
+  assert(!tooltip.includes("will be used"), "tooltip avoids consumption phrasing");
   assert(tooltip.endsWith("Steer used Tokenizer Model, in Extension Settings."), "tooltip footer");
-  assert(tooltip.includes(`Active setting: ${DEFAULT_LLM_MODEL}`), "tooltip active model");
-  assert(
-    TOKENIZER_COMPATIBILITY_CHART.some((line) => line.includes(DEFAULT_LLM_MODEL)),
-    "chart lists default model"
-  );
 
   const claudeTooltip = formatTokenTooltip(47382, true, "approx - Claude tokenizer", "claude-sonnet-4-6");
   assert(claudeTooltip.includes("~47,382"), "claude tooltip approx");
+  assert(claudeTooltip.includes("approximate offline estimate"), "claude tooltip accuracy");
+
+  const zeroTooltip = formatTokenTooltip(0, false, "exact", DEFAULT_LLM_MODEL);
+  assert(zeroTooltip.includes("0 tokens"), "zero-count tooltip");
+
+  const emptyModelTooltip = formatTokenTooltip(100, true, undefined, "");
+  assert(emptyModelTooltip.includes(`Active model: ${DEFAULT_LLM_MODEL}`), "empty model falls back to default");
+
+  assert(!formatTokenTooltip(100, false, "exact", "gpt-5.5").includes("Compatible models"), "no chart leak");
 
   console.log("formatters: ok");
 }

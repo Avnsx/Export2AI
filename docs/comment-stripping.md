@@ -1,6 +1,6 @@
 # Comment stripping
 
-When `export2ai.removeComments` is enabled (default `true`), Export2AI strips comments from text files included in zips. Rules are chosen **by file extension** using string-aware parsing in `commentStripper.ts`. Profile definitions live in `commentProfiles.ts`.
+When `export2ai.removeComments` is enabled (default `false`), Export2AI strips comments from text files included in zips. Rules are chosen **by file extension** using string-aware parsing in `commentStripper.ts`. Profile definitions live in `commentProfiles.ts`.
 
 ## Skipped file types
 
@@ -53,8 +53,8 @@ The scanner tracks `"`, `'`, and `` ` `` string literals and does not strip comm
 
 At compile time, `scripts/sync-comment-settings.js` updates:
 
-- `export2ai.removeComments` → `markdownDescription` (full family list)
-- `export2ai.commentStripLanguages` → read-only summary string
+- `export2ai.removeComments` → humane intro (`REMOVE_COMMENTS_USER_DESCRIPTION`) + technical `markdownDescription` (syntax families, string-aware stripper)
+- `export2ai.commentStripLanguages` → read-only summary string and full extension table
 
 Run `npm run compile` after editing `commentProfiles.ts` to refresh Settings text.
 

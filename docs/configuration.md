@@ -31,18 +31,30 @@ When adding a setting, place it in the matching category object in `package.slim
 | `export2ai.ignoreDollarFiles` | boolean | `true` | Skip `$*` and `**/$*` (temp files) |
 | `export2ai.excludePatterns` | string[] | See below | Glob patterns to exclude |
 | `export2ai.excludePaths` | string[] | `[]` | Workspace-relative paths to exclude entirely |
-| `export2ai.compressCode` | boolean | `true` | Trim blank lines and trailing whitespace per line |
-| `export2ai.removeComments` | boolean | `true` | Strip comments per file type (see [comment-stripping.md](./comment-stripping.md)) |
-| `export2ai.enableTokenCounting` | boolean | `true` | Token estimates in menu, status bar, notifications |
+| `export2ai.compressCode` | boolean | `false` | Reduces exported text size (trim whitespace, drop blank lines); see Settings UI for full guidance |
+| `export2ai.removeComments` | boolean | `false` | Strip comments per file type (see [comment-stripping.md](./comment-stripping.md)) |
+| `export2ai.enableTokenCounting` | boolean | `true` | Token estimates in status bar, Explorer badges, notifications |
 | `export2ai.llmModel` | string | `gpt-5.5` | **Target AI model** for token estimates, Explorer menu target row, status bar label, zip filename, and zip manifest — see [target-model-ui.md](./target-model-ui.md) |
 | `export2ai.maxFileSize` | number | `1048576` | Max bytes per file (larger → placeholder) |
 | `export2ai.maxDepth` | number | `5` | Tree depth for copy project structure |
 | `export2ai.fileConcurrency` | number | `4` | Parallel file reads (clamped 1–32) |
 | `export2ai.outputFormat` | enum | `markdown` | `plaintext`, `markdown`, or `xml` for copy structure |
 | `export2ai.includeManifest` | boolean | `true` | Add `_EXPORT2AI_MANIFEST.txt` inside zip |
-| `export2ai.compressionLevel` | number | `9` | Zip level 0–9 (clamped at read time) |
+| `export2ai.compressionLevel` | number | `9` | Zip archive pack level 0–9 (upload size only; not token count after extract) |
 | `export2ai.copyPathAfterCreate` | boolean | `true` | Copy zip path to clipboard after create |
 | `export2ai.debug` | boolean | `false` | Log settings navigation to Export2AI output channel |
+
+### Settings UI copy (Zip archive & Comments)
+
+These settings show a **plain-language `description`** under the control plus a **`markdownDescription`** with a **Technical:** block (or stripper details for comments). Edit humane text in **`package.slim.json`**; Remove comments intro is also defined as `REMOVE_COMMENTS_USER_DESCRIPTION` in `commentProfiles.ts` and prepended at compile by `extension-metadata.js`.
+
+| Setting | Humane summary (shown first) |
+|---------|------------------------------|
+| `compressCode` | Reduces exported source for smaller context; may remove formatting or layout — keep OFF for faithful review |
+| `removeComments` | Strips comments to save space; removes rationale and warnings — keep OFF for debugging or agent handoff |
+| `compressionLevel` | Controls `.zip` pack tightness for upload size only; does not change code or tokens after extract |
+
+Run `npm run compile` after editing manifest or `commentProfiles.ts`.
 
 ### Default `excludePatterns`
 

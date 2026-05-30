@@ -4,9 +4,21 @@ All notable changes to Export2AI are documented in this file.
 
 ## [1.2.4] - 2026-05-30
 
+### Added
+
+- **Clearer Settings copy** — plain-language descriptions under **Compress code**, **Remove comments**, and **ZIP compression level** (Zip archive / Comments categories). Each keeps a **Technical:** block in `markdownDescription` for implementation detail. Humane intro for Remove comments is synced at compile via `REMOVE_COMMENTS_USER_DESCRIPTION` in `commentProfiles.ts`.
+
 ### Changed
 
-- **Shorter, cleaner zip names** — the archive name now uses only the selected folder's own name instead of its full nested path (no more `y--HOST_ROOT-…` clutter) and a compact `YYYY-MM-DD-HHMMSS` timestamp. Example: `WinMGT-gpt-5.5-context-2026-05-30-182617.zip`. The folder segment is capped at 40 characters to keep paths well under the Windows limit. New helpers `formatFolderNameSegment()` and `formatCompactTimestamp()` in `modelFormat.ts`.
+- **Shorter, cleaner zip names** — the archive name uses only the selected folder's **basename** (not the full nested path; no more `y--HOST_ROOT-…` clutter) and a compact `YYYY-MM-DD-HHMMSS` timestamp. Example: `WinMGT-gpt-5.5-context-2026-05-30-182617.zip`. Folder segment capped at 40 characters. Helpers: `formatFolderNameSegment()` and `formatCompactTimestamp()` in `modelFormat.ts`.
+- **Safer export defaults** — `export2ai.compressCode` and `export2ai.removeComments` default to **`false`** so zips preserve full source unless you opt in to trimming or comment stripping.
+- **Token estimate UI** — status bar label uses `(est. ~N tokens)` / `(est. N tokens)` via `formatTokenUsageLabel()`; status-bar hover tooltip is compact (active model + exact/approx offline estimate + settings footer). Explorer decoration badges are **badge-only** (no per-folder tooltip).
+- **Status bar stability** — workspace-root token estimate is published from the root scan only, so the status bar no longer jumps when Explorer folder decoration scans finish.
+
+### Fixed
+
+- **`scripts/live-test.js`** — comment assertion respects `removeComments` default (`false`: comments preserved; `true`: stripped).
+- **Documentation** — README, `AGENTS.md`, and `docs/` synced with current token UI, zip naming, settings copy, and defaults.
 
 ## [1.2.3] - 2026-05-30
 

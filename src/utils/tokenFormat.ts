@@ -5,21 +5,6 @@ import { formatModelDisplayName } from "./modelFormat";
 
 export const TOOLTIP_SETTINGS_FOOTER = "Steer used Tokenizer Model, in Extension Settings.";
 
-/** Plain-text compatibility chart shown in status bar / explorer tooltips. */
-export const TOKENIZER_COMPATIBILITY_CHART = [
-  "Compatible models (offline tokenizers):",
-  `  OpenAI      ${DEFAULT_LLM_MODEL} (default), gpt-5.4, gpt-4o, o3-mini`,
-  "              exact (gpt-tokenizer o200k — ChatGPT modern models)",
-  "  OpenAI      gpt-4, gpt-3.5-turbo",
-  "              exact (gpt-tokenizer cl100k, legacy)",
-  "  Anthropic   claude-opus-4-8, claude-opus-4-7, claude-sonnet-4-6",
-  "              ~approx (Opus 4.7+ uses updated tokenizer uplift)",
-  "  Anthropic   claude-haiku-4-5, claude-opus-4-6",
-  "              ~approx (legacy Claude tokenizer, ~1–2% off)",
-  "  Other       gemini-2.5-pro, grok-3, deepseek-*",
-  "              ~approx (characters ÷ 4 heuristic)"
-] as const;
-
 export interface TokenDisplayOptions {
   approximate?: boolean;
   includeSuffix?: boolean;
@@ -36,7 +21,7 @@ export function formatTokenCount(
   return approximate ? `~${formatted}` : formatted;
 }
 
-/** Status bar / notification label, e.g. "(~47,382 tokens will be used)". */
+/** Status bar / notification label, e.g. "(est. ~47,382 tokens)". */
 export function formatTokenUsageLabel(
   tokenCount: number,
   options: TokenDisplayOptions = {}
@@ -46,7 +31,7 @@ export function formatTokenUsageLabel(
   if (!includeSuffix) {
     return countLabel;
   }
-  return `(${countLabel} tokens will be used)`;
+  return `(est. ${countLabel} tokens)`;
 }
 
 /** Status bar primary label — model matches export2ai.llmModel. */
@@ -84,6 +69,7 @@ export function formatTokenBadge(tokenCount: number): string | undefined {
   return "9m";
 }
 
+/** Compact status-bar hover tooltip (not shown on Explorer badges). */
 export function formatTokenTooltip(
   tokenCount: number,
   approximate: boolean,
@@ -91,18 +77,15 @@ export function formatTokenTooltip(
   llmModel?: string
 ): string {
   const countLabel = formatTokenCount(tokenCount, { approximate });
-  const methodSuffix = methodLabel ? ` (${methodLabel})` : "";
   const modelLabel = formatModelDisplayName(llmModel ?? DEFAULT_LLM_MODEL);
-  const lines = [
-    `${modelLabel} · ${countLabel} tokens will be used if this folder is zipped for AI${methodSuffix}`,
+  const accuracy = approximate ? "approximate offline estimate" : "exact offline estimate";
+  const methodHint = methodLabel && !methodLabel.startsWith("exact")
+    ? ` (${methodLabel})`
+    : "";
+
+  return [
+    `Active model: ${modelLabel} · ${countLabel} tokens — ${accuracy}${methodHint}.`,
     "",
-    ...TOKENIZER_COMPATIBILITY_CHART
-  ];
-
-  if (llmModel?.trim()) {
-    lines.push("", `Active setting: ${llmModel.trim()}`);
-  }
-
-  lines.push("", TOOLTIP_SETTINGS_FOOTER);
-  return lines.join("\n");
+    TOOLTIP_SETTINGS_FOOTER
+  ].join("\n");
 }

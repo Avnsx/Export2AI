@@ -42,9 +42,11 @@ Known models list: **`MENU_TARGET_MODELS`** in `src/utils/menuTargetModels.ts` (
 
 ## Status bar
 
-Format: **`{model} · (~N tokens will be used)`**
+Format: **`{model} · (est. ~47,382 tokens)`** (exact counts omit `~`)
 
 Implementation: `formatStatusBarZipLabel()` in `src/utils/tokenFormat.ts`, updated by `TokenEstimateManager.updateStatusBar()`.
+
+Hover → compact tooltip: active model, token count, exact/approx offline estimate, link to Settings.
 
 Click → opens Export2AI settings.
 

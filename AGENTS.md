@@ -82,8 +82,8 @@ Detailed flows: **[docs/architecture.md](./docs/architecture.md)**
 
 The token estimate is shown in **three places**, none of which is a menu command:
 
-1. **Status bar** — `gpt-5.5 · (~N tokens will be used)` via `formatStatusBarZipLabel()`; click opens Settings.
-2. **Explorer decoration badge** — per-folder 2-char badge via `formatTokenBadge()` + rich tooltip.
+1. **Status bar** — `gpt-5.5 · (est. ~47,382 tokens)` via `formatStatusBarZipLabel()`; compact hover tooltip; click opens Settings.
+2. **Explorer decoration badge** — per-folder 2-char badge via `formatTokenBadge()` (badge only, no tooltip).
 3. **Post-zip notification** — exact/approx count after creating the archive.
 
 VS Code **cannot** compute a menu row's title at runtime, so there is **no** way to show a live token number *inside a menu* without pre-generating one command per number. The old design generated **~10,900** such commands and was removed in 1.2.3 (manifest bloat, Command Palette pollution, activate/settings hangs — all for a number already shown three other ways).

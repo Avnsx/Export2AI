@@ -32,7 +32,7 @@ npm run compile
 npm run package
 ```
 
-Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick `export2ai-1.2.2.vsix`.
+Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick `export2ai-1.2.4.vsix`.
 
 **Or** press **F5** in this repo to launch an Extension Development Host with the extension loaded.
 
@@ -75,15 +75,15 @@ Need just the folder tree, not every file? Use **Copy Project Structure** from t
 
 When token counting is on, the bottom-right status bar shows something like:
 
-`(12,450 tokens will be used)` — exact for OpenAI / ChatGPT models
+`(est. 12,450 tokens)` — exact for OpenAI / ChatGPT models
 
 or
 
-`(~12,450 tokens will be used)` — approximate for Claude and other families
+`(est. ~12,450 tokens)` — approximate for Claude and other families
 
-**Click the status bar** to open Export2AI settings. Hover folders in the Explorer for a tooltip with the estimate plus a short tokenizer compatibility chart. Counts are **offline** — nothing is sent to an API.
+**Click the status bar** to open Export2AI settings. **Hover the status bar** for a short tooltip (active model + offline estimate). Counts are **offline estimates** — nothing is sent to an API, and zipping does not consume tokens.
 
-When token counting is on, the Explorer menu shows **`Target model: …`** (from your setting) plus a **`Zip Folder`** action. The live token estimate appears in the **status bar** (e.g. `gpt-5.5 · (~12,450 tokens will be used)`) and as a small **badge on each folder** in the Explorer — VS Code can't put a live number inside a menu row.
+When token counting is on, the Explorer menu shows **`Target model: …`** (from your setting) plus a **`Zip Folder`** action. The live token estimate appears in the **status bar** (e.g. `gpt-5.5 · (est. ~12,450 tokens)`) and as a small **badge on each folder** in the Explorer — VS Code can't put a live number inside a menu row.
 
 ---
 
@@ -98,7 +98,7 @@ These open the **extension-specific settings page** via VS Code’s `@ext:` rout
 
 At the **top** of the settings page, a read-only row shows:
 
-`Extension version v.1.2.2 · Last updated May 30, 2026`
+`Extension version v.1.2.4 · Last updated May 30, 2026`
 
 That string is synced automatically from `package.json` version and `CHANGELOG.md` when the extension is built.
 
@@ -120,16 +120,16 @@ This avoids slow global Settings search, which could freeze Cursor when filterin
 | `export2ai.excludePatterns` | Glob patterns to skip (`node_modules`, `dist`, …) | See defaults |
 | `export2ai.excludePaths` | Workspace-relative paths to skip entirely | `[]` |
 | `export2ai.commentStripLanguages` | Read-only list of supported comment syntax families | Auto-synced at build |
-| `export2ai.compressCode` | Trim blank lines & extra spaces in code | `true` |
-| `export2ai.removeComments` | Strip comments per file type (18 syntax families; string-aware) | `true` |
-| `export2ai.enableTokenCounting` | Show token estimates in UI | `true` |
+| `export2ai.compressCode` | Trim whitespace & blank lines in exported text (see Settings for guidance) | `false` |
+| `export2ai.removeComments` | Strip comments per file type (18 syntax families; string-aware) | `false` |
+| `export2ai.enableTokenCounting` | Show token estimates in status bar, Explorer badges, notifications | `true` |
 | `export2ai.llmModel` | Target model for token estimates (see below) | `gpt-5.5` |
 | `export2ai.maxFileSize` | Max bytes per file (larger = placeholder) | `1048576` (1 MB) |
 | `export2ai.maxDepth` | Tree depth for **Copy Project Structure** | `5` |
 | `export2ai.fileConcurrency` | Parallel file reads (1–32) | `4` |
 | `export2ai.outputFormat` | Structure format: `plaintext`, `markdown`, `xml` | `markdown` |
 | `export2ai.includeManifest` | Add `_EXPORT2AI_MANIFEST.txt` inside zip | `true` |
-| `export2ai.compressionLevel` | Zip compression 0 (fast) – 9 (smallest) | `9` |
+| `export2ai.compressionLevel` | Zip file pack tightness 0 (fast) – 9 (smallest upload); does not change token count after extract | `9` |
 | `export2ai.copyPathAfterCreate` | Copy zip path to clipboard after create | `true` |
 | `export2ai.debug` | Log settings-navigation diagnostics to Output | `false` |
 
@@ -187,7 +187,7 @@ For API-exact Opus 4.7+ counts, use Anthropic’s [token counting API](https://p
 
 - `node_modules`, `dist`, `build`, `out`, `.git`
 - Log/temp/backup files (`*.log`, `*.tmp`, …)
-- Previous Export2AI zips (`*-chatgpt-context-*.zip`)
+- Previous Export2AI zips (`*-chatgpt-context-*.zip`, `*-*-context-*.zip`)
 - Dot files (if `ignoreDotFiles` is on)
 - Dollar-prefixed files (if `ignoreDollarFiles` is on)
 - Anything in `.gitignore` (if `ignoreGitIgnore` is on)

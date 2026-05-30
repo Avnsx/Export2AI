@@ -47,7 +47,7 @@ function mockManifest(version) {
           title: "Comments",
           id: "comments",
           properties: {
-            "export2ai.removeComments": { type: "boolean", default: true },
+            "export2ai.removeComments": { type: "boolean", default: false },
             "export2ai.commentStripLanguages": { type: "string", readOnly: true, order: 1 }
           }
         }

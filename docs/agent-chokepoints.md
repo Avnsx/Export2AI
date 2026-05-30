@@ -22,7 +22,8 @@ This caused a cascade of problems:
 
 ### Resolution (1.2.3 — keep it this way)
 **The entire bucket system was deleted.** The token estimate is already shown in three places that need no menu command:
-- **Status bar** — `gpt-5.5 · (~N tokens will be used)` (`formatStatusBarZipLabel`).
+- **Status bar** — `gpt-5.5 · (est. ~47,382 tokens)` (`formatStatusBarZipLabel`); compact hover tooltip.
+- **Explorer badge** — 2-char folder badge only (`formatTokenBadge`); no badge tooltip.
 - **Explorer decoration badge** — per-folder 2-char badge (`formatTokenBadge`) + rich tooltip.
 - **Post-zip notification** — exact/approx count after the archive is written.
 
@@ -120,7 +121,7 @@ VS Code can't compute titles at runtime, but showing the **active model** needs 
 |---------|-------------------|
 | Explorer menu (counting on) | `Target model: gpt-5.5` row + `Zip Folder` row |
 | Explorer menu (counting off) | `Zip Folder for gpt-5.5` (when config matches) |
-| Status bar | `gpt-5.5 · (~N tokens will be used)` via `formatStatusBarZipLabel()` |
+| Status bar | `gpt-5.5 · (est. ~47,382 tokens)` via `formatStatusBarZipLabel()` |
 | Zip filename | `{folder}-gpt-5-5-context-{timestamp}.zip` via `buildZipArchiveFileName()` |
 | Progress / notification | Includes `config.llmModel` |
 | Manifest in zip | `Target model: …` line |

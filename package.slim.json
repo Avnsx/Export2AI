@@ -215,9 +215,10 @@
         "properties": {
           "export2ai.compressCode": {
             "type": "boolean",
-            "default": true,
+            "default": false,
             "order": 0,
-            "description": "Trim trailing whitespace and collapse extra blank lines in text files before zipping."
+            "description": "Reduces exported source text for smaller context size, but may remove formatting, blank lines, or exact layout; keep it OFF when faithful full-code review matters.",
+            "markdownDescription": "Reduces exported source text for smaller context size, but may remove formatting, blank lines, or exact layout; keep it **OFF** when faithful full-code review matters.\n\n**Technical:** Trims trailing whitespace and collapses extra blank lines in text files before zipping (`FileProcessor.compressCodeContent`). Does not strip comments — use **Remove comments** for that."
           },
           "export2ai.compressionLevel": {
             "type": "number",
@@ -225,7 +226,8 @@
             "minimum": 0,
             "maximum": 9,
             "order": 1,
-            "description": "Zip compression level. 0 = store/fastest; 9 = smallest archive."
+            "description": "Controls only how tightly the archive file is packed for upload size; it does not change code contents or reduce token usage after extraction, so level 9 is safest when upload size matters.",
+            "markdownDescription": "Controls only how tightly the archive file is packed for upload size; it does not change code contents or reduce token usage after extraction, so level **9** is safest when upload size matters.\n\n**Technical:** Zip compression level passed to the archiver zlib option. **0** = store/fastest; **9** = smallest archive file on disk."
           },
           "export2ai.includeManifest": {
             "type": "boolean",
@@ -248,10 +250,10 @@
         "properties": {
           "export2ai.removeComments": {
             "type": "boolean",
-            "default": true,
+            "default": false,
             "order": 0,
-            "description": "Remove comments from source files in the zip (per extension; see Comment Strip Languages).",
-            "markdownDescription": "When enabled, Export2AI removes comments **per file extension** before adding source files to the zip.\n\nThe stripper is **string-aware**: line comments, block comments, and nested blocks are handled per syntax family. String literals, template literals, and shebang lines are preserved where possible.\n\n**18 syntax families** cover **175 extensions** (plus special names like `Dockerfile` and `Makefile`).\n\nPlain text, `.json`, `.md`, and unknown extensions are **not** modified.\n\nSee **Comment Strip Languages** below for the full per-family extension map."
+            "description": "Strips comments from exported files to save space, but removes rationale, warnings, edge-case explanations, and useful developer context; keep it OFF for debugging or agent handoff.",
+            "markdownDescription": "Strips comments from exported files to save space, but removes rationale, warnings, edge-case explanations, and useful developer context; keep it **OFF** for debugging or agent handoff.\n\nWhen enabled, Export2AI removes comments **per file extension** before adding source files to the zip.\n\nThe stripper is **string-aware**: line comments, block comments, and nested blocks are handled per syntax family. String literals, template literals, and shebang lines are preserved where possible.\n\n**18 syntax families** cover **175 extensions** (plus special names like `Dockerfile` and `Makefile`).\n\nPlain text, `.json`, `.md`, and unknown extensions are **not** modified.\n\nSee **Comment Strip Languages** below for the full per-family extension map."
           },
           "export2ai.commentStripLanguages": {
             "type": "string",

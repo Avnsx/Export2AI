@@ -7,7 +7,7 @@
   "type": "commonjs",
   "publisher": "local",
   "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "https://github.com/Avnsx/export2ai.git"
@@ -326,6 +326,7 @@
     "package": "npm run compile && node --disable-warning=DEP0040 ./node_modules/@vscode/vsce/vsce package",
     "vscode:prepublish": "node scripts/verify-build.js",
     "slim:package": "node scripts/slim-package.js",
+    "release:notes": "node scripts/release-notes.js",
     "test:live": "node scripts/live-test.js",
     "test:tokens": "node scripts/test-token-format.js",
     "test:comments": "node scripts/test-comment-strip.js",

@@ -1,0 +1,103 @@
+name: Release
+
+# Releases lane:
+#   - Push a tag like `v1.2.3` (or run manually) to build the VSIX, generate
+#     human-friendly release notes from CHANGELOG.md, and publish a GitHub
+#     Release with the VSIX attached as a downloadable asset.
+#   - Marketplace publishing (VS Code Marketplace + Open VSX / Cursor) runs
+#     automatically only once the matching secrets are added — see below.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 1.2.3). Defaults to package.slim.json."
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, release & package
+    runs-on: ubuntu-latest
+    env:
+      # Empty when the secret is not set — used to gate the publish steps.
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile & test
+        run: |
+          npm run compile
+          npm run test:tokens
+          npm run test:comments
+          npm run test:model-format
+          npm run test:menu-merge
+          npm run test:settings-nav
+          npm run test:live
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(node -p "require('./package.slim.json').version")"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "vsix=export2ai-${VERSION}.vsix" >> "$GITHUB_OUTPUT"
+          echo "Releasing version ${VERSION}"
+
+      - name: Package VSIX
+        run: npm run package
+
+      - name: Generate release notes
+        run: npm run release:notes -- --version "${{ steps.version.outputs.version }}" --output RELEASE_NOTES.md
+
+      - name: Upload VSIX as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.version.outputs.vsix }}
+          path: ${{ steps.version.outputs.vsix }}
+          if-no-files-found: error
+
+      - name: Create / update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Export2AI v${{ steps.version.outputs.version }}
+          body_path: RELEASE_NOTES.md
+          files: ${{ steps.version.outputs.vsix }}
+          draft: false
+          prerelease: false
+
+      # --- Marketplace publishing (optional) -------------------------------
+      # Add repo secrets to enable. These steps are skipped while the secrets
+      # are empty, so the workflow stays green until you are ready to publish.
+      #   VSCE_PAT  → https://marketplace.visualstudio.com (Azure DevOps PAT)
+      #   OVSX_PAT  → https://open-vsx.org (used by Cursor / VSCodium)
+      # Note: set a real `publisher` in package.slim.json before publishing.
+      - name: Publish to VS Code Marketplace
+        if: ${{ env.VSCE_PAT != '' }}
+        run: npx --yes @vscode/vsce publish --packagePath "${{ steps.version.outputs.vsix }}" --pat "$VSCE_PAT"
+
+      - name: Publish to Open VSX (Cursor / VSCodium)
+        if: ${{ env.OVSX_PAT != '' }}
+        run: npx --yes ovsx publish "${{ steps.version.outputs.vsix }}" --pat "$OVSX_PAT"

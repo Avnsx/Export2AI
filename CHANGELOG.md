@@ -4,6 +4,11 @@ All notable changes to Export2AI are documented in this file.
 
 ## [1.2.3] - 2026-05-30
 
+### Added
+
+- **GNU General Public License v3.0** — added `LICENSE.txt` (full GPL-3.0 text) and set the manifest `license` to `GPL-3.0-only`.
+- **Automated releases** — `.github/workflows/release.yml` builds the VSIX on every `v*.*.*` tag, attaches it to a GitHub Release, and generates human-friendly notes from this changelog via `scripts/release-notes.js`. Optional VS Code Marketplace (`VSCE_PAT`) and Open VSX / Cursor (`OVSX_PAT`) publish steps activate automatically once those secrets are added.
+
 ### Removed
 
 - **Token-bucket command system (~10,900 commands)** — deleted `export2ai.zip.bucket.*` generation and all supporting code (`tokenBuckets.ts`, `zipBucketCommands.ts`, `zipBucketRegistry.ts`, `generate-token-menu.js`, `token-bucket-config.js`). VS Code cannot set menu titles at runtime, so the old design pre-generated one command per token range — which bloated `package.json` to ~1.9–4 MB, flooded the Command Palette, and was the root cause of Cursor activate/settings hangs. The token estimate was already shown in the status bar, the Explorer decoration badge, and the post-zip notification, so nothing user-facing was lost.

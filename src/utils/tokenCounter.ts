@@ -78,6 +78,29 @@ export class TokenCounter {
     return this.countTokens(combined, model);
   }
 
+  /**
+   * Tokenize each file exactly once (selecting the tokenizer a single time) and return
+   * per-file counts plus their sum. Used for single-pass per-directory aggregation so the
+   * same file is never re-tokenized once per ancestor folder.
+   *
+   * The summed total may differ from {@link countFilesContent} by a few tokens (the latter
+   * tokenizes the newline-joined corpus, so join boundaries can merge differently). The gap
+   * is negligible for an estimate and invisible at badge granularity.
+   */
+  public static countFilesPerPath(
+    files: ReadonlyArray<{ path: string; content: string }>,
+    model: string
+  ): { method: TokenCountMethod; approximate: boolean; total: number; perPath: Array<{ path: string; tokens: number }> } {
+    const tokenizer = selectTokenizer(model);
+    let total = 0;
+    const perPath = files.map(file => {
+      const tokens = tokenizer.count(file.content);
+      total += tokens;
+      return { path: file.path, tokens };
+    });
+    return { method: tokenizer.method, approximate: tokenizer.approximate, total, perPath };
+  }
+
   public static formatTokenCount(tokenCount: number, approximate = false): string {
     return formatTokenCount(tokenCount, { approximate });
   }

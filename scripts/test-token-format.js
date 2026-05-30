@@ -164,6 +164,50 @@ function testLiveTokenizer() {
   );
 }
 
+function testPerFileAggregation() {
+  const files = [
+    { path: "a.ts", content: "const a = 1;\n".repeat(40) },
+    { path: "src/b.ts", content: "function b() { return 2; }\n".repeat(40) },
+    { path: "src/utils/c.ts", content: "export const c = 3;\n".repeat(40) }
+  ];
+
+  const perFile = TokenCounter.countFilesPerPath(files, DEFAULT_LLM_MODEL);
+  assert(perFile.perPath.length === files.length, "one entry per file");
+  assert(perFile.perPath.every((entry) => entry.tokens > 0), "each file has positive tokens");
+
+  const summed = perFile.perPath.reduce((acc, entry) => acc + entry.tokens, 0);
+  assert(summed === perFile.total, "perPath tokens sum to total");
+
+  // The summed estimate must track the joined count closely (differs only by join-boundary tokens).
+  const joined = TokenCounter.countFilesContent(files, DEFAULT_LLM_MODEL);
+  const delta = Math.abs(joined.inputTokens - perFile.total);
+  assert(delta <= files.length * 2, `summed estimate within boundary tolerance (delta ${delta})`);
+
+  assert(perFile.method === joined.method, "per-file method matches single-pass method");
+  assert(perFile.approximate === joined.approximate, "per-file approximate flag matches");
+
+  // Aggregating per-file counts up the directory chain reproduces the directory subtree sums.
+  const dirTotals = new Map();
+  for (const { path: relativePath, tokens } of perFile.perPath) {
+    const segments = relativePath.split("/");
+    segments.pop();
+    dirTotals.set("", (dirTotals.get("") ?? 0) + tokens);
+    let prefix = "";
+    for (const segment of segments) {
+      prefix = prefix ? `${prefix}/${segment}` : segment;
+      dirTotals.set(prefix, (dirTotals.get(prefix) ?? 0) + tokens);
+    }
+  }
+  assert(dirTotals.get("") === perFile.total, "root aggregates every file");
+  assert(
+    dirTotals.get("src") === perFile.perPath[1].tokens + perFile.perPath[2].tokens,
+    "src subtree sums its descendants"
+  );
+  assert(dirTotals.get("src/utils") === perFile.perPath[2].tokens, "nested folder sums its own file");
+
+  console.log(`per-file aggregation: ok (total ${perFile.total}, joined ${joined.inputTokens})`);
+}
+
 function testManifestHygiene() {
   const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"));
   const commands = pkg.contributes.commands;
@@ -195,6 +239,7 @@ function testManifestHygiene() {
   testOpusModernSupport();
   testFormatters();
   testLiveTokenizer();
+  testPerFileAggregation();
   testManifestHygiene();
   console.log("All token format tests passed.");
 })().catch((error) => {

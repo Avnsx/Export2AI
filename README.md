@@ -83,7 +83,7 @@ or
 
 **Click the status bar** to open Export2AI settings. **Hover the status bar** for a short tooltip (active model + offline estimate). Counts are **offline estimates** — nothing is sent to an API, and zipping does not consume tokens.
 
-When token counting is on, the Explorer menu shows **`Target model: …`** (from your setting) plus a **`Zip Folder`** action. The live token estimate appears in the **status bar** (e.g. `gpt-5.5 · (est. ~12,450 tokens)`) and as a small **badge on each folder** in the Explorer — VS Code can't put a live number inside a menu row.
+When token counting is on, the Explorer menu shows **`Target model: …`** (from your setting) plus a **`Zip Folder`** action. The live token estimate appears in the **status bar** (e.g. `gpt-5.5 · (est. ~12,450 tokens)`) and as a small **2-character badge on each folder** in the Explorer (populated from one workspace scan — all folders update together; see [architecture.md](./docs/architecture.md)) — VS Code can't put a live number inside a menu row.
 
 ---
 
@@ -198,7 +198,6 @@ For API-exact Opus 4.7+ counts, use Anthropic’s [token counting API](https://p
 
 - Token status bar reflects the **first workspace folder** in multi-root workspaces.
 - **`removeComments`** uses language-aware rules by file extension (C-family, Python `#`, SQL `--`, HTML `<!-- -->`, PowerShell `<# #>`, batch `REM`, etc.). String literals are preserved where possible; edge cases inside regex or nested strings may still lose text. Plain `.json`, `.md`, and unknown extensions are unchanged.
-- Explorer folder badges appear after the folder is scanned/cached.
 - The live token count is shown in the status bar, folder badges, and the post-zip notification — **not** inside a menu row (VS Code menu titles are static).
 - **`lastZipPath`** is session-only and lost on window reload.
 

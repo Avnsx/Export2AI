@@ -5,6 +5,6 @@
   "export2ai.ignoreDollarFiles": true,
   "export2ai.compressCode": true,
   "export2ai.removeComments": true,
-  "export2ai.debug": true,
+  "export2ai.debug": false,
   "npm.autoDetect": "off"
 }

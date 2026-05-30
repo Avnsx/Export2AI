@@ -9,7 +9,7 @@
 | `types.ts` | `Export2AIConfiguration`, `FileContent`, `TokenCountMethod`, collect/zip option interfaces |
 | `zipService.ts` | `createZipArchive()`; archiver integration, in-zip manifest |
 | `projectService.ts` | Ignore context, copy project structure, tree + formatter orchestration |
-| `tokenEstimate.ts` | `TokenEstimateManager` — status bar, Explorer decoration badge, deferred scans |
+| `tokenEstimate.ts` | `TokenEstimateManager` — status bar, Explorer decoration badge, deferred scans, single-pass per-folder aggregation (`aggregateDirectoryEstimates`) |
 | `archiver-v8.d.ts` | Type declarations for archiver v8 `ZipArchive` |
 | `ignore.d.ts` | Type declarations for `ignore` package |
 
@@ -23,7 +23,7 @@
 | `ignoreUtils.ts` | Gitignore loading, glob ignore instance, `excludePaths` checks |
 | `projectTree.ts` | Folder tree generation for copy-structure |
 | `formatters.ts` | Plaintext / markdown / XML structure output |
-| `tokenCounter.ts` | `selectTokenizer()` → family-specific counting |
+| `tokenCounter.ts` | `selectTokenizer()` → family-specific counting; `countFilesContent` (joined) and `countFilesPerPath` (per-file, for folder aggregation) |
 | `anthropicTokenizer.ts` | Opus 4.7+ content-aware uplift heuristics |
 | `tokenFormat.ts` | Display strings, badge formatting, status-bar label, compact status-bar tooltip |
 | `modelRegistry.ts` | `MODEL_REGISTRY`, `detectFamily`, `DEFAULT_LLM_MODEL` |

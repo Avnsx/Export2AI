@@ -1,5 +1,7 @@
+import * as path from "path";
 import * as vscode from "vscode";
 import { getConfiguration } from "./config";
+import { FileContent } from "./types";
 import { TokenCounter } from "./utils/tokenCounter";
 import { onSettingsNavigationFinished, settingsNavigationInProgress } from "./utils/extensionSettings";
 
@@ -24,6 +26,8 @@ export class TokenEstimateManager implements vscode.Disposable {
   private enabled = false;
   private refreshGeneration = 0;
   private initialScanTimer: NodeJS.Timeout | undefined;
+  /** Workspace roots whose entire subtree has been aggregated, so badges come from cache only. */
+  private readonly fullyScannedRoots = new Set<string>();
 
   constructor(private readonly context: vscode.ExtensionContext) {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -39,6 +43,7 @@ export class TokenEstimateManager implements vscode.Disposable {
       vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration("export2ai")) {
           this.cache.clear();
+          this.fullyScannedRoots.clear();
           this.scheduleRefresh();
         }
       }),
@@ -141,24 +146,83 @@ export class TokenEstimateManager implements vscode.Disposable {
     workspaceFolder: vscode.WorkspaceFolder,
     config: ReturnType<typeof getConfiguration>
   ) {
+    const files = await this.collectFilesUnder(uri, workspaceFolder, config);
+    return TokenCounter.countFilesContent(files, config.llmModel);
+  }
+
+  /** Walk a folder once, returning processed files with paths relative to `rootUri`. */
+  private async collectFilesUnder(
+    rootUri: vscode.Uri,
+    workspaceFolder: vscode.WorkspaceFolder,
+    config: ReturnType<typeof getConfiguration>
+  ): Promise<FileContent[]> {
     const { prepareIgnoreContext } = await import("./projectService");
     const { FileProcessor } = await import("./utils/fileProcessor");
     const { ig, isExcludedByResourcePath } = await prepareIgnoreContext(workspaceFolder, config);
-    const files = await FileProcessor.collectFiles(
-      uri,
-      uri,
-      workspaceFolder.uri,
-      ig,
-      {
-        maxFileSize: config.maxFileSize,
-        compressCode: config.compressCode,
-        removeComments: config.removeComments,
-        isExcludedByResourcePath,
-        zipOutputPath: "",
-        fileConcurrency: config.fileConcurrency
+    return FileProcessor.collectFiles(rootUri, rootUri, workspaceFolder.uri, ig, {
+      maxFileSize: config.maxFileSize,
+      compressCode: config.compressCode,
+      removeComments: config.removeComments,
+      isExcludedByResourcePath,
+      zipOutputPath: "",
+      fileConcurrency: config.fileConcurrency
+    });
+  }
+
+  /**
+   * Single-pass aggregation. Tokenizes every collected file once, then propagates each
+   * file's count up its ancestor directories so the workspace root and every folder that
+   * contains at least one included file get a cached estimate from one walk. This replaces
+   * the old behaviour where each folder decoration triggered its own full subtree scan
+   * (re-reading and re-tokenizing the same files once per ancestor), which is why badges
+   * only appeared after a per-folder scan completed.
+   *
+   * Mirrors VS Code's own Git decoration provider, which precomputes a full decoration map
+   * and serves `provideFileDecoration` synchronously from it.
+   *
+   * @returns the root subtree estimate for the status bar headline.
+   */
+  private aggregateDirectoryEstimates(
+    workspaceFolder: vscode.WorkspaceFolder,
+    files: ReadonlyArray<FileContent>,
+    model: string
+  ): { count: number; approximate: boolean; methodLabel: string } {
+    const { method, approximate, perPath } = TokenCounter.countFilesPerPath(files, model);
+    const methodLabel = TokenCounter.getMethodLabel(method);
+
+    // Relative directory path ("" = workspace root) -> summed token count.
+    const dirTotals = new Map<string, number>();
+    for (const { path: relativePath, tokens } of perPath) {
+      const segments = relativePath.split("/");
+      segments.pop(); // drop the filename; keep ancestor directories
+      let prefix = "";
+      dirTotals.set("", (dirTotals.get("") ?? 0) + tokens);
+      for (const segment of segments) {
+        prefix = prefix ? `${prefix}/${segment}` : segment;
+        dirTotals.set(prefix, (dirTotals.get(prefix) ?? 0) + tokens);
       }
-    );
-    return TokenCounter.countFilesContent(files, config.llmModel);
+    }
+
+    const rootKey = workspaceFolder.uri.fsPath.toLowerCase();
+    this.clearCacheUnderRoot(rootKey);
+    for (const [relativeDir, count] of dirTotals) {
+      const dirUri = relativeDir
+        ? vscode.Uri.joinPath(workspaceFolder.uri, ...relativeDir.split("/"))
+        : workspaceFolder.uri;
+      this.cache.set(dirUri.fsPath.toLowerCase(), { count, approximate, methodLabel });
+    }
+
+    return { count: dirTotals.get("") ?? 0, approximate, methodLabel };
+  }
+
+  /** Drop cached estimates for a root and its descendants before repopulating from a fresh walk. */
+  private clearCacheUnderRoot(rootKey: string): void {
+    const prefix = rootKey.endsWith(path.sep) ? rootKey : `${rootKey}${path.sep}`;
+    for (const key of [...this.cache.keys()]) {
+      if (key === rootKey || key.startsWith(prefix)) {
+        this.cache.delete(key);
+      }
+    }
   }
 
   private provideDecoration(uri: vscode.Uri): vscode.FileDecoration | undefined {
@@ -171,6 +235,21 @@ export class TokenEstimateManager implements vscode.Disposable {
       return undefined;
     }
 
+    const cached = this.cache.get(uri.fsPath.toLowerCase());
+    if (cached !== undefined) {
+      const badge = formatTokenBadge(cached.count);
+      return badge ? { badge } : undefined;
+    }
+
+    // Once the root's whole subtree has been aggregated, an uncached folder has no included
+    // files — show no badge instead of launching a redundant per-folder scan. New/changed
+    // files re-trigger a full aggregation via the workspace file-event listeners.
+    if (this.fullyScannedRoots.has(workspaceFolder.uri.fsPath.toLowerCase())) {
+      return undefined;
+    }
+
+    // Fallback only during the initial deferred-scan window (before the first full
+    // aggregation): estimate this folder on demand, then refresh its badge.
     void (async () => {
       try {
         const stat = await vscode.workspace.fs.stat(uri);
@@ -182,11 +261,7 @@ export class TokenEstimateManager implements vscode.Disposable {
       }
     })();
 
-    const cached = this.cache.get(uri.fsPath.toLowerCase());
-    if (cached !== undefined) {
-      const badge = formatTokenBadge(cached.count);
-      return badge ? { badge } : undefined;
-    }
+    return undefined;
   }
 
   /** Status bar reflects the workspace root estimate, not per-folder decoration scans. */
@@ -226,6 +301,7 @@ export class TokenEstimateManager implements vscode.Disposable {
 
     if (!this.enabled) {
       this.statusBarItem?.hide();
+      this.fullyScannedRoots.delete(workspaceFolder.uri.fsPath.toLowerCase());
       this.decorationEmitter.fire(undefined);
       if (generation === this.refreshGeneration) {
         await this.publishEstimate(0, false, true);
@@ -234,13 +310,22 @@ export class TokenEstimateManager implements vscode.Disposable {
     }
 
     try {
-      const count = await this.estimateAndCache(workspaceFolder.uri, workspaceFolder, true);
+      // One fresh walk feeds every folder's badge — no stale cache short-circuit, no
+      // per-folder rescans. Clearing pending lets the aggregated values win over any
+      // in-flight fallback scans started during the initial window.
+      const files = await this.collectFilesUnder(workspaceFolder.uri, workspaceFolder, config);
       if (generation !== this.refreshGeneration) {
         return;
       }
-      const cached = this.cache.get(workspaceFolder.uri.fsPath.toLowerCase());
-      this.updateStatusBar(count, cached?.approximate ?? true, cached?.methodLabel);
-      this.decorationEmitter.fire(workspaceFolder.uri);
+
+      this.pending.clear();
+      const root = this.aggregateDirectoryEstimates(workspaceFolder, files, config.llmModel);
+      this.fullyScannedRoots.add(workspaceFolder.uri.fsPath.toLowerCase());
+
+      this.updateStatusBar(root.count, root.approximate, root.methodLabel);
+      // Refresh every visible folder badge in one event. Firing `undefined` triggers a full
+      // decoration refresh without hitting VS Code's 250-resource per-event cap.
+      this.decorationEmitter.fire(undefined);
     } catch (error) {
       console.error("Export2AI: token estimate failed", error);
     }

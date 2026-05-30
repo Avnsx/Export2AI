@@ -50,6 +50,20 @@ Hover → compact tooltip: active model, token count, exact/approx offline estim
 
 Click → opens Export2AI settings.
 
+## Explorer folder badges
+
+Each folder that contains included source files shows a **2-character badge** (`formatTokenBadge`) — e.g. `47` for ~47k tokens.
+
+Implementation (`TokenEstimateManager` in `tokenEstimate.ts`):
+
+1. **One workspace walk** — `collectFilesUnder(workspaceRoot)` reads every included file once per refresh.
+2. **Per-file tokenize** — `TokenCounter.countFilesPerPath()` selects the tokenizer once and counts each file.
+3. **Aggregate up the tree** — `aggregateDirectoryEstimates()` sums each file's count into its ancestor folders and caches every folder in one pass.
+4. **Refresh all badges** — `onDidChangeFileDecorations(undefined)` updates every visible folder in one event (same pattern as VS Code's Git decoration provider).
+5. **Synchronous serve** — `provideFileDecoration` returns the cached badge; no per-folder subtree rescans after aggregation.
+
+The first scan is **deferred ~5 s** after activation (cold-start guard; see [agent-chokepoints.md](./agent-chokepoints.md) §3). File save/create/delete/rename triggers a debounced full refresh. Badge totals may differ from the zip notification by a few newline-boundary tokens — negligible at badge granularity.
+
 ## Runtime sync
 
 **None needed.** The target-menu rows use `config.export2ai.llmModel == '…'` `when`-clauses, which VS Code re-evaluates automatically whenever the setting changes. The earlier `activeModelContext.ts` (which set `export2ai.activeLlmModel` / `llmModelKnown` context keys) was removed in 1.2.3 because no menu consumed those keys.
@@ -69,6 +83,8 @@ The **status bar** and **zip filename** always reflect the live setting immediat
 | Progress / notification | `src/extension.ts` |
 | Target menu rows | `scripts/generate-model-target-menu.js` + `menu-target-models.js` |
 | Status bar token label | `src/utils/tokenFormat.ts` (`formatStatusBarZipLabel`) |
+| Explorer folder badge | `formatTokenBadge()` in `src/utils/tokenFormat.ts` |
 | Zip manifest | `src/zipService.ts` |
+| Folder aggregation | `aggregateDirectoryEstimates()` in `src/tokenEstimate.ts` |
 
 After changing generators: `npm run compile`.

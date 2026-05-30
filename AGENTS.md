@@ -70,7 +70,7 @@ Details and rationale: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md
 Detailed flows: **[docs/architecture.md](./docs/architecture.md)**
 
 - **Zip:** `extension.ts` → `zipService.ts` → `FileProcessor.collectFiles()` → archiver
-- **Token estimate:** `TokenEstimateManager` in `tokenEstimate.ts` (deferred scan; status bar + decoration badge)
+- **Token estimate:** `TokenEstimateManager` in `tokenEstimate.ts` (deferred scan; single-pass folder aggregation; status bar + decoration badge)
 - **Copy structure:** `projectService.ts` → `projectTree.ts` + `formatters.ts`
 - **Settings nav:** `extensionSettings.ts` + `@ext:` route with fallbacks
 - **Comments:** `commentStripper.ts` + `commentProfiles.ts` when `removeComments` is on
@@ -83,7 +83,7 @@ Detailed flows: **[docs/architecture.md](./docs/architecture.md)**
 The token estimate is shown in **three places**, none of which is a menu command:
 
 1. **Status bar** — `gpt-5.5 · (est. ~47,382 tokens)` via `formatStatusBarZipLabel()`; compact hover tooltip; click opens Settings.
-2. **Explorer decoration badge** — per-folder 2-char badge via `formatTokenBadge()` (badge only, no tooltip).
+2. **Explorer decoration badge** — per-folder 2-char badge via `formatTokenBadge()` (badge only, no tooltip). Populated by **one** workspace walk (`aggregateDirectoryEstimates`); `provideFileDecoration` is a synchronous cache read — do not restore per-folder subtree scans (see [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) §3).
 3. **Post-zip notification** — exact/approx count after creating the archive.
 
 VS Code **cannot** compute a menu row's title at runtime, so there is **no** way to show a live token number *inside a menu* without pre-generating one command per number. The old design generated **~10,900** such commands and was removed in 1.2.3 (manifest bloat, Command Palette pollution, activate/settings hangs — all for a number already shown three other ways).
@@ -172,7 +172,7 @@ Full reference: **[docs/comment-stripping.md](./docs/comment-stripping.md)**
 | **compile before tests** | Tests import from `out/utils/`. |
 | **postcompile merge** | `merge:package` runs after tsc; needs `model-target-contributes.json`. |
 | **generate:menus** | Runs `generate-all-menus.js` (model-target only now). |
-| **File decoration badge** | Max **2 characters** — use `formatTokenBadge()`. |
+| **File decoration badge** | Max **2 characters** — use `formatTokenBadge()`. Populate via **single-pass aggregation** (`aggregateDirectoryEstimates`); never scan per folder in `provideFileDecoration`. |
 | **Opus 4.7+ counts** | Heuristic uplift, not API-exact. |
 | **Comment stripping** | `.json`, `.md`, unknown extensions unchanged. |
 | **Settings + token scan** | `settingsNavigationInProgress` + 5 s cooldown; decoration scans paused during navigation. |

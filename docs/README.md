@@ -5,8 +5,8 @@ Technical documentation for the Export2AI VS Code / Cursor extension. User-facin
 | Document | Audience | Contents |
 |----------|----------|----------|
 | [Agent chokepoints](./agent-chokepoints.md) | **Agents (read first)** | Hang prevention, lazy registration, settings race, build traps |
-| [Target model UI](./target-model-ui.md) | Contributors, agents | Unified `llmModel` in menus, status bar, zip filenames |
-| [Architecture](./architecture.md) | Contributors, agents | Data flows, commands, why there is no token-bucket menu, ignore pipeline |
+| [Target model UI](./target-model-ui.md) | Contributors, agents | Unified `llmModel` in menus, status bar, Explorer folder badges, zip filenames |
+| [Architecture](./architecture.md) | Contributors, agents | Data flows, single-pass folder aggregation, commands, ignore pipeline |
 | [Source modules](./source-modules.md) | Contributors, agents | Every `src/` file and `scripts/` utility |
 | [Configuration](./configuration.md) | Users, contributors | All `export2ai.*` settings |
 | [Comment stripping](./comment-stripping.md) | Users, contributors | Language profiles, extension map, limitations |

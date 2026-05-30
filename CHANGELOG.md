@@ -2,6 +2,17 @@
 
 All notable changes to Export2AI are documented in this file.
 
+## [1.2.5] - 2026-05-30
+
+### Changed
+
+- **Instant Explorer folder badges (single-pass aggregation)** — token badges for every folder are now computed from **one** workspace walk instead of a separate subtree scan per folder. `TokenCounter.countFilesPerPath()` tokenizes each file once and `aggregateDirectoryEstimates()` sums those counts up each file's ancestor directories, caching the root and every folder in a single pass before firing one decoration-refresh event. `provideFileDecoration` is now a synchronous cache read (the same approach VS Code's built-in Git decoration provider uses).
+
+### Fixed
+
+- **Redundant token scanning** — the old design re-read and re-tokenized each file once per ancestor folder (`O(depth × files)`), so badges appeared one folder at a time and large repos paid repeated I/O. Files are now read and tokenized exactly once per refresh; per-folder on-demand scans remain only as a fallback during the initial ~5 s deferred-scan window (and for non-primary roots in multi-root workspaces).
+- **Stale estimates after edits** — a workspace refresh now performs a fresh walk and rebuilds the folder cache, so saving, creating, deleting, or renaming files updates the status bar and badges (previously the cached root short-circuited the refresh).
+
 ## [1.2.4] - 2026-05-30
 
 ### Added

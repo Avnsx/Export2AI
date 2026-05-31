@@ -52,6 +52,7 @@
 | `verify-build.js` | Ensures `out/extension.js` exists before VSIX pack (avoids double compile) |
 | `submenu-base.json` | Static folder-submenu items (copy structure, settings, open zip) |
 | `test-token-format.js` | Token format, Opus routing, status-bar labels, manifest hygiene |
+| `test-debug-logger.js` | Mocked VS Code debug logger tests for setting scopes and Output-channel reveal |
 | `test-comment-strip.js` | Language-aware comment stripping assertions |
 | `test-model-format.js` | Model slug and zip filename helpers |
 | `test-menu-merge.js` | Submenu shape, single zip row, single-file copy row, palette hides, no bucket rows |

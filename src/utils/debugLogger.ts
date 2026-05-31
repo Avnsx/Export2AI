@@ -22,7 +22,17 @@ export function getDebugOutputChannel(): vscode.OutputChannel | undefined {
 
 export function isDebugLoggingEnabled(resource?: vscode.Uri): boolean {
   const configTarget = resource ?? vscode.workspace.workspaceFolders?.[0]?.uri;
-  return vscode.workspace.getConfiguration(CONFIG_SECTION, configTarget).get<boolean>("debug", false);
+  const config = vscode.workspace.getConfiguration(CONFIG_SECTION, configTarget);
+  const inspected = config.inspect<boolean>("debug");
+
+  return [
+    inspected?.globalValue,
+    inspected?.workspaceValue,
+    inspected?.workspaceFolderValue,
+    inspected?.globalLanguageValue,
+    inspected?.workspaceLanguageValue,
+    inspected?.workspaceFolderLanguageValue
+  ].some(value => value === true) || config.get<boolean>("debug", false);
 }
 
 export function formatLocalCompactTimestamp(date = new Date()): string {

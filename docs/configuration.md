@@ -46,7 +46,7 @@ When adding a setting, place it in the matching category object in `package.slim
 
 ### Debug logging
 
-When `export2ai.debug` is `true`, Export2AI writes diagnostic lines to **View -> Output -> Export2AI** for activation/deactivation, command registration, settings navigation, zip creation, copy-structure, single-file copy, token-estimate refreshes, ignore setup, and file collection. If debug mode is already on during activation, the Export2AI output channel is revealed automatically; if you turn it on while the extension is running, the channel is revealed immediately and a `debug: enabled` line is written. Routine diagnostics are read from the live setting on each log call, so turning the setting off stops later Output entries.
+When `export2ai.debug` is `true`, Export2AI writes diagnostic lines to **View -> Output -> Export2AI** for activation/deactivation, command registration, settings navigation, zip creation, copy-structure, single-file copy, token-estimate refreshes, ignore setup, and file collection. If debug mode is already on during activation, the Export2AI output channel is revealed automatically; if you turn it on while the extension is running, the channel is revealed immediately and a `debug: enabled` line is written. Debug is enabled when any User, Workspace, or Workspace Folder scope is checked; this prevents a checked User setting from being hidden by a stale workspace `false`.
 
 Log lines are prefixed with the extension name and a compact timestamp formatted by the local PC locale/time settings, for example:
 

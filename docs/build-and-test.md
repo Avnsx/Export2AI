@@ -64,6 +64,7 @@ npm run slim:package
 | `npm run slim:package` | Strip generated commands/menus for git commit |
 | `npm run package` | Compile once + build `build/export2ai-x.x.x.vsix` |
 | `npm run test:tokens` | Token format, Opus routing, status-bar labels, manifest hygiene |
+| `npm run test:debug-logger` | Debug setting scope handling + Output channel reveal calls |
 | `npm run test:comments` | Language-aware comment stripping |
 | `npm run test:model-format` | Zip filename / model slug helpers |
 | `npm run test:menu-merge` | Submenu shape, single zip row, palette hides, no bucket rows |

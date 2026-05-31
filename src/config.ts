@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { Export2AIConfiguration } from "./types";
+import { isDebugLoggingEnabled } from "./utils/debugLogger";
 import { DEFAULT_LLM_MODEL } from "./utils/modelRegistry";
 
 const CONFIG_SECTION = "export2ai";
@@ -42,6 +43,6 @@ export function getConfiguration(resource?: vscode.Uri): Export2AIConfiguration 
     maxDepth: Math.max(0, config.get<number>("maxDepth", 5)),
     fileConcurrency: Math.min(32, Math.max(1, config.get<number>("fileConcurrency", 4))),
     outputFormat: config.get<"plaintext" | "markdown" | "xml">("outputFormat", "plaintext"),
-    debug: config.get<boolean>("debug", false)
+    debug: isDebugLoggingEnabled(resource)
   };
 }

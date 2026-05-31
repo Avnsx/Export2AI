@@ -321,6 +321,16 @@ export function activate(context: vscode.ExtensionContext): void {
       });
     }, 3500);
   }
+
+  if (process.env.EXPORT2AI_AUTO_TEST_DEBUG === "1") {
+    setTimeout(() => {
+      void vscode.workspace.getConfiguration("export2ai").update(
+        "debug",
+        true,
+        vscode.ConfigurationTarget.Global
+      );
+    }, 2500);
+  }
 }
 
 export function deactivate(): void {

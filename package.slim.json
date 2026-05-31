@@ -345,6 +345,7 @@
     "release:notes": "node scripts/release-notes.js",
     "test:live": "node scripts/live-test.js",
     "test:tokens": "node scripts/test-token-format.js",
+    "test:debug-logger": "node scripts/test-debug-logger.js",
     "test:comments": "node scripts/test-comment-strip.js",
     "test:menu-merge": "node scripts/test-menu-merge.js",
     "test:model-format": "node scripts/test-model-format.js",

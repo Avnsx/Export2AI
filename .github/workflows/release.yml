@@ -101,4 +101,10 @@ jobs:
 
       - name: Publish to Open VSX (Cursor / VSCodium)
         if: ${{ env.OVSX_PAT != '' }}
-        run: npx --yes ovsx publish "${{ steps.version.outputs.vsix }}" --pat "$OVSX_PAT"
+        run: |
+          EXTENSION_ID="$(node -p "const p = require('./package.json'); p.publisher + '.' + p.name")"
+          if npx --yes ovsx get "$EXTENSION_ID" --versionRange "${{ steps.version.outputs.version }}" --metadata >/tmp/open-vsx-existing.json 2>/dev/null; then
+            echo "Open VSX already has ${EXTENSION_ID} ${{ steps.version.outputs.version }}; skipping duplicate publish."
+          else
+            npx --yes ovsx publish "${{ steps.version.outputs.vsix }}" --pat "$OVSX_PAT"
+          fi

@@ -20,7 +20,7 @@ const DEFAULT_EXCLUDE_PATTERNS = [
 ];
 
 export function getConfiguration(resource?: vscode.Uri): Export2AIConfiguration {
-  const config = vscode.workspace.getConfiguration(CONFIG_SECTION, resource);
+  const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
 
   const legacyExclude = config.get<string[]>("exclude");
   const excludePatterns = config.get<string[]>("excludePatterns")
@@ -43,6 +43,6 @@ export function getConfiguration(resource?: vscode.Uri): Export2AIConfiguration 
     maxDepth: Math.max(0, config.get<number>("maxDepth", 5)),
     fileConcurrency: Math.min(32, Math.max(1, config.get<number>("fileConcurrency", 4))),
     outputFormat: config.get<"plaintext" | "markdown" | "xml">("outputFormat", "plaintext"),
-    debug: isDebugLoggingEnabled(resource)
+    debug: isDebugLoggingEnabled()
   };
 }

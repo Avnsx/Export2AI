@@ -2,17 +2,16 @@ import * as vscode from "vscode";
 import { getConfiguration } from "./config";
 import { copyFileContentToClipboard, copyProjectStructure } from "./projectService";
 import { TokenEstimateManager } from "./tokenEstimate";
-import { openOwnExtensionSettings, OUTPUT_CHANNEL_NAME } from "./utils/extensionSettings";
+import { openOwnExtensionSettings } from "./utils/extensionSettings";
 import { MENU_TARGET_MODELS } from "./utils/menuTargetModels";
 import { formatModelCommandSlug } from "./utils/modelFormat";
 import { TokenCounter } from "./utils/tokenCounter";
 import { revealInSystemExplorer } from "./utils/systemExplorer";
 import { createZipArchive, ZipResult } from "./zipService";
-import { debugError, debugLog, isDebugLoggingEnabled, setDebugOutputChannel } from "./utils/debugLogger";
+import { debugError, debugLog, disposeDebugOutputChannel, isDebugLoggingEnabled } from "./utils/debugLogger";
 
 let lastZipPath: string | undefined;
 let tokenEstimateManager: TokenEstimateManager | undefined;
-let outputChannel: vscode.OutputChannel | undefined;
 
 async function revealZipInSystemExplorer(zipPath: string): Promise<void> {
   try {
@@ -290,9 +289,6 @@ function registerDebugConfigurationWatcher(context: vscode.ExtensionContext): vo
 }
 
 export function activate(context: vscode.ExtensionContext): void {
-  outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
-  setDebugOutputChannel(outputChannel);
-  context.subscriptions.push(outputChannel);
   debugLog("extension: activate", {
     show: true,
     details: {
@@ -327,6 +323,5 @@ export function deactivate(): void {
   debugLog("extension: deactivate");
   tokenEstimateManager?.dispose();
   tokenEstimateManager = undefined;
-  setDebugOutputChannel(undefined);
-  outputChannel = undefined;
+  disposeDebugOutputChannel();
 }

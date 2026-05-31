@@ -20,18 +20,28 @@ export function getDebugOutputChannel(): vscode.OutputChannel | undefined {
   return outputChannel;
 }
 
+export function disposeDebugOutputChannel(): void {
+  outputChannel?.dispose();
+  outputChannel = undefined;
+}
+
+function ensureDebugOutputChannel(): vscode.OutputChannel {
+  if (!outputChannel) {
+    outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
+  }
+
+  return outputChannel;
+}
+
 export function isDebugLoggingEnabled(resource?: vscode.Uri): boolean {
-  const configTarget = resource ?? vscode.workspace.workspaceFolders?.[0]?.uri;
-  const config = vscode.workspace.getConfiguration(CONFIG_SECTION, configTarget);
+  const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
   const inspected = config.inspect<boolean>("debug");
 
   return [
     inspected?.globalValue,
     inspected?.workspaceValue,
-    inspected?.workspaceFolderValue,
     inspected?.globalLanguageValue,
-    inspected?.workspaceLanguageValue,
-    inspected?.workspaceFolderLanguageValue
+    inspected?.workspaceLanguageValue
   ].some(value => value === true) || config.get<boolean>("debug", false);
 }
 
@@ -118,8 +128,9 @@ export function debugLog(message: string, options: DebugLogOptions = {}): void {
     return;
   }
 
+  const channel = ensureDebugOutputChannel();
   const line = formatDebugLogLine(message, new Date(), options.details);
-  outputChannel?.appendLine(line);
+  channel.appendLine(line);
   console.log(line);
 
   if (options.show) {

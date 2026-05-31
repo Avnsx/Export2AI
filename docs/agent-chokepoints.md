@@ -91,7 +91,7 @@ workbench.action.openSettings("@ext:{publisher}.{name}")
   → fallback: extension.open → vscode:extension/ URI → user prompts
 ```
 
-Enable **`export2ai.debug`** to diagnose; the extension reveals **View → Output → Export2AI** automatically on activation when debug is already on and immediately when the setting is turned on at runtime. Debug logging is now shared across the extension (activation, commands, zip/copy, single-file copy, token scans, file collection, and settings navigation), not only the settings page. Because Settings can be checked at User scope while the repo has a stale Workspace value, debug mode treats any checked User/Workspace/Folder scope as enabled. Routine debug entries must stay gated by the live setting; turning `export2ai.debug` off in every scope must stop later Output lines. F5 configs in `.vscode/launch.json`:
+Enable **`export2ai.debug`** to diagnose; the extension reveals **View → Output → Export2AI** automatically on activation when debug is already on and immediately when the setting is turned on at runtime. Debug logging is now shared across the extension (activation, commands, zip/copy, single-file copy, token scans, file collection, and settings navigation), not only the settings page. Because Settings can be checked at User scope while the repo has a stale Workspace value, debug mode treats either checked User or Workspace scope as enabled. Routine debug entries must stay gated by the live setting; turning `export2ai.debug` off in every scope must stop later Output lines. F5 configs in `.vscode/launch.json`:
 - **Run Extension** — normal
 - **Run Extension (auto settings test)** — sets `EXPORT2AI_AUTO_TEST_SETTINGS=1`
 

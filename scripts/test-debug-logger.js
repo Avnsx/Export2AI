@@ -3,6 +3,7 @@ const Module = require("module");
 
 let inspected = {};
 let fallbackValue = false;
+let createdChannels = 0;
 const outputLines = [];
 const showCalls = [];
 
@@ -23,6 +24,21 @@ const mockVscode = {
           assert.strictEqual(key, "debug", "debug logger inspects debug setting scopes");
           return inspected;
         }
+      };
+    }
+  },
+  window: {
+    createOutputChannel(name) {
+      createdChannels += 1;
+      assert.strictEqual(name, "Export2AI", "debug logger creates the Export2AI output channel lazily");
+      return {
+        appendLine(line) {
+          outputLines.push(line);
+        },
+        show(preserveFocus) {
+          showCalls.push(preserveFocus);
+        },
+        dispose() {}
       };
     }
   }
@@ -57,6 +73,8 @@ function configureDebug(inspectResult, fallback = false) {
 
   configureDebug({ globalValue: false, workspaceValue: false }, false);
   assert.strictEqual(logger.isDebugLoggingEnabled(), false, "all explicit false values disable logging");
+  logger.debugLog("debug: disabled", { show: true });
+  assert.strictEqual(createdChannels, 0, "debugLog does not create an Output channel while debug is disabled");
 
   logger.setDebugOutputChannel({
     appendLine(line) {

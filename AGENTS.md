@@ -113,6 +113,7 @@ npm install
 npm run compile           # precompile (menus) → tsc → postcompile (comment sync + merge)
 npm run slim:package      # before commit — strips fat manifest
 npm run test:tokens
+npm run test:debug-logger
 npm run test:comments
 npm run test:model-format
 npm run test:menu-merge   # submenu shape + palette hides + no bucket rows
@@ -195,6 +196,7 @@ Full write-up: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
 - [ ] Read [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) if you touched activate, menus, settings nav, or build
 - [ ] `npm run compile` succeeds
 - [ ] `npm run test:tokens` passes (includes manifest-hygiene: no bucket commands, palette hides)
+- [ ] `npm run test:debug-logger` passes
 - [ ] `npm run test:comments` passes
 - [ ] `npm run test:model-format` passes
 - [ ] `npm run test:menu-merge` passes (if menus/build changed)

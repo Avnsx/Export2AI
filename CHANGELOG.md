@@ -2,7 +2,7 @@
 
 All notable changes to Export2AI are documented in this file.
 
-## [1.2.5] - 2026-05-30
+## [1.2.5] - 2026-05-31
 
 ### Added
 
@@ -18,6 +18,7 @@ All notable changes to Export2AI are documented in this file.
 - **Full-extension debug logging** — `export2ai.debug` now covers activation, command registration, settings navigation, zip creation, copy-structure, single-file copy, token-estimate refreshes, ignore setup, and file collection. Output lines use the **Export2AI** channel and a compact local-PC timestamp instead of UTC ISO strings.
 - **Visible debug startup** — Export2AI now activates after workbench startup, so when `export2ai.debug` is already enabled the **Export2AI** Output channel is revealed with the activation log; when debug is turned on while the extension is running, the channel is revealed and a visible `debug: enabled` marker is written.
 - **Debug scope handling** — checking `export2ai.debug` at User scope now enables diagnostics even if a workspace setting still contains `export2ai.debug: false`; configuration reads no longer emit resource-scope warnings for window-scoped settings.
+- **Lazy debug channel creation** — the **Export2AI** Output channel is not created while `export2ai.debug` is off. Debug defaults to `false` and logging starts only after the User or Workspace setting is checked.
 
 ### Fixed
 

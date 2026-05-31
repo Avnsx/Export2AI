@@ -64,7 +64,7 @@ That's it.
 ### 📁 Zip a folder or workspace
 
 - **Right-click a folder** → **Export2AI** submenu → zip command with token estimate.
-- **Command Palette** (`Ctrl+Shift+P`) → `Export2AI: Zip Current Workspace for ChatGPT`.
+- **Command Palette** (`Ctrl+Shift+P`) → `Export2AI: Zip Current Workspace`.
 - **Explorer title bar** → **Export2AI** zip icon (when token counting is on).
 
 The zip includes **text source files only**. Binaries are replaced with a short placeholder. Files over the size limit get a `[File too large: …]` note instead of full content. Unreadable files are skipped (logged to the developer console).
@@ -108,7 +108,7 @@ These open the **extension-specific settings page** via VS Code’s `@ext:` rout
 
 At the **top** of the settings page, a read-only row shows:
 
-`Extension version v.1.2.5 · Last updated May 30, 2026`
+`Extension version v.1.2.5 · Last updated May 31, 2026`
 
 That string is synced automatically from `package.json` version and `CHANGELOG.md` when the extension is built.
 
@@ -228,6 +228,7 @@ npm run compile          # generate menus → tsc → sync settings → merge pa
 npm run slim:package     # shrink package.json before commit (recommended)
 npm run watch            # compile on save
 npm run test:tokens      # token format, Opus routing, manifest hygiene
+npm run test:debug-logger # debug setting scopes + Output channel reveal
 npm run test:menu-merge  # submenu shape + Command Palette hides
 npm run test:marketplace-assets # packaged icon asset hygiene
 npm run test:live        # smoke-test zip creation

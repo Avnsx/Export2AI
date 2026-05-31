@@ -117,6 +117,7 @@ The workflow compiles, runs tests, builds `build/export2ai-{version}.vsix`, gene
 
 - [ ] `npm run compile` succeeds
 - [ ] `npm run test:tokens` passes (manifest hygiene: 0 bucket commands, palette hides)
+- [ ] `npm run test:debug-logger` passes
 - [ ] `npm run test:comments` passes
 - [ ] `npm run test:model-format` passes
 - [ ] `npm run test:menu-merge` passes (if menus/build changed)

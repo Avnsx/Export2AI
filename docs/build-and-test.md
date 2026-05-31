@@ -51,7 +51,17 @@ npm run slim:package
 
 ### Marketplace assets
 
-`package.slim.json` sets the shared marketplace icon to `icons/icon-1254x1254.png`. VS Code documents the extension icon as at least 128x128, with 256x256 for Retina screens, and the current packaging flow accepts the larger square PNG. The generated `package.json`, Cursor, VS Code Marketplace, and Open VSX all read that manifest field from the packaged VSIX. The GitHub README banner remains in `icons/`.
+`package.slim.json` sets the shared marketplace icon to `icons/icon-1254x1254.png`. VS Code documents the extension icon as at least 128x128, with 256x256 for Retina screens, and the current packaging flow accepts the larger square PNG. The generated `package.json`, Cursor, VS Code Marketplace, and Open VSX all read that manifest field from the packaged VSIX. The README banner source is kept at `icons/gh_banner.png`, while README uses the HTTPS copy `https://i.imgur.com/RpgluFc.png` so GitHub, Cursor, and Open VSX can render it without relying on packaged relative paths.
+
+### Local Publishing Env
+
+Local marketplace publishing credentials live in `.env.local`, which is ignored by Git. Expected keys:
+
+```bash
+OVSX_PAT=...
+OPENVSX_NAMESPACE=avnsx
+REPO=https://github.com/Avnsx/Export2AI
+```
 
 ## npm scripts
 

@@ -23,7 +23,7 @@ function mockContext(overrides = {}) {
     extension: {
       id: overrides.id,
       packageJSON: {
-        publisher: overrides.publisher ?? "local",
+        publisher: overrides.publisher ?? "avnsx",
         name: overrides.name ?? "export2ai"
       }
     }
@@ -69,14 +69,14 @@ const SAMPLE_CHANGELOG = `# Changelog
 `;
 
 assert.strictEqual(
-  buildExtensionSettingsQuery("local.export2ai"),
-  "@ext:local.export2ai",
+  buildExtensionSettingsQuery("avnsx.export2ai"),
+  "@ext:avnsx.export2ai",
   "settings query"
 );
 
 assert.strictEqual(
-  resolveExtensionId(mockContext({ id: "local.export2ai" })),
-  "local.export2ai",
+  resolveExtensionId(mockContext({ id: "avnsx.export2ai" })),
+  "avnsx.export2ai",
   "prefer runtime id"
 );
 

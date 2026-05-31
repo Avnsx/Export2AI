@@ -51,7 +51,7 @@ When `export2ai.debug` is `true`, Export2AI writes diagnostic lines to **View ->
 Log lines are prefixed with the extension name and a compact timestamp formatted by the local PC locale/time settings, for example:
 
 ```
-[Export2AI 05/30/26, 09:05:07 PM] settings: navigation start settingsQuery=@ext:local.export2ai contributedCommands=40
+[Export2AI 05/31/26, 09:05:07 PM] settings: navigation start settingsQuery=@ext:avnsx.export2ai contributedCommands=40
 ```
 
 ### Settings UI copy (Zip archive & Comments)

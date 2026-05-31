@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="icons/gh_banner.png" alt="Export2AI" width="1672" height="941">
+  <img src="https://i.imgur.com/RpgluFc.png" alt="Export2AI" width="1672" height="941">
 </p>
 
 # Export2AI 📦
@@ -31,6 +31,7 @@ Export2AI is a [Cursor](https://cursor.com) / [VS Code](https://code.visualstudi
 **From a marketplace (when published):**
 
 Search for **Export2AI** in Cursor, VS Code Marketplace, or Open VSX.
+Published marketplace identity: `avnsx.export2ai`.
 
 **From a `.vsix` file (local build):**
 
@@ -104,7 +105,7 @@ Open Export2AI settings from:
 - **Export2AI → Settings** (submenu or Command Palette)
 - **Status bar** token count (click)
 
-These open the **extension-specific settings page** via VS Code’s `@ext:` route (e.g. `@ext:local.export2ai` for a local VSIX). The extension ID is resolved at runtime from your installed copy — not hardcoded.
+These open the **extension-specific settings page** via VS Code’s `@ext:` route (e.g. `@ext:avnsx.export2ai`). The extension ID is resolved at runtime from your installed copy — not hardcoded.
 
 At the **top** of the settings page, a read-only row shows:
 

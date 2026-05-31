@@ -20,7 +20,7 @@ This document is for **AI coding agents** and **human contributors** working on 
 | **Config namespace** | `export2ai.*` |
 | **Command prefix** | `export2ai.*` |
 | **Marketplace icon** | `icons/icon-1254x1254.png` |
-| **Publisher** | `local` (change before marketplace publish) |
+| **Publisher** | `avnsx` |
 | **Default `llmModel`** | `gpt-5.5` (`DEFAULT_LLM_MODEL` in `modelRegistry.ts`) |
 
 Former names: **repozip4ai / RepoZip4AI**, **copy4ai**. All identifiers must use `export2ai` / `Export2AI`. Do not reintroduce old names.

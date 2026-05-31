@@ -45,6 +45,7 @@ jobs:
         run: |
           npm run compile
           npm run test:tokens
+          npm run test:debug-logger
           npm run test:comments
           npm run test:model-format
           npm run test:menu-merge
@@ -93,7 +94,7 @@ jobs:
       # are empty, so the workflow stays green until you are ready to publish.
       #   VSCE_PAT  → https://marketplace.visualstudio.com (Azure DevOps PAT)
       #   OVSX_PAT  → https://open-vsx.org (used by Cursor / VSCodium)
-      # Note: set a real `publisher` in package.slim.json before publishing.
+      # Publisher identity is `avnsx.export2ai` from package.slim.json.
       - name: Publish to VS Code Marketplace
         if: ${{ env.VSCE_PAT != '' }}
         run: npx --yes @vscode/vsce publish --packagePath "${{ steps.version.outputs.vsix }}" --pat "$VSCE_PAT"

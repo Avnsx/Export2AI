@@ -1,9 +1,9 @@
 import { TextDecoder } from "util";
 import * as vscode from "vscode";
-import { isBinaryFile } from "isbinaryfile";
 import ignore from "ignore";
 import { CollectFilesOptions, FileContent } from "../types";
 import { AsyncPool, DirectoryQueue } from "./asyncPool";
+import { isBinaryBuffer } from "./binaryFile";
 import { IgnoreUtils } from "./ignoreUtils";
 import { UriUtils } from "./uriUtils";
 import { stripCommentsForFile } from "./commentStripper";
@@ -172,7 +172,7 @@ export class FileProcessor {
       const fileBuffer = Buffer.from(fileBytes);
 
       try {
-        const isBinary = await isBinaryFile(fileBuffer, stats.size);
+        const isBinary = await isBinaryBuffer(fileBuffer, stats.size);
         if (isBinary) {
           return {
             path: relativePath,

@@ -4,10 +4,19 @@ const os = require("os");
 const { finished } = require("stream/promises");
 const { ZipArchive } = require("archiver");
 const ignore = require("ignore");
-const { isBinaryFile } = require("isbinaryfile");
 const { TokenCounter } = require("../out/utils/tokenCounter");
 const { DEFAULT_LLM_MODEL } = require("../out/utils/modelRegistry");
 const { buildZipArchiveFileName, formatCompactTimestamp } = require("../out/utils/modelFormat");
+
+let binaryFileModulePromise;
+
+async function isBinaryBuffer(buffer, size) {
+  if (!binaryFileModulePromise) {
+    binaryFileModulePromise = import("isbinaryfile");
+  }
+  const { isBinaryFile } = await binaryFileModulePromise;
+  return isBinaryFile(buffer, { size });
+}
 
 function createIgnoreInstance(patterns, ignoreDotFiles, ignoreDollarFiles = true) {
   const ig = ignore().add(patterns);
@@ -76,7 +85,7 @@ async function collectFiles(sourcePath, workspaceRoot, config, zipOutputPath) {
         }
 
         const buffer = await fs.promises.readFile(absolute);
-        if (await isBinaryFile(buffer, stat.size)) {
+        if (await isBinaryBuffer(buffer, stat.size)) {
           files.push({ path: relative, content: "[Binary file content not included]" });
           continue;
         }

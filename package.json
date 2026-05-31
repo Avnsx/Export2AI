@@ -878,6 +878,7 @@
     "slim:package": "node scripts/slim-package.js",
     "release:notes": "node scripts/release-notes.js",
     "test:live": "node scripts/live-test.js",
+    "test:explorer-badges": "node scripts/test-explorer-badges.js",
     "test:tokens": "node scripts/test-token-format.js",
     "test:debug-logger": "node scripts/test-debug-logger.js",
     "test:comments": "node scripts/test-comment-strip.js",

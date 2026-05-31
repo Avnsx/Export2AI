@@ -117,6 +117,7 @@ npm run test:debug-logger
 npm run test:comments
 npm run test:model-format
 npm run test:menu-merge   # submenu shape + palette hides + no bucket rows
+npm run test:explorer-badges # runtime provider gate: badges off by default, opt-in only
 npm run test:marketplace-assets
 npm run test:live
 npm run test:settings-nav
@@ -200,6 +201,7 @@ Full write-up: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
 - [ ] `npm run test:comments` passes
 - [ ] `npm run test:model-format` passes
 - [ ] `npm run test:menu-merge` passes (if menus/build changed)
+- [ ] `npm run test:explorer-badges` passes
 - [ ] `npm run test:marketplace-assets` passes after `npm run package` if manifest assets changed
 - [ ] `npm run test:live` passes
 - [ ] `npm run test:settings-nav` passes

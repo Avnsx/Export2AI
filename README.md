@@ -232,6 +232,7 @@ npm run watch            # compile on save
 npm run test:tokens      # token format, Opus routing, manifest hygiene
 npm run test:debug-logger # debug setting scopes + Output channel reveal
 npm run test:menu-merge  # submenu shape + Command Palette hides
+npm run test:explorer-badges # Explorer badge provider gate
 npm run test:marketplace-assets # packaged icon asset hygiene
 npm run test:live        # smoke-test zip creation
 npm run test:settings-nav      # extension ID + extensionInfo metadata

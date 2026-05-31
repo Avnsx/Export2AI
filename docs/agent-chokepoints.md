@@ -98,6 +98,7 @@ Enable **`export2ai.debug`** to diagnose; the extension reveals **View → Outpu
 ### Verify
 ```bash
 npm run test:settings-nav
+npm run test:explorer-badges
 ```
 
 ### Folder badges: aggregate once, do not scan per folder

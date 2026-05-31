@@ -78,6 +78,7 @@ REPO=https://github.com/Avnsx/Export2AI
 | `npm run test:comments` | Language-aware comment stripping |
 | `npm run test:model-format` | Zip filename / model slug helpers |
 | `npm run test:menu-merge` | Submenu shape, single zip row, palette hides, no bucket rows |
+| `npm run test:explorer-badges` | Runtime smoke test for the Explorer file-decoration provider; badges off by default, opt-in only |
 | `npm run test:settings-nav` | Extension ID + extensionInfo metadata |
 | `npm run test:marketplace-assets` | Verifies `build/*.vsix` embeds the marketplace icon path and PNG dimensions |
 | `npm run test:live` | End-to-end zip smoke test |
@@ -131,6 +132,7 @@ The workflow compiles, runs tests, builds `build/export2ai-{version}.vsix`, gene
 - [ ] `npm run test:comments` passes
 - [ ] `npm run test:model-format` passes
 - [ ] `npm run test:menu-merge` passes (if menus/build changed)
+- [ ] `npm run test:explorer-badges` passes
 - [ ] `npm run package` then `npm run test:marketplace-assets` passes (if manifest/package assets changed)
 - [ ] `npm run test:live` passes
 - [ ] `npm run test:settings-nav` passes

@@ -183,7 +183,7 @@ export class TokenEstimateManager implements vscode.Disposable {
         };
         this.cache.set(cacheKey, estimate);
         this.pending.delete(cacheKey);
-        this.decorationEmitter.fire(uri);
+        this.decorationEmitter.fire(this.explorerBadgesEnabled ? uri : undefined);
         if (this.isWorkspaceRoot(uri, workspaceFolder)) {
           await this.publishEstimate(
             estimate.count,

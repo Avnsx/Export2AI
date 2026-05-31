@@ -194,7 +194,7 @@ Full reference: **[docs/comment-stripping.md](./docs/comment-stripping.md)**
 | **npm.autoDetect** | Kept `off` as belt-and-suspenders; no longer critical now the manifest is small. |
 | **vsce DEP0040** | Suppressed in `npm run package` only. |
 | **Legacy zip names** | `*-chatgpt-context-*.zip` excluded by default; new pattern `*-*-context-*.zip`. |
-| **Git metadata soft-delete** | Keep real repository-control files (`.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, `.git-blame-ignore-revs`) but never create `.git/` by default. The default marker is `_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt`; `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` is allowed only when `export2ai.softDeleteGitMetadata.realGitPathPlaceholder` is explicitly true. |
+| **Git metadata soft-delete** | Keep real repository-control files (`.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, `.git-blame-ignore-revs`) but never create `.git/` by default. The default marker is `_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt`; `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` is allowed only when `export2ai.softDeleteGitMetadata.realGitPathPlaceholder` is explicitly true. |
 
 Full write-up: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
 

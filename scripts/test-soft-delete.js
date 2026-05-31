@@ -138,6 +138,7 @@ async function collect(rootUri, sourceUri, options = {}) {
 
   try {
     writeFile(path.join(tempRoot, "src", "index.ts"), "export const ok = true;\n");
+    writeFile(path.join(tempRoot, "_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt"), "real project file with legacy marker name\n");
     writeFile(path.join(tempRoot, ".env"), "SHOULD_NOT_EXPORT=true\n");
     writeFile(path.join(tempRoot, ".gitignore"), "node_modules\n.env\nignored-by-gitignore.txt\n");
     writeFile(path.join(tempRoot, ".gitattributes"), "*.ts text eol=lf\n");
@@ -207,10 +208,16 @@ async function collect(rootUri, sourceUri, options = {}) {
     assert(map.has(".github/settings.json"), "JSON GitHub metadata path is preserved");
     assert.deepStrictEqual(JSON.parse(map.get(".github/settings.json")), { labels: true }, "JSON GitHub metadata content is exported");
 
-    assert(map.has("_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt"), ".git metadata gets one external marker by default");
-    assert(map.get("_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt").includes("The real local .git metadata was intentionally not exported."), "marker states .git metadata was omitted");
-    assert(map.get("_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt").includes("remotes, refs, branches, local history, hooks, object database, or credentials"), "marker names omitted Git internals");
-    assert(map.get("_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt").includes("do not use it as project code, CI configuration, dependency evidence, credential evidence, or repository truth"), "marker instructs AI not to treat it as repo truth");
+    const defaultMarkerPath = "_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt";
+    assert.strictEqual(
+      map.get("_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt"),
+      "real project file with legacy marker name\n",
+      "real project file using the legacy root marker name is preserved"
+    );
+    assert(map.has(defaultMarkerPath), ".git metadata gets one external marker by default");
+    assert(map.get(defaultMarkerPath).includes("The real local .git metadata was intentionally not exported."), "marker states .git metadata was omitted");
+    assert(map.get(defaultMarkerPath).includes("remotes, refs, branches, local history, hooks, object database, or credentials"), "marker names omitted Git internals");
+    assert(map.get(defaultMarkerPath).includes("do not use it as project code, CI configuration, dependency evidence, credential evidence, or repository truth"), "marker instructs AI not to treat it as repo truth");
     assertNoPathPrefix([...map.keys()], ".git", ".git directory is absent by default");
     assert(!map.has(".git/HEAD"), ".git HEAD is not exported");
     assert(!map.has(".git/config"), ".git config is not exported");
@@ -234,7 +241,7 @@ async function collect(rootUri, sourceUri, options = {}) {
     const hardDeleted = byPath(await collect(workspaceUri, workspaceUri, { softDeleteGitMetadata: false }));
     assert(!hardDeleted.has(".gitignore"), "soft-delete can be disabled");
     assert(!hardDeleted.has(".github/workflows/ci.yml"), ".github remains excluded when disabled");
-    assert(!hardDeleted.has("_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt"), ".git marker is absent when disabled");
+    assert(!hardDeleted.has("_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt"), ".git marker is absent when disabled");
 
     const excludeGithub = byPath(await collect(workspaceUri, workspaceUri, {
       isExcludedByResourcePath: (uri) => uri.fsPath.includes(`${path.sep}.github`)
@@ -255,7 +262,7 @@ async function collect(rootUri, sourceUri, options = {}) {
     assert(githubOnly.get("workflows/ci.yml").includes("name: real ci"), "selected .github folder exports real workflow content");
 
     const gitOnly = byPath(await collect(workspaceUri, Uri.file(path.join(tempRoot, ".git"))));
-    assert.deepStrictEqual([...gitOnly.keys()], ["_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt"], "selected .git folder gets one external marker by default");
+    assert.deepStrictEqual([...gitOnly.keys()], ["_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt"], "selected .git folder gets one external marker by default");
 
     const advancedGitPlaceholder = byPath(await collect(workspaceUri, workspaceUri, {
       softDeleteGitMetadataRealGitPathPlaceholder: true
@@ -327,8 +334,8 @@ async function collect(rootUri, sourceUri, options = {}) {
     assert(tree.includes(".github"), "copy structure keeps .github");
     assert(tree.includes("ci.yml"), "copy structure keeps .github descendants");
     assert(tree.includes(".gitignore"), "copy structure keeps .gitignore");
-    assert(tree.includes("_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt"), "copy structure shows external .git marker by default");
-    assert(!tree.includes("EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt"), "copy structure does not create .git marker path by default");
+    assert(tree.includes("_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt"), "copy structure shows external .git marker by default");
+    assert(!tree.includes(".git\n"), "copy structure does not list a .git directory by default");
     assert(tree.includes("EXPORT2AI_READ_ERROR.txt"), "copy structure surfaces repository-control read errors");
     assert(!tree.includes("HEAD"), "copy structure does not traverse .git");
 
@@ -345,7 +352,7 @@ async function collect(rootUri, sourceUri, options = {}) {
       false,
       workspaceUri
     );
-    assert(gitTree.includes("_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt"), "selected .git structure shows external marker by default");
+    assert(gitTree.includes("_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt"), "selected .git structure shows external marker by default");
     assert(!gitTree.includes("config"), "selected .git structure does not expose config");
     const excludedGitTree = await ProjectTreeGenerator.generateProjectTree(
       Uri.file(path.join(tempRoot, ".git")),

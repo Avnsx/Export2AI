@@ -78,7 +78,7 @@ REPO=https://github.com/Avnsx/Export2AI
 | `npm run test:comments` | Language-aware comment stripping |
 | `npm run test:model-format` | Zip filename / model slug helpers |
 | `npm run test:menu-merge` | Submenu shape, single zip row, palette hides, no bucket rows |
-| `npm run test:explorer-badges` | Runtime smoke test for the Explorer file-decoration provider; badges off by default, opt-in only |
+| `npm run test:explorer-badges` | Runtime smoke test for the Explorer file-decoration provider; badges off by default, opt-in only, tooltip scope labels |
 | `npm run test:settings-nav` | Extension ID + extensionInfo metadata |
 | `npm run test:marketplace-assets` | Verifies `build/*.vsix` embeds the marketplace icon path and PNG dimensions |
 | `npm run test:live` | End-to-end zip smoke test |
@@ -111,7 +111,7 @@ See **[agent-chokepoints.md](./agent-chokepoints.md)** for full detail. Short ve
 
 - **`tsc` is ~2–3 s** — not the main IDE hang source
 - **`package.json` is ~34 KB** — if it balloons into the MB range, you reintroduced a generated-command explosion
-- **Never generate per-token-count commands** — the count lives in the status bar / notification, with optional Explorer decoration badges (`test:tokens` enforces zero bucket commands)
+- **Never generate per-token-count commands** — the count lives in the status bar / notification. Explorer badges are opt-in only (`test:tokens` enforces zero bucket commands; `test:explorer-badges` enforces the badge gate).
 
 ## Releases (GitHub)
 

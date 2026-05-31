@@ -83,6 +83,7 @@ const workspaceFolder = {
 };
 
 let capturedProvider;
+let statusBarItem;
 const decorationEvents = [];
 const executedCommands = [];
 let statCalls = 0;
@@ -154,14 +155,20 @@ const vscodeMock = {
   },
   window: {
     createStatusBarItem() {
-      return {
+      statusBarItem = {
         text: "",
         tooltip: "",
         command: undefined,
-        show() {},
-        hide() {},
+        visible: false,
+        show() {
+          this.visible = true;
+        },
+        hide() {
+          this.visible = false;
+        },
         dispose() {}
       };
+      return statusBarItem;
     },
     createOutputChannel() {
       return {
@@ -256,6 +263,7 @@ function badgeFor(uri) {
     await manager.updateContextForUri(workspaceUri);
     await nextTurn();
     assert(collectCalls > 0, "runtime estimate path collected files");
+    assert(statusBarItem.tooltip.includes("Counted: workspace badge-runtime-workspace"), "root estimate tooltip names workspace scope");
     assert.strictEqual(badgeFor(workspaceUri), undefined, "manual estimate still has no badge while disabled");
     assert.strictEqual(badgeFor(srcUri), undefined, "manual estimate does not create child badges while disabled");
     assert(
@@ -271,6 +279,9 @@ function badgeFor(uri) {
     assert(childDecoration && typeof childDecoration.badge === "string", "opt-in child badge is produced");
     assert(childDecoration.badge.length <= 2, "Explorer badge stays within VS Code's two-character limit");
 
+    await manager.updateContextForUri(srcUri);
+    assert(statusBarItem.tooltip.includes("Counted: folder src"), "selected folder estimate tooltip names folder scope");
+
     const enabledCollectCalls = collectCalls;
     assert.strictEqual(badgeFor(Uri.joinPath(workspaceUri, "empty-folder")), undefined, "uncached folder has no badge after full aggregation");
     assert.strictEqual(collectCalls, enabledCollectCalls, "provider remains synchronous after full aggregation");
@@ -284,6 +295,11 @@ function badgeFor(uri) {
       decorationEvents.slice(reDisableEventStart).some((event) => event === undefined),
       "disabling badges emits a full decoration clear"
     );
+
+    settings.enableTokenCounting = false;
+    await manager.updateContextForUri(workspaceUri);
+    assert.strictEqual(statusBarItem.visible, false, "status bar hides when token counting is disabled");
+    assert.strictEqual(badgeFor(workspaceUri), undefined, "token counting disabled cannot produce badges");
 
     assert(
       executedCommands.some((entry) => entry.command === "setContext" && entry.args[0] === "export2ai.enableTokenCounting"),

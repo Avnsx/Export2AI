@@ -18,7 +18,7 @@ Export2AI is a [Cursor](https://cursor.com) / [VS Code](https://code.visualstudi
 | Without Export2AI | With Export2AI |
 |-------------------|----------------|
 | Manually pick files | One click on a folder |
-| Huge zips full of `temporary_files` | Smart ignore rules |
+| Huge zips full of `node_modules` | Smart ignore rules |
 | No idea how big the context is | Live token estimate |
 | Comments & whitespace bloat the zip | Optional compression |
 
@@ -92,7 +92,7 @@ or
 
 `(est. ~12,450 tokens)` — approximate for Claude and other families
 
-**Click the status bar** to open Export2AI settings. **Hover the status bar** for a short tooltip (active model + offline estimate). Counts are **offline estimates** — nothing is sent to an API, and zipping does not consume tokens.
+**Click the status bar** to open Export2AI settings. **Hover the status bar** for a short tooltip that says what was counted (`workspace ...` or `folder ...`), the active model, and whether the estimate is exact or approximate. Counts are **offline estimates** — nothing is sent to an API, and zipping does not consume tokens.
 
 When token counting is on, the Explorer menu shows **`Target model: …`** (from your setting) plus a **`Zip Folder`** action. The live token estimate appears in the **status bar** (e.g. `gpt-5.5 · (est. ~12,450 tokens)`) and in the post-zip notification. Optional Explorer folder badges can be enabled with `export2ai.showExplorerTokenBadges`, but they are off by default so Cursor/VS Code Explorer stays clean.
 
@@ -134,7 +134,7 @@ This avoids slow global Settings search, which could freeze Cursor when filterin
 | `export2ai.compressCode` | Trim whitespace & blank lines in exported text (see Settings for guidance) | `false` |
 | `export2ai.removeComments` | Strip comments per file type (18 syntax families; string-aware) | `false` |
 | `export2ai.enableTokenCounting` | Show token estimates in status bar, Explorer menu state, and zip notifications | `true` |
-| `export2ai.showExplorerTokenBadges` | Show compact token-estimate badges on Explorer folders | `false` |
+| `export2ai.showExplorerTokenBadges` | Opt-in compact token badges on Explorer folders | `false` |
 | `export2ai.llmModel` | Target model for token estimates (see below) | `gpt-5.5` |
 | `export2ai.maxFileSize` | Max bytes per file (larger = placeholder) | `1048576` (1 MB) |
 | `export2ai.maxDepth` | Tree depth for **Copy Project Structure** | `5` |
@@ -210,7 +210,7 @@ For API-exact Opus 4.7+ counts, use Anthropic’s [token counting API](https://p
 
 - Token status bar reflects the **first workspace folder** in multi-root workspaces.
 - **`removeComments`** uses language-aware rules by file extension (C-family, Python `#`, SQL `--`, HTML `<!-- -->`, PowerShell `<# #>`, batch `REM`, etc.). String literals are preserved where possible; edge cases inside regex or nested strings may still lose text. Plain `.json`, `.md`, and unknown extensions are unchanged.
-- The live token count is shown in the status bar and post-zip notification — **not** inside a menu row (VS Code menu titles are static). Explorer folder badges are optional and off by default.
+- The live token count is shown in the status bar and post-zip notification — **not** inside a menu row (VS Code menu titles are static). Explorer folder badges are opt-in and off by default.
 - **`lastZipPath`** is session-only and lost on window reload.
 
 ---

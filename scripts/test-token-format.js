@@ -118,23 +118,26 @@ function testFormatters() {
   assert(formatTokenBadge(850) === "99", "badge caps at 99");
   assert(formatTokenBadge(42) === "42", "badge small count");
 
-  const tooltip = formatTokenTooltip(47382, false, "exact", DEFAULT_LLM_MODEL);
+  const tooltip = formatTokenTooltip(47382, false, "exact", DEFAULT_LLM_MODEL, "workspace Export2AI");
   assert(tooltip.includes("47,382") && !tooltip.includes("~47,382"), "tooltip exact count");
-  assert(tooltip.includes("Active model: gpt-5.5"), "tooltip active model");
+  assert(tooltip.includes("Counted: workspace Export2AI"), "tooltip counted scope");
+  assert(tooltip.includes("Model: gpt-5.5"), "tooltip active model");
   assert(tooltip.includes("exact offline estimate"), "tooltip accuracy hint");
   assert(!tooltip.includes("Compatible models"), "tooltip has no model chart");
   assert(!tooltip.includes("will be used"), "tooltip avoids consumption phrasing");
-  assert(tooltip.endsWith("Steer used Tokenizer Model, in Extension Settings."), "tooltip footer");
+  assert(tooltip.endsWith("Change model in Export2AI Settings."), "tooltip footer");
 
-  const claudeTooltip = formatTokenTooltip(47382, true, "approx - Claude tokenizer", "claude-sonnet-4-6");
+  const claudeTooltip = formatTokenTooltip(47382, true, "approx - Claude tokenizer", "claude-sonnet-4-6", "folder src");
   assert(claudeTooltip.includes("~47,382"), "claude tooltip approx");
+  assert(claudeTooltip.includes("Counted: folder src"), "claude tooltip counted scope");
   assert(claudeTooltip.includes("approximate offline estimate"), "claude tooltip accuracy");
 
   const zeroTooltip = formatTokenTooltip(0, false, "exact", DEFAULT_LLM_MODEL);
   assert(zeroTooltip.includes("0 tokens"), "zero-count tooltip");
+  assert(zeroTooltip.includes("Counted: current workspace"), "tooltip default scope");
 
   const emptyModelTooltip = formatTokenTooltip(100, true, undefined, "");
-  assert(emptyModelTooltip.includes(`Active model: ${DEFAULT_LLM_MODEL}`), "empty model falls back to default");
+  assert(emptyModelTooltip.includes(`Model: ${DEFAULT_LLM_MODEL}`), "empty model falls back to default");
 
   assert(!formatTokenTooltip(100, false, "exact", "gpt-5.5").includes("Compatible models"), "no chart leak");
 

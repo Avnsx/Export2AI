@@ -46,13 +46,13 @@ Format: **`{model} · (est. ~47,382 tokens)`** (exact counts omit `~`)
 
 Implementation: `formatStatusBarZipLabel()` in `src/utils/tokenFormat.ts`, updated by `TokenEstimateManager.updateStatusBar()`.
 
-Hover → compact tooltip: active model, token count, exact/approx offline estimate, link to Settings.
+Hover → compact tooltip: counted scope (`workspace Export2AI` or `folder src`), model, token count, exact/approx offline estimate, and Settings hint.
 
 Click → opens Export2AI settings.
 
 ## Optional Explorer Folder Badges
 
-Explorer folder badges are controlled by **`export2ai.showExplorerTokenBadges`** and are **off by default**. When enabled, each folder that contains included source files shows a **2-character badge** (`formatTokenBadge`) — e.g. `47` for ~47k tokens. When disabled, `TokenEstimateManager` still computes the workspace status-bar estimate, but `provideFileDecoration` returns `undefined` and fires a full decoration refresh to clear stale badges.
+Explorer folder badges are controlled by **`export2ai.showExplorerTokenBadges`** and are **off by default**. Do not add another automatic badge path or turn this default on. When enabled, each folder that contains included source files shows a **2-character badge** (`formatTokenBadge`) — e.g. `47` for ~47k tokens. When disabled, `TokenEstimateManager` still computes the workspace status-bar estimate, but `provideFileDecoration` returns `undefined` and fires a full decoration refresh to clear stale badges.
 
 Implementation (`TokenEstimateManager` in `tokenEstimate.ts`):
 
@@ -87,4 +87,4 @@ The **status bar** and **zip filename** always reflect the live setting immediat
 | Zip manifest | `src/zipService.ts` |
 | Folder aggregation | `aggregateDirectoryEstimates()` in `src/tokenEstimate.ts` |
 
-After changing generators: `npm run compile`.
+After changing token UI: `npm run compile`, `npm run test:tokens`, and `npm run test:explorer-badges`.

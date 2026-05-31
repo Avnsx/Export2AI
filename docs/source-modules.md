@@ -9,7 +9,7 @@
 | `types.ts` | `Export2AIConfiguration`, `FileContent`, `TokenCountMethod`, collect/zip option interfaces |
 | `zipService.ts` | `createZipArchive()`; archiver integration, in-zip manifest |
 | `projectService.ts` | Ignore context, copy project structure, single-file content copy, tree + formatter orchestration |
-| `tokenEstimate.ts` | `TokenEstimateManager` — status bar, optional Explorer decoration badge, deferred scans, single-pass per-folder aggregation when badges are enabled (`aggregateDirectoryEstimates`) |
+| `tokenEstimate.ts` | `TokenEstimateManager` — status bar scope labels, optional Explorer decoration badge, deferred scans, single-pass per-folder aggregation when badges are enabled (`aggregateDirectoryEstimates`) |
 | `archiver-v8.d.ts` | Type declarations for archiver v8 `ZipArchive` |
 | `ignore.d.ts` | Type declarations for `ignore` package |
 
@@ -25,7 +25,7 @@
 | `formatters.ts` | Plaintext / markdown / XML structure output |
 | `tokenCounter.ts` | `selectTokenizer()` → family-specific counting; `countFilesContent` (joined) and `countFilesPerPath` (per-file, for folder aggregation) |
 | `anthropicTokenizer.ts` | Opus 4.7+ content-aware uplift heuristics |
-| `tokenFormat.ts` | Display strings, optional badge formatting, status-bar label, compact status-bar tooltip |
+| `tokenFormat.ts` | Display strings, optional badge formatting, status-bar label, scoped status-bar tooltip |
 | `modelRegistry.ts` | `MODEL_REGISTRY`, `detectFamily`, `DEFAULT_LLM_MODEL` |
 | `modelFormat.ts` | Model file slug, command-id slug, compact folder-name + timestamp helpers, zip filename builder |
 | `menuTargetModels.ts` | `MENU_TARGET_MODELS` — models with config-scoped Explorer menu rows |
@@ -56,6 +56,7 @@
 | `test-comment-strip.js` | Language-aware comment stripping assertions |
 | `test-model-format.js` | Model slug and zip filename helpers |
 | `test-menu-merge.js` | Submenu shape, single zip row, single-file copy row, palette hides, no bucket rows |
+| `test-explorer-badges.js` | Runtime badge-provider guard: badges off by default, opt-in only, tooltip scope labels |
 | `test-extension-settings.js` | Extension ID resolution + metadata sync |
 | `test-marketplace-assets.js` | VSIX marketplace icon path, manifest asset, and PNG-dimension assertions |
 | `live-test.js` | End-to-end zip creation smoke test |

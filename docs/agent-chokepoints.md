@@ -22,8 +22,8 @@ This caused a cascade of problems:
 
 ### Resolution (1.2.3 — keep it this way)
 **The entire bucket system was deleted.** The token estimate is already shown in three places that need no menu command:
-- **Status bar** — `gpt-5.5 · (est. ~47,382 tokens)` (`formatStatusBarZipLabel`); compact hover tooltip.
-- **Optional Explorer decoration badge** — 2-char folder badge only (`formatTokenBadge`); no badge tooltip. Off by default via `export2ai.showExplorerTokenBadges`. When enabled, one workspace walk populates every folder; `provideFileDecoration` reads the cache synchronously.
+- **Status bar** — `gpt-5.5 · (est. ~47,382 tokens)` (`formatStatusBarZipLabel`); hover tooltip names the counted scope (`workspace …` or `folder …`).
+- **Optional Explorer decoration badge** — 2-char folder badge only (`formatTokenBadge`); no badge tooltip. Off by default via `export2ai.showExplorerTokenBadges`. Do not add any automatic badge path or turn this default on. When enabled, one workspace walk populates every folder; `provideFileDecoration` reads the cache synchronously.
 - **Post-zip notification** — exact/approx count after the archive is written.
 
 `package.json` is now **~34 KB / ~40 commands**. Deleted: `src/utils/{tokenBuckets,zipBucketCommands,zipBucketRegistry}.ts`, `scripts/{token-bucket-config,generate-token-menu,test-zip-bucket-commands}.js`, and context keys `tokenBucket` / `tokenCountExact` / `tokenCountFormatted`.
@@ -104,6 +104,8 @@ npm run test:explorer-badges
 ### Folder badges: aggregate once, do not scan per folder
 `provideFileDecoration` must stay a **synchronous cache read** and must return `undefined` when `export2ai.showExplorerTokenBadges` is off. Do **not** restore the old pattern where each folder decoration launched its own `collectFiles()` subtree walk — that re-read and re-tokenized every file once per ancestor folder (`O(depth × files)`), made badges appear one folder at a time, and multiplied I/O on large repos.
 
+Disabled mode must clear stale decorations with `onDidChangeFileDecorations(undefined)`, not URI-specific badge refreshes. `npm run test:explorer-badges` is the guard for this.
+
 Current design (`tokenEstimate.ts`):
 - One `collectFilesUnder(workspaceRoot)` walk per refresh.
 - `TokenCounter.countFilesPerPath()` tokenizes each file **once**.
@@ -133,7 +135,7 @@ VS Code can't compute titles at runtime, but showing the **active model** needs 
 | Explorer menu (counting on) | `Target model: gpt-5.5` row + `Zip Folder` row |
 | Explorer menu (counting off) | `Zip Folder for gpt-5.5` (when config matches) |
 | Status bar | `gpt-5.5 · (est. ~47,382 tokens)` via `formatStatusBarZipLabel()` |
-| Explorer folder badges | Optional 2-char badge per folder (`formatTokenBadge`); off by default; single-pass aggregation in `tokenEstimate.ts` when enabled |
+| Explorer folder badges | Optional 2-char badge per folder (`formatTokenBadge`); off by default; no automatic badge paths; single-pass aggregation in `tokenEstimate.ts` when enabled |
 | Zip filename | `{folder}-gpt-5-5-context-{timestamp}.zip` via `buildZipArchiveFileName()` |
 | Progress / notification | Includes `config.llmModel` |
 | Manifest in zip | `Target model: …` line |

@@ -6,35 +6,32 @@ All notable changes to Export2AI are documented in this file.
 
 ### Changed
 
-- **Explorer token badges are opt-in** — `export2ai.showExplorerTokenBadges` now defaults to `false`, so Cursor/VS Code Explorer no longer gets compact folder token badges unless the user explicitly enables them. Existing stale decorations are cleared when badges are off.
+- **Clearer token tooltip** — the status-bar hover now says what was counted (`workspace ...` or `folder ...`), plus model, token count, and exact/approx status.
+- **Explorer token badges stay opt-in** — `export2ai.showExplorerTokenBadges` remains default `false`; disabled mode clears stale decorations and avoids URI-specific badge refreshes.
 - **VSIX asset hygiene** — backup banner source `icons/gh_banner_original.png` is excluded from packaged extensions; the VSIX ships only the marketplace icon and README banner.
+
+### Added
+
+- **Badge regression test** — `npm run test:explorer-badges` verifies badges are off by default, opt-in only, and status-bar tooltips include the counted scope.
 
 ## [1.2.6] - 2026-05-31
 
 ### Added
 
-- **Single-file copy command** — right-click a file in Explorer and choose **Export2AI: Copy Content to Clipboard** to copy exact UTF-8 text without creating a zip. The command rejects folders, multi-selects, binary files, invalid UTF-8, read failures, and clipboard failures with visible Export2AI messages instead of quiet no-ops.
-- **Packaged extension artwork** — the VSIX manifest now points at `icons/icon-1254x1254.png` for Cursor, VS Code Marketplace, and Open VSX, and the README starts with the packaged `icons/gh_banner.png` banner at its native aspect ratio.
+- **Single-file copy** — right-click one file and copy exact UTF-8 text without creating a zip; invalid selections, binary files, and read/clipboard failures show visible Export2AI messages.
+- **Marketplace assets** — packaged icon and README banner now render correctly in Cursor, VS Code Marketplace, GitHub, and Open VSX.
 
 ### Changed
 
-- **Marketplace README spacing** — moved the README heading and summary above the banner image and removed fixed banner dimensions so Open VSX / Cursor render the Overview tab without large blank vertical gaps.
-- **VSIX output folder** — `npm run package` now writes release packages to `build/export2ai-{version}.vsix` instead of the repository root. Release automation, docs, and release notes now use the same path.
-- **Marketplace asset validation** — release automation packages the VSIX before upload/publish and runs `test:marketplace-assets` against the embedded manifest icon path and PNG dimensions.
-- **Copy structure default format** — `export2ai.outputFormat` now defaults to `plaintext` instead of `markdown`.
-- **Instant Explorer folder badges (single-pass aggregation)** — token badges for every folder are now computed from **one** workspace walk instead of a separate subtree scan per folder. `TokenCounter.countFilesPerPath()` tokenizes each file once and `aggregateDirectoryEstimates()` sums those counts up each file's ancestor directories, caching the root and every folder in a single pass before firing one decoration-refresh event. `provideFileDecoration` is now a synchronous cache read (the same approach VS Code's built-in Git decoration provider uses).
-- **Full-extension debug logging** — `export2ai.debug` now covers activation, command registration, settings navigation, zip creation, copy-structure, single-file copy, token-estimate refreshes, ignore setup, and file collection. Output lines use the **Export2AI** channel and a compact local-PC timestamp instead of UTC ISO strings.
-- **Visible debug startup** — Export2AI now activates after workbench startup, so when `export2ai.debug` is already enabled the **Export2AI** Output channel is revealed with the activation log; when debug is turned on while the extension is running, the channel is revealed and a visible `debug: enabled` marker is written.
-- **Debug scope handling** — checking `export2ai.debug` at User scope now enables diagnostics even if a workspace setting still contains `export2ai.debug: false`; configuration reads no longer emit resource-scope warnings for window-scoped settings.
-- **Lazy debug channel creation** — the **Export2AI** Output channel is not created while `export2ai.debug` is off. Debug defaults to `false` and logging starts only after the User or Workspace setting is checked.
-- **Published extension identity** — marketplace builds now use publisher `avnsx`, name `export2ai`, and extension ID `avnsx.export2ai`.
+- **Published identity** — marketplace builds use `avnsx.export2ai`.
+- **Cleaner packaging** — VSIX files build under `build/`, release automation validates packaged assets, and `outputFormat` defaults to `plaintext`.
+- **Debug logging** — `export2ai.debug` is off by default, logs to the **Export2AI** output channel only when enabled, and reveals the channel when turned on.
 
 ### Fixed
 
-- **Redundant token scanning** — the old design re-read and re-tokenized each file once per ancestor folder (`O(depth × files)`), so badges appeared one folder at a time and large repos paid repeated I/O. Files are now read and tokenized exactly once per refresh; per-folder on-demand scans remain only as a fallback during the initial ~5 s deferred-scan window (and for non-primary roots in multi-root workspaces).
-- **Stale estimates after edits** — a workspace refresh now performs a fresh walk and rebuilds the folder cache, so saving, creating, deleting, or renaming files updates the status bar and badges (previously the cached root short-circuited the refresh).
-- **Debug setting respected** — routine settings-navigation diagnostics no longer write to Output when `export2ai.debug` is off, including delayed cooldown messages.
-- **Zip completion hardening** — token-estimate refresh failures no longer abort zip creation or hide the created zip notification, and zip-path clipboard failures now show a visible Export2AI error.
+- **Token scan performance** — optional Explorer badges use one workspace walk and a synchronous cache read instead of one subtree scan per folder.
+- **Token refresh accuracy** — saves, creates, deletes, and renames rebuild estimates instead of reusing stale root cache.
+- **Zip completion reliability** — token-estimate refresh or clipboard failures no longer hide the created zip result.
 
 ## [1.2.4] - 2026-05-30
 
@@ -46,7 +43,7 @@ All notable changes to Export2AI are documented in this file.
 
 - **Shorter, cleaner zip names** — the archive name uses only the selected folder's **basename** (not the full nested path; no more `y--HOST_ROOT-…` clutter) and a compact `YYYY-MM-DD-HHMMSS` timestamp. Example: `WinMGT-gpt-5.5-context-2026-05-30-182617.zip`. Folder segment capped at 40 characters. Helpers: `formatFolderNameSegment()` and `formatCompactTimestamp()` in `modelFormat.ts`.
 - **Safer export defaults** — `export2ai.compressCode` and `export2ai.removeComments` default to **`false`** so zips preserve full source unless you opt in to trimming or comment stripping.
-- **Token estimate UI** — status bar label uses `(est. ~N tokens)` / `(est. N tokens)` via `formatTokenUsageLabel()`; status-bar hover tooltip is compact (active model + exact/approx offline estimate + settings footer). Explorer decoration badges are **badge-only** (no per-folder tooltip).
+- **Token estimate UI** — status bar label uses `(est. ~N tokens)` / `(est. N tokens)` via `formatTokenUsageLabel()`; hover text stays compact and Explorer badges remain badge-only.
 - **Status bar stability** — workspace-root token estimate is published from the root scan only, so the status bar no longer jumps when Explorer folder decoration scans finish.
 
 ### Fixed
@@ -63,7 +60,7 @@ All notable changes to Export2AI are documented in this file.
 
 ### Removed
 
-- **Token-bucket command system (~10,900 commands)** — deleted `export2ai.zip.bucket.*` generation and all supporting code (`tokenBuckets.ts`, `zipBucketCommands.ts`, `zipBucketRegistry.ts`, `generate-token-menu.js`, `token-bucket-config.js`). VS Code cannot set menu titles at runtime, so the old design pre-generated one command per token range — which bloated `package.json` to ~1.9–4 MB, flooded the Command Palette, and was the root cause of Cursor activate/settings hangs. The token estimate was already shown in the status bar, the Explorer decoration badge, and the post-zip notification, so nothing user-facing was lost.
+- **Token-bucket command system (~10,900 commands)** — deleted `export2ai.zip.bucket.*` generation and support code. The old design bloated `package.json`, flooded the Command Palette, and caused Cursor activation/settings hangs; token counts remain available in the status bar and zip notification.
 - **Dead context keys** — `export2ai.tokenBucket`, `export2ai.tokenCountExact`, `export2ai.tokenCountFormatted`, `export2ai.activeLlmModel`, `export2ai.llmModelKnown` (no menu consumed them). Removed `activeModelContext.ts`; the `Target model: …` rows read `config.export2ai.llmModel` directly.
 - **Dead helpers** — `estimateTokensForFolder()` (`zipService.ts`) and `formatZipMenuTitle()` (`tokenFormat.ts` / `TokenCounter`).
 

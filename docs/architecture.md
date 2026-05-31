@@ -42,12 +42,12 @@ TokenEstimateManager [tokenEstimate.ts]
   → aggregateDirectoryEstimates() — sum tokens up each file's ancestor chain,
        caching the root + every folder that contains an included file
   → setContext: export2ai.enableTokenCounting (drives menu visibility)
-  → status bar (root estimate; model + `(est. N tokens)`; click → openSettings; compact tooltip)
+  → status bar (counted scope + model + `(est. N tokens)`; click → openSettings; compact tooltip)
   → decorationEmitter.fire(undefined) → optional folder badges refresh or stale badges clear in one event
   → optional Explorer file-decoration badge per folder (formatTokenBadge; badge only, served from cache when enabled)
 ```
 
-The token estimate is surfaced in the status bar and post-zip notification. Optional Explorer decoration badges can be enabled with `export2ai.showExplorerTokenBadges` (default `false`). There are **no per-count menu commands** (see "Why there is no token-bucket menu" below).
+The token estimate is surfaced in the status bar and post-zip notification. The status-bar tooltip names what was counted: the first workspace folder during the automatic scan, or the folder passed to the command. Optional Explorer decoration badges can be enabled with `export2ai.showExplorerTokenBadges` (default `false`); do not add automatic badge behavior outside that opt-in. There are **no per-count menu commands** (see "Why there is no token-bucket menu" below).
 
 ### Single-pass folder aggregation (why badges no longer lazy-scan per folder)
 
@@ -161,7 +161,7 @@ That approach was removed because it was **pure cost with no surviving benefit**
 - **Command Palette pollution** — VS Code lists every command that has a `title` in the palette by default. 10,900 `Zip (~N tokens…)` rows flooded it.
 - **Manifest bloat** — `package.json` ballooned to ~1.9–4 MB, which slows the Settings UI, npm task detection, and extension-host parse (the original Cursor hang).
 - **No menu surface left** — the Explorer submenu can only render a handful of rows, so the bucket rows were already dropped from the submenu; the `setContext('export2ai.tokenBucket', …)` had no consumer.
-- **Already covered elsewhere** — the exact token count shows in the **status bar** and **post-zip notification**. Per-folder Explorer decoration badges (`formatTokenBadge`) are optional and off by default.
+- **Already covered elsewhere** — the exact token count shows in the **status bar** and **post-zip notification**. Per-folder Explorer decoration badges (`formatTokenBadge`) are optional, off by default, and must stay behind `export2ai.showExplorerTokenBadges`.
 
 Result: the manifest is ~34 KB with ~40 commands. **Do not reintroduce a per-count command set.** If a future requirement truly needs an in-menu count, use a *small* coarse bucket set (≤ ~25 rows) and hide the commands from the palette — never thousands.
 

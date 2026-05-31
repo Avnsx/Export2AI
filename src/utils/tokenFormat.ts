@@ -3,7 +3,7 @@ const LOCALE = "en-US";
 import { DEFAULT_LLM_MODEL } from "./modelRegistry";
 import { formatModelDisplayName } from "./modelFormat";
 
-export const TOOLTIP_SETTINGS_FOOTER = "Steer used Tokenizer Model, in Extension Settings.";
+export const TOOLTIP_SETTINGS_FOOTER = "Change model in Export2AI Settings.";
 
 export interface TokenDisplayOptions {
   approximate?: boolean;
@@ -74,7 +74,8 @@ export function formatTokenTooltip(
   tokenCount: number,
   approximate: boolean,
   methodLabel?: string,
-  llmModel?: string
+  llmModel?: string,
+  countedScope?: string
 ): string {
   const countLabel = formatTokenCount(tokenCount, { approximate });
   const modelLabel = formatModelDisplayName(llmModel ?? DEFAULT_LLM_MODEL);
@@ -82,9 +83,11 @@ export function formatTokenTooltip(
   const methodHint = methodLabel && !methodLabel.startsWith("exact")
     ? ` (${methodLabel})`
     : "";
+  const scopeLabel = countedScope?.trim() || "current workspace";
 
   return [
-    `Active model: ${modelLabel} · ${countLabel} tokens — ${accuracy}${methodHint}.`,
+    `Counted: ${scopeLabel}`,
+    `Model: ${modelLabel} · ${countLabel} tokens · ${accuracy}${methodHint}.`,
     "",
     TOOLTIP_SETTINGS_FOOTER
   ].join("\n");

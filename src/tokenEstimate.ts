@@ -135,13 +135,33 @@ export class TokenEstimateManager implements vscode.Disposable {
   }
 
   public async updateContextForUri(uri: vscode.Uri): Promise<void> {
-    const count = await this.estimateForUri(uri);
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+    if (!workspaceFolder) {
+      debugLog("token-estimate: context update skipped", {
+        details: { reason: "no workspace folder", uri: uri.fsPath }
+      });
+      await this.publishEstimate(0, false, true);
+      return;
+    }
+
+    const config = getConfiguration(workspaceFolder.uri);
+    this.enabled = config.enableTokenCounting;
+    this.explorerBadgesEnabled = this.enabled && config.showExplorerTokenBadges;
+    if (!this.enabled) {
+      this.statusBarItem?.hide();
+      this.decorationEmitter.fire(undefined);
+      await this.publishEstimate(0, false, true);
+      return;
+    }
+
+    const count = await this.estimateAndCache(uri, workspaceFolder, this.enabled);
     const cached = this.cache.get(uri.fsPath.toLowerCase());
     await this.publishEstimate(
       count ?? 0,
       this.enabled,
       cached?.approximate ?? true,
-      cached?.methodLabel
+      cached?.methodLabel,
+      this.formatEstimateScope(uri, workspaceFolder)
     );
   }
 
@@ -189,7 +209,8 @@ export class TokenEstimateManager implements vscode.Disposable {
             estimate.count,
             enabled,
             estimate.approximate,
-            estimate.methodLabel
+            estimate.methodLabel,
+            this.formatEstimateScope(uri, workspaceFolder)
           );
         }
         debugLog("token-estimate: estimate finished", {
@@ -380,6 +401,20 @@ export class TokenEstimateManager implements vscode.Disposable {
       || uri.fsPath.toLowerCase() === workspaceFolder.uri.fsPath.toLowerCase();
   }
 
+  private formatEstimateScope(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder): string {
+    const workspaceName = workspaceFolder.name || path.basename(workspaceFolder.uri.fsPath) || workspaceFolder.uri.fsPath;
+    if (this.isWorkspaceRoot(uri, workspaceFolder)) {
+      return `workspace ${workspaceName}`;
+    }
+
+    const relative = path.relative(workspaceFolder.uri.fsPath, uri.fsPath);
+    const normalized = relative && !relative.startsWith("..") && !path.isAbsolute(relative)
+      ? relative.split(path.sep).filter(Boolean).join("/")
+      : uri.fsPath;
+
+    return `folder ${normalized || path.basename(uri.fsPath) || uri.fsPath}`;
+  }
+
   private scheduleRefresh(): void {
     if (settingsNavigationInProgress) {
       debugLog("token-estimate: refresh skipped during settings navigation", {
@@ -459,7 +494,12 @@ export class TokenEstimateManager implements vscode.Disposable {
         this.fullyScannedRoots.delete(workspaceFolder.uri.fsPath.toLowerCase());
       }
 
-      this.updateStatusBar(root.count, root.approximate, root.methodLabel);
+      this.updateStatusBar(
+        root.count,
+        root.approximate,
+        root.methodLabel,
+        this.formatEstimateScope(workspaceFolder.uri, workspaceFolder)
+      );
       // Refresh every visible folder badge in one event. When Explorer badges are off,
       // this clears stale decorations left by earlier builds or previous setting states.
       this.decorationEmitter.fire(undefined);
@@ -484,7 +524,12 @@ export class TokenEstimateManager implements vscode.Disposable {
     }
   }
 
-  private updateStatusBar(count: number, approximate: boolean, methodLabel?: string): void {
+  private updateStatusBar(
+    count: number,
+    approximate: boolean,
+    methodLabel?: string,
+    countedScope?: string
+  ): void {
     if (!this.statusBarItem) {
       this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 90);
       this.statusBarItem.command = "export2ai.openSettings";
@@ -495,7 +540,10 @@ export class TokenEstimateManager implements vscode.Disposable {
     const llmModel = workspaceFolder ? getConfiguration(workspaceFolder.uri).llmModel : undefined;
 
     this.statusBarItem.text = `$(file-zip) ${formatStatusBarZipLabel(llmModel ?? "", count, approximate)}`;
-    this.statusBarItem.tooltip = formatTokenTooltip(count, approximate, methodLabel, llmModel);
+    const scope = countedScope ?? (workspaceFolder
+      ? this.formatEstimateScope(workspaceFolder.uri, workspaceFolder)
+      : "current workspace");
+    this.statusBarItem.tooltip = formatTokenTooltip(count, approximate, methodLabel, llmModel, scope);
     this.statusBarItem.show();
   }
 
@@ -503,11 +551,12 @@ export class TokenEstimateManager implements vscode.Disposable {
     count: number,
     enabled: boolean,
     approximate: boolean,
-    methodLabel?: string
+    methodLabel?: string,
+    countedScope?: string
   ): Promise<void> {
     await vscode.commands.executeCommand("setContext", "export2ai.enableTokenCounting", enabled);
     if (enabled) {
-      this.updateStatusBar(count, approximate, methodLabel);
+      this.updateStatusBar(count, approximate, methodLabel, countedScope);
     }
   }
 

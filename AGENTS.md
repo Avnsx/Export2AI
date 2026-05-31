@@ -53,7 +53,8 @@ Full file-by-file map: **[docs/source-modules.md](./docs/source-modules.md)**
 
 | Area | Wrong (causes hangs / confusion) | Right (current code) |
 |------|----------------------------------|----------------------|
-| **Token-count menu** | Pre-generate thousands of `zip.bucket.{N}` commands to show a live count in a menu | No per-count commands. Count lives in **status bar + Explorer decoration badge + notification** |
+| **Token-count menu** | Pre-generate thousands of `zip.bucket.{N}` commands to show a live count in a menu | No per-count commands. Count lives in **status bar + notification**; Explorer badges are opt-in only |
+| **Explorer badges** | Turn badges on by default, add new automatic badge sources, or fire URI badge refreshes while disabled | `export2ai.showExplorerTokenBadges` stays default `false`; disabled mode must return `undefined` and fire full clears |
 | **Command Palette** | Leave generated commands with a `title` visible | Hide generated `modelTarget.*` / `zipFor.*` with `when: "false"` |
 | **Settings open** | Global settings search; await in command handler | `@ext:{id}` route; `void openOwnExtensionSettings(...)` |
 | **Token scan vs settings** | Full-repo scan on activate while opening Settings | 5 s deferred scan; 5 s post-settings cooldown; `settingsNavigationInProgress` |
@@ -64,7 +65,7 @@ Full file-by-file map: **[docs/source-modules.md](./docs/source-modules.md)**
 
 Details and rationale: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
 
-> **History (1.2.3):** the ~10,900 `export2ai.zip.bucket.{N}` command system was **removed**. It bloated `package.json` to ~1.9–4 MB, polluted the Command Palette, and was the root cause of Cursor settings/activate hangs — while providing nothing the status bar/decoration badge didn't already show. `package.json` is now ~34 KB. **Do not bring it back.** See [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) §1.
+> **History (1.2.3):** the ~10,900 `export2ai.zip.bucket.{N}` command system was **removed**. It bloated `package.json` to ~1.9–4 MB, polluted the Command Palette, and was the root cause of Cursor settings/activate hangs — while duplicating status-bar and notification estimates. `package.json` is now ~34 KB. **Do not bring it back.** See [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) §1.
 
 ---
 
@@ -73,7 +74,7 @@ Details and rationale: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md
 Detailed flows: **[docs/architecture.md](./docs/architecture.md)**
 
 - **Zip:** `extension.ts` → `zipService.ts` → `FileProcessor.collectFiles()` → archiver
-- **Token estimate:** `TokenEstimateManager` in `tokenEstimate.ts` (deferred scan; single-pass folder aggregation; status bar + decoration badge)
+- **Token estimate:** `TokenEstimateManager` in `tokenEstimate.ts` (deferred scan; status bar with counted scope; optional opt-in decoration badge)
 - **Copy structure:** `projectService.ts` → `projectTree.ts` + `formatters.ts`
 - **Copy file content:** `projectService.ts` → validate one file → raw UTF-8 clipboard copy (+ token label if enabled)
 - **Settings nav:** `extensionSettings.ts` + `@ext:` route with fallbacks
@@ -87,13 +88,15 @@ Detailed flows: **[docs/architecture.md](./docs/architecture.md)**
 
 The token estimate is shown in **three places**, none of which is a menu command:
 
-1. **Status bar** — `gpt-5.5 · (est. ~47,382 tokens)` via `formatStatusBarZipLabel()`; compact hover tooltip; click opens Settings.
-2. **Explorer decoration badge** — per-folder 2-char badge via `formatTokenBadge()` (badge only, no tooltip). Populated by **one** workspace walk (`aggregateDirectoryEstimates`); `provideFileDecoration` is a synchronous cache read — do not restore per-folder subtree scans (see [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) §3).
+1. **Status bar** — `gpt-5.5 · (est. ~47,382 tokens)` via `formatStatusBarZipLabel()`; hover tooltip names the counted scope; click opens Settings.
+2. **Optional Explorer decoration badge** — disabled by default. If the user explicitly enables `export2ai.showExplorerTokenBadges`, folders can show a 2-char badge via `formatTokenBadge()` (badge only, no tooltip). Populated by **one** workspace walk (`aggregateDirectoryEstimates`); `provideFileDecoration` is a synchronous cache read — do not restore per-folder subtree scans (see [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) §3).
 3. **Post-zip notification** — exact/approx count after creating the archive.
 
 VS Code **cannot** compute a menu row's title at runtime, so there is **no** way to show a live token number *inside a menu* without pre-generating one command per number. The old design generated **~10,900** such commands and was removed in 1.2.3 (manifest bloat, Command Palette pollution, activate/settings hangs — all for a number already shown three other ways).
 
 **Rule:** never reintroduce `export2ai.zip.bucket.*` or any per-count command set. If a future requirement genuinely needs an in-menu count, use a **small coarse bucket set (≤ ~25 rows)** and hide the commands from the Command Palette — never thousands. Full rationale: [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) §1.
+
+**Badge rule:** do not reintroduce automatic Explorer badges. The only allowed badge path is the existing user opt-in setting, default `false`, guarded in `TokenEstimateManager.provideDecoration()`. Disabled mode must clear stale decorations and `npm run test:explorer-badges` must pass before release.
 
 ### Generated menus (small, build-time)
 
@@ -173,7 +176,8 @@ Full reference: **[docs/comment-stripping.md](./docs/comment-stripping.md)**
 
 | Issue | Detail |
 |-------|--------|
-| **No per-count menu commands** | **Never** generate `export2ai.zip.bucket.*` (or any per-number command set). It bloats the manifest, pollutes the palette, and hangs Cursor. Token count is in status bar + decoration badge + notification. |
+| **No per-count menu commands** | **Never** generate `export2ai.zip.bucket.*` (or any per-number command set). It bloats the manifest, pollutes the palette, and hangs Cursor. Token count is in status bar + notification; folder badges are explicit opt-in only. |
+| **No automatic Explorer badges** | Keep `export2ai.showExplorerTokenBadges` default `false`. Do not add another badge provider/path, do not show tooltips on badges, and do not fire URI-specific badge refreshes while disabled. |
 | **Command Palette hygiene** | Any **generated** command with a `title` must be hidden via a `commandPalette` `when: "false"` row (handled in `merge-package.js`). |
 | **Dead context keys** | Only `export2ai.enableTokenCounting` is consumed by menus. Don't add `setContext` keys nothing reads (we removed `tokenBucket`, `tokenCountExact`, `tokenCountFormatted`, `activeLlmModel`, `llmModelKnown`). |
 | **Submenu = one zip row** | The Explorer submenu uses a single `export2ai.zipSelectedFolder` row. Don't add many `when`-gated zip rows. |

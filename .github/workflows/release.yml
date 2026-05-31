@@ -20,6 +20,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   release:
     name: Build, release & package
@@ -30,10 +33,10 @@ jobs:
       OVSX_PAT: ${{ secrets.OVSX_PAT }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: "npm"
@@ -73,14 +76,14 @@ jobs:
         run: npm run release:notes -- --version "${{ steps.version.outputs.version }}" --output RELEASE_NOTES.md
 
       - name: Upload VSIX as workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.version.outputs.vsix_name }}
           path: ${{ steps.version.outputs.vsix }}
           if-no-files-found: error
 
       - name: Create / update GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: Export2AI v${{ steps.version.outputs.version }}
@@ -101,4 +104,10 @@ jobs:
 
       - name: Publish to Open VSX (Cursor / VSCodium)
         if: ${{ env.OVSX_PAT != '' }}
-        run: npx --yes ovsx publish "${{ steps.version.outputs.vsix }}" --pat "$OVSX_PAT"
+        run: |
+          EXTENSION_ID="$(node -p "const p = require('./package.json'); p.publisher + '.' + p.name")"
+          if npx --yes ovsx get "$EXTENSION_ID" --versionRange "${{ steps.version.outputs.version }}" --metadata >/tmp/open-vsx-existing.json 2>/dev/null; then
+            echo "Open VSX already has ${EXTENSION_ID} ${{ steps.version.outputs.version }}; skipping duplicate publish."
+          else
+            npx --yes ovsx publish "${{ steps.version.outputs.vsix }}" --pat "$OVSX_PAT"
+          fi

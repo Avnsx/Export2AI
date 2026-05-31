@@ -1,7 +1,7 @@
 {
   "name": "export2ai",
   "displayName": "Export2AI",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "description": "Create compact AI-ready zip archives from the current Cursor or VS Code workspace.",
   "icon": "icons/icon-1254x1254.png",
   "main": "./out/extension.js",
@@ -127,7 +127,7 @@
         "properties": {
           "export2ai.extensionInfo": {
             "type": "string",
-            "default": "Extension version v.1.2.7 · Last updated May 31, 2026",
+            "default": "Extension version v.1.2.8 · Last updated June 01, 2026",
             "readOnly": true,
             "order": -100
           }
@@ -182,6 +182,19 @@
             "order": 2,
             "description": "Skip $* and **/$* paths (common temp-file patterns)."
           },
+          "export2ai.softDeleteGitMetadata": {
+            "type": "boolean",
+            "default": true,
+            "order": 3,
+            "description": "Keep repository control files such as .github, .gitignore, and .gitattributes in exports while replacing unsafe local .git internals with a harmless marker outside .git by default.",
+            "markdownDescription": "Keep repository control files such as `.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, and `.git-blame-ignore-revs` in exports even when broad dot-file ignores are enabled.\n\nWhen enabled, Export2AI improves full-source validation compatibility by preserving CI workflows, Dependabot config, archive rules, and other repository files that tests may inspect. The unsafe local `.git` directory is still soft-deleted: Export2AI does **not** traverse it and, by default, writes `_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt` outside `.git` so test suites that check `Path(\".git\").exists()` do not mistake the export for a real Git repository. Remotes, refs, branches, local history, hooks, object database, and credentials are not exported.\n\nUnreadable repository-control paths stay visible as `Export2AI Repository-Control Read Error` placeholders or `EXPORT2AI_READ_ERROR.txt` markers instead of silently disappearing.\n\nExplicit `excludePaths` entries still hard-exclude matching paths."
+          },
+          "export2ai.softDeleteGitMetadata.realGitPathPlaceholder": {
+            "type": "boolean",
+            "default": false,
+            "order": 4,
+            "description": "Advanced compatibility option. Write the .git placeholder at .git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt instead of outside .git. Default: false."
+          },
           "export2ai.excludePatterns": {
             "type": "array",
             "default": [
@@ -194,14 +207,18 @@
               "build",
               "out",
               ".git",
+              "__pycache__",
+              ".pytest_cache",
+              ".cache",
+              ".tmp",
               "*-chatgpt-context-*.zip",
               "*-*-context-*.zip"
             ],
             "items": {
               "type": "string"
             },
-            "order": 3,
-            "description": "Glob patterns excluded from every zip (e.g. node_modules, build output, prior Export2AI zips)."
+            "order": 5,
+            "description": "Glob patterns excluded from every zip (e.g. node_modules, build output, prior Export2AI zips). Soft-delete may restore repository-control paths; use excludePaths to hard-exclude those."
           },
           "export2ai.excludePaths": {
             "type": "array",
@@ -209,13 +226,13 @@
             "items": {
               "type": "string"
             },
-            "order": 4,
+            "order": 6,
             "description": "Workspace-relative paths to exclude entirely (folders or files)."
           },
           "export2ai.maxFileSize": {
             "type": "number",
             "default": 1048576,
-            "order": 5,
+            "order": 7,
             "description": "Maximum file size in bytes to include in the zip. Larger files become a placeholder entry. Default: 1 MB."
           },
           "export2ai.fileConcurrency": {
@@ -223,7 +240,7 @@
             "default": 4,
             "minimum": 1,
             "maximum": 32,
-            "order": 6,
+            "order": 8,
             "description": "Parallel file reads when scanning large folders (clamped 1–32 at runtime)."
           }
         }
@@ -352,6 +369,7 @@
     "test:live": "node scripts/live-test.js",
     "test:explorer-badges": "node scripts/test-explorer-badges.js",
     "test:tokens": "node scripts/test-token-format.js",
+    "test:soft-delete": "node scripts/test-soft-delete.js",
     "test:debug-logger": "node scripts/test-debug-logger.js",
     "test:comments": "node scripts/test-comment-strip.js",
     "test:menu-merge": "node scripts/test-menu-merge.js",
@@ -362,6 +380,7 @@
     "test:critical:list": "node tests/run-critical-tests.js --list",
     "test:critical:compile": "node tests/run-critical-tests.js compile",
     "test:critical:tokens": "node tests/run-critical-tests.js tokens",
+    "test:critical:soft-delete": "node tests/run-critical-tests.js soft-delete",
     "test:critical:explorer-badges": "node tests/run-critical-tests.js explorer-badges",
     "test:critical:debug-logger": "node tests/run-critical-tests.js debug-logger",
     "test:critical:comments": "node tests/run-critical-tests.js comments",

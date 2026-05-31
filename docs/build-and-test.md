@@ -75,6 +75,7 @@ REPO=https://github.com/Avnsx/Export2AI
 | `npm run slim:package` | Strip generated commands/menus for git commit |
 | `npm run package` | Compile once + build `build/export2ai-x.x.x.vsix` |
 | `npm run test:tokens` | Token format, Opus routing, status-bar labels, manifest hygiene |
+| `npm run test:soft-delete` | Repository control file preservation, cache excludes, and `.git` traversal guard |
 | `npm run test:debug-logger` | Debug setting scope handling + Output channel reveal calls |
 | `npm run test:comments` | Language-aware comment stripping |
 | `npm run test:model-format` | Zip filename / model slug helpers |
@@ -83,7 +84,7 @@ REPO=https://github.com/Avnsx/Export2AI
 | `npm run test:settings-nav` | Extension ID + extensionInfo metadata |
 | `npm run test:marketplace-assets` | Verifies `build/*.vsix` embeds the marketplace icon path and PNG dimensions |
 | `npm run test:live` | End-to-end zip smoke test |
-| `npm run test:critical` | Runs the 10 critical release smoke targets from `tests/` using repo-root execution |
+| `npm run test:critical` | Runs the 11 critical release smoke targets from `tests/` using repo-root execution |
 | `npm run test:critical:list` | Lists target names for selective runs |
 | `npm run test:critical:<target>` | Runs one critical target, e.g. `tokens`, `live`, or `package-assets` |
 
@@ -93,6 +94,7 @@ For targeted checks, use `npm run test:critical:list` then run one target such a
 
 ```bash
 npm run test:critical:explorer-badges
+npm run test:critical:soft-delete
 npm run test:critical -- tokens live
 ```
 
@@ -129,8 +131,8 @@ See **[agent-chokepoints.md](./agent-chokepoints.md)** for full detail. Short ve
 Push a semver tag to trigger [`.github/workflows/release.yml`](../.github/workflows/release.yml):
 
 ```bash
-git tag v1.2.7
-git push origin v1.2.7
+git tag v1.2.8
+git push origin v1.2.8
 ```
 
 The workflow runs `npm run test:critical`, builds `build/export2ai-{version}.vsix`, generates release notes from `CHANGELOG.md` via `scripts/release-notes.js`, and attaches the VSIX to a GitHub Release. Optional marketplace publish when `VSCE_PAT` / `OVSX_PAT` secrets are set.
@@ -140,6 +142,7 @@ The workflow runs `npm run test:critical`, builds `build/export2ai-{version}.vsi
 - [ ] `npm run compile` succeeds
 - [ ] `npm run test:critical` passes for release-level smoke
 - [ ] `npm run test:tokens` passes (manifest hygiene: 0 bucket commands, palette hides)
+- [ ] `npm run test:soft-delete` passes
 - [ ] `npm run test:debug-logger` passes
 - [ ] `npm run test:comments` passes
 - [ ] `npm run test:model-format` passes

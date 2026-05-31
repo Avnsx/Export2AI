@@ -2,6 +2,12 @@ import * as vscode from "vscode";
 import ignore from "ignore";
 import { IgnoreUtils } from "./ignoreUtils";
 import { UriUtils } from "./uriUtils";
+import {
+  buildGitMetadataPlaceholderPath,
+  buildRepositoryControlReadErrorPath,
+  isGitDirectoryPath,
+  resolveGitMetadataSoftDeleteAction
+} from "./gitMetadataSoftDelete";
 
 type IgnoreInstance = ReturnType<typeof ignore>;
 
@@ -14,7 +20,10 @@ export class ProjectTreeGenerator {
     prefix: string = "",
     isExcludedByResourcePath: (resourceUri: vscode.Uri) => boolean,
     cancellationToken: vscode.CancellationToken,
-    rootUri?: vscode.Uri
+    rootUri?: vscode.Uri,
+    softDeleteGitMetadata: boolean = false,
+    softDeleteGitMetadataRealGitPathPlaceholder: boolean = false,
+    workspaceUri?: vscode.Uri
   ): Promise<string> {
     if (cancellationToken.isCancellationRequested) {
       throw new vscode.CancellationError();
@@ -28,10 +37,38 @@ export class ProjectTreeGenerator {
       rootUri = dir;
     }
 
+    if (currentDepth === 0) {
+      try {
+        if (isExcludedByResourcePath(dir)) {
+          return "";
+        }
+      } catch (error) {
+        console.error(`Export2AI: path exclusion failed for ${dir.toString()}`, error);
+      }
+    }
+
+    if (softDeleteGitMetadata) {
+      const relativePath = UriUtils.relativePath(rootUri, dir);
+      const workspaceRelativePath = workspaceUri ? UriUtils.relativePath(workspaceUri, dir) : undefined;
+      const softDeleteAction = resolveGitMetadataSoftDeleteAction(relativePath, workspaceRelativePath);
+      if (softDeleteAction?.placeholder) {
+        const placeholderName = buildGitMetadataPlaceholderPath(
+          "",
+          softDeleteGitMetadataRealGitPathPlaceholder,
+          true
+        );
+        return `${prefix}└── ${placeholderName}\n`;
+      }
+    }
+
     try {
       if (currentDepth > 0) {
         const relativePath = UriUtils.relativePath(rootUri, dir);
-        if (IgnoreUtils.isIgnored(ig, relativePath, true)) {
+        const workspaceRelativePath = workspaceUri ? UriUtils.relativePath(workspaceUri, dir) : undefined;
+        const softDeleteAction = softDeleteGitMetadata
+          ? resolveGitMetadataSoftDeleteAction(relativePath, workspaceRelativePath)
+          : undefined;
+        if (IgnoreUtils.isIgnored(ig, relativePath, true) && !softDeleteAction) {
           return "";
         }
         if (isExcludedByResourcePath(dir)) {
@@ -41,6 +78,7 @@ export class ProjectTreeGenerator {
 
       const entries = await vscode.workspace.fs.readDirectory(dir);
       const visibleEntries: Array<{ name: string; isDirectory: boolean; uri: vscode.Uri }> = [];
+      const visiblePlaceholderNames = new Set<string>();
 
       for (const [name, fileType] of entries) {
         if (cancellationToken.isCancellationRequested) {
@@ -50,6 +88,10 @@ export class ProjectTreeGenerator {
         const fileUri = vscode.Uri.joinPath(dir, name);
         const isDirectory = Boolean(fileType & vscode.FileType.Directory);
         const rootRelative = UriUtils.relativePath(rootUri, fileUri);
+        const workspaceRelative = workspaceUri ? UriUtils.relativePath(workspaceUri, fileUri) : undefined;
+        const softDeleteAction = softDeleteGitMetadata
+          ? resolveGitMetadataSoftDeleteAction(rootRelative, workspaceRelative)
+          : undefined;
 
         let isIgnored = false;
         let isExcludedByPath = false;
@@ -66,7 +108,16 @@ export class ProjectTreeGenerator {
           console.error(`Export2AI: path exclusion failed for ${fileUri.toString()}`, error);
         }
 
-        if (!isIgnored && !isExcludedByPath) {
+        if (softDeleteAction?.placeholder && !softDeleteGitMetadataRealGitPathPlaceholder && !isExcludedByPath) {
+          const placeholderName = buildGitMetadataPlaceholderPath(rootRelative, false, isDirectory);
+          if (!visiblePlaceholderNames.has(placeholderName)) {
+            visiblePlaceholderNames.add(placeholderName);
+            visibleEntries.push({ name: placeholderName, isDirectory: false, uri: fileUri });
+          }
+          continue;
+        }
+
+        if ((!isIgnored || softDeleteAction) && !isExcludedByPath) {
           visibleEntries.push({ name, isDirectory, uri: fileUri });
         }
       }
@@ -91,6 +142,21 @@ export class ProjectTreeGenerator {
         result += `${prefix}${connector}${name}\n`;
 
         if (isDirectory) {
+          const rootRelative = UriUtils.relativePath(rootUri, uri);
+          const workspaceRelative = workspaceUri ? UriUtils.relativePath(workspaceUri, uri) : undefined;
+          const softDeleteAction = softDeleteGitMetadata
+            ? resolveGitMetadataSoftDeleteAction(rootRelative, workspaceRelative)
+            : undefined;
+          if (softDeleteAction?.placeholder && isGitDirectoryPath(softDeleteAction.originalPath)) {
+            const placeholderName = buildGitMetadataPlaceholderPath(
+              "",
+              softDeleteGitMetadataRealGitPathPlaceholder,
+              true
+            ).replace(/.*\//, "");
+            result += `${prefix + newPrefix}└── ${placeholderName}\n`;
+            continue;
+          }
+
           const subTree = await this.generateProjectTree(
             uri,
             ig,
@@ -99,7 +165,10 @@ export class ProjectTreeGenerator {
             prefix + newPrefix,
             isExcludedByResourcePath,
             cancellationToken,
-            rootUri
+            rootUri,
+            softDeleteGitMetadata,
+            softDeleteGitMetadataRealGitPathPlaceholder,
+            workspaceUri
           );
           result += subTree;
         }
@@ -111,6 +180,15 @@ export class ProjectTreeGenerator {
         throw error;
       }
       console.error(`Export2AI: error reading directory ${dir.toString()}`, error);
+      if (softDeleteGitMetadata && rootUri) {
+        const relativePath = UriUtils.relativePath(rootUri, dir);
+        const workspaceRelativePath = workspaceUri ? UriUtils.relativePath(workspaceUri, dir) : undefined;
+        const softDeleteAction = resolveGitMetadataSoftDeleteAction(relativePath, workspaceRelativePath);
+        if (softDeleteAction && !softDeleteAction.placeholder) {
+          const placeholderName = buildRepositoryControlReadErrorPath("").replace(/.*\//, "");
+          return `${prefix}└── ${placeholderName}\n`;
+        }
+      }
       return "";
     }
   }

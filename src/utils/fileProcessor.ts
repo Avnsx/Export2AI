@@ -8,12 +8,24 @@ import { IgnoreUtils } from "./ignoreUtils";
 import { UriUtils } from "./uriUtils";
 import { stripCommentsForFile } from "./commentStripper";
 import { debugError, debugLog } from "./debugLogger";
+import {
+  buildGitMetadataPlaceholderPath,
+  buildRepositoryControlReadErrorPath,
+  createGitMetadataSoftDeletePlaceholder,
+  createRepositoryControlReadErrorPlaceholder,
+  isGitDirectoryPath,
+  resolveGitMetadataSoftDeleteAction
+} from "./gitMetadataSoftDelete";
 
 type IgnoreInstance = ReturnType<typeof ignore>;
 
 interface PendingFile {
   uri: vscode.Uri;
   relativePath: string;
+  softDeleteSourcePath?: string;
+  repositoryControlSourcePath?: string;
+  bypassIgnore?: boolean;
+  contentOverride?: string;
 }
 
 export class FileProcessor {
@@ -31,7 +43,53 @@ export class FileProcessor {
     let ignoredDirectories = 0;
     let ignoredEntries = 0;
     let excludedEntries = 0;
+    let softDeletedEntries = 0;
+    const softDeletedPlaceholderPaths = new Set<string>();
     directoryQueue.enqueue(sourceUri);
+
+    const addSoftDeletedGitMetadataPlaceholder = (
+      archiveRelativePath: string,
+      softDeleteSourcePath: string,
+      sourceUriForPlaceholder: vscode.Uri,
+      isDirectory: boolean
+    ): void => {
+      const placeholderPath = buildGitMetadataPlaceholderPath(
+        archiveRelativePath,
+        options.softDeleteGitMetadataRealGitPathPlaceholder,
+        isDirectory
+      );
+      if (softDeletedPlaceholderPaths.has(placeholderPath)) {
+        return;
+      }
+      softDeletedPlaceholderPaths.add(placeholderPath);
+      pendingFiles.push({
+        uri: sourceUriForPlaceholder,
+        relativePath: placeholderPath,
+        softDeleteSourcePath,
+        bypassIgnore: true
+      });
+      softDeletedEntries += 1;
+    };
+
+    const addRepositoryControlReadError = (
+      directoryRelativePath: string,
+      originalPath: string,
+      directoryUri: vscode.Uri,
+      error: unknown
+    ): void => {
+      const placeholderPath = buildRepositoryControlReadErrorPath(directoryRelativePath);
+      const reason = error instanceof Error ? error.message : String(error);
+      pendingFiles.push({
+        uri: directoryUri,
+        relativePath: placeholderPath,
+        bypassIgnore: true,
+        contentOverride: createRepositoryControlReadErrorPlaceholder(
+          placeholderPath,
+          originalPath,
+          reason
+        )
+      });
+    };
 
     while (directoryQueue.size > 0) {
       if (options.cancellationToken?.isCancellationRequested) {
@@ -45,14 +103,26 @@ export class FileProcessor {
       directoriesVisited += 1;
 
       const relativeDirPath = UriUtils.relativePath(rootUri, dirUri);
-      if (relativeDirPath && IgnoreUtils.isIgnored(ig, relativeDirPath, true)) {
-        ignoredDirectories += 1;
-        continue;
-      }
+      const workspaceRelativeDirPath = UriUtils.relativePath(workspaceUri, dirUri);
+      const softDeleteDirAction = options.softDeleteGitMetadata
+        ? resolveGitMetadataSoftDeleteAction(relativeDirPath, workspaceRelativeDirPath)
+        : undefined;
 
       if (options.isExcludedByResourcePath(dirUri)) {
         excludedEntries += 1;
         continue;
+      }
+
+      if (softDeleteDirAction?.placeholder) {
+        addSoftDeletedGitMetadataPlaceholder(relativeDirPath, softDeleteDirAction.originalPath, dirUri, true);
+        continue;
+      }
+
+      if (relativeDirPath && IgnoreUtils.isIgnored(ig, relativeDirPath, true)) {
+        if (!softDeleteDirAction) {
+          ignoredDirectories += 1;
+          continue;
+        }
       }
 
       let entries: [string, vscode.FileType][];
@@ -62,6 +132,14 @@ export class FileProcessor {
         debugError("file-processor: failed to read directory", error, {
           details: { directory: dirUri.toString(), root: rootUri.toString() }
         });
+        if (softDeleteDirAction && !softDeleteDirAction.placeholder) {
+          addRepositoryControlReadError(
+            relativeDirPath,
+            softDeleteDirAction.originalPath,
+            dirUri,
+            error
+          );
+        }
         continue;
       }
 
@@ -72,11 +150,17 @@ export class FileProcessor {
 
         const fileUri = vscode.Uri.joinPath(dirUri, name);
         const relativePath = UriUtils.relativePath(rootUri, fileUri);
+        const workspaceRelativePath = UriUtils.relativePath(workspaceUri, fileUri);
         const isDirectory = Boolean(fileType & vscode.FileType.Directory);
+        const softDeleteAction = options.softDeleteGitMetadata
+          ? resolveGitMetadataSoftDeleteAction(relativePath, workspaceRelativePath)
+          : undefined;
 
         if (IgnoreUtils.isIgnored(ig, relativePath, isDirectory)) {
-          ignoredEntries += 1;
-          continue;
+          if (!softDeleteAction) {
+            ignoredEntries += 1;
+            continue;
+          }
         }
 
         if (options.isExcludedByResourcePath(fileUri)) {
@@ -85,9 +169,27 @@ export class FileProcessor {
         }
 
         if (isDirectory) {
-          directoryQueue.enqueue(fileUri);
+          if (softDeleteAction?.placeholder && isGitDirectoryPath(softDeleteAction.originalPath)) {
+            addSoftDeletedGitMetadataPlaceholder(relativePath, softDeleteAction.originalPath, fileUri, true);
+          } else {
+            directoryQueue.enqueue(fileUri);
+          }
         } else if (fileType & vscode.FileType.File) {
-          pendingFiles.push({ uri: fileUri, relativePath });
+          if (softDeleteAction?.placeholder) {
+            addSoftDeletedGitMetadataPlaceholder(relativePath, softDeleteAction.originalPath, fileUri, false);
+            continue;
+          }
+          pendingFiles.push({
+            uri: fileUri,
+            relativePath,
+            softDeleteSourcePath: softDeleteAction?.placeholder
+              ? softDeleteAction.originalPath
+              : undefined,
+            repositoryControlSourcePath: softDeleteAction && !softDeleteAction.placeholder
+              ? softDeleteAction.originalPath
+              : undefined,
+            bypassIgnore: Boolean(softDeleteAction)
+          });
         }
       }
     }
@@ -103,6 +205,7 @@ export class FileProcessor {
         ignoredDirectories,
         ignoredEntries,
         excludedEntries,
+        softDeletedEntries,
         candidateFiles: pendingFiles.length,
         concurrency
       }
@@ -112,7 +215,16 @@ export class FileProcessor {
       pendingFiles,
       concurrency,
       async (pending) => {
-        const result = await this.processFile(pending.uri, pending.relativePath, ig, options);
+        const result = await this.processFile(
+          pending.uri,
+          pending.relativePath,
+          ig,
+          options,
+          pending.softDeleteSourcePath,
+          pending.repositoryControlSourcePath,
+          pending.bypassIgnore,
+          pending.contentOverride
+        );
         return result;
       },
       {
@@ -129,6 +241,16 @@ export class FileProcessor {
     );
 
     const files = processed.filter((file): file is FileContent => file !== null);
+    options.onSummary?.({
+      directoriesVisited,
+      ignoredDirectories,
+      ignoredEntries,
+      excludedEntries,
+      softDeletedEntries,
+      candidateFiles: pendingFiles.length,
+      includedFiles: files.length,
+      skippedFiles: processed.length - files.length
+    });
     debugLog("file-processor: processing finished", {
       details: {
         root: rootUri.fsPath,
@@ -144,10 +266,28 @@ export class FileProcessor {
     fileUri: vscode.Uri,
     relativePath: string,
     ig: IgnoreInstance,
-    options: CollectFilesOptions
+    options: CollectFilesOptions,
+    softDeleteSourcePath?: string,
+    repositoryControlSourcePath?: string,
+    bypassIgnore: boolean = false,
+    contentOverride?: string
   ): Promise<FileContent | null> {
     try {
-      if (IgnoreUtils.isIgnored(ig, relativePath, false)) {
+      if (contentOverride !== undefined) {
+        return {
+          path: relativePath,
+          content: contentOverride
+        };
+      }
+
+      if (softDeleteSourcePath) {
+        return {
+          path: relativePath,
+          content: createGitMetadataSoftDeletePlaceholder(relativePath, softDeleteSourcePath)
+        };
+      }
+
+      if (!bypassIgnore && IgnoreUtils.isIgnored(ig, relativePath, false)) {
         return null;
       }
 
@@ -197,6 +337,17 @@ export class FileProcessor {
       debugError("file-processor: error processing file", error, {
         details: { file: fileUri.toString(), relativePath }
       });
+      if (bypassIgnore) {
+        const reason = error instanceof Error ? error.message : String(error);
+        return {
+          path: relativePath,
+          content: createRepositoryControlReadErrorPlaceholder(
+            relativePath,
+            repositoryControlSourcePath ?? relativePath,
+            reason
+          )
+        };
+      }
       return null;
     }
   }

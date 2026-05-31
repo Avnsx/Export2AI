@@ -306,6 +306,8 @@ export class TokenEstimateManager implements vscode.Disposable {
       maxFileSize: config.maxFileSize,
       compressCode: config.compressCode,
       removeComments: config.removeComments,
+      softDeleteGitMetadata: config.softDeleteGitMetadata,
+      softDeleteGitMetadataRealGitPathPlaceholder: config.softDeleteGitMetadataRealGitPathPlaceholder,
       isExcludedByResourcePath,
       zipOutputPath: "",
       fileConcurrency: config.fileConcurrency

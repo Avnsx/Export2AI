@@ -17,6 +17,7 @@ User command (zipFolder)
   → createZipArchive()                    [zipService.ts]
        → prepareIgnoreContext()           [projectService.ts]
        → FileProcessor.collectFiles()     [fileProcessor.ts]
+            → Git/GitHub soft-delete policy if enabled
             → stripCommentsForFile()      [commentStripper.ts] if removeComments
             → compress whitespace         if compressCode
        → TokenCounter.countFilesContent() if enableTokenCounting
@@ -26,7 +27,7 @@ User command (zipFolder)
 
 Zip naming: `{folderBasename}-{model-slug}-context-{YYYY-MM-DD-HHMMSS}.zip` in the workspace root. Only the folder's own name is used (not its nested path), capped at 40 chars, with a compact timestamp — e.g. `WinMGT-gpt-5.5-context-2026-05-30-182617.zip`.
 
-Optional manifest: `_EXPORT2AI_MANIFEST.txt` when `includeManifest` is true.
+Optional manifest: `_EXPORT2AI_MANIFEST.txt` when `includeManifest` is true. It records the source folder name, created timestamp, soft-delete settings, included/excluded collection counts, and token estimate when enabled. The absolute local source path is redacted (`Source path redacted: true`).
 
 ## Data flow: token estimate
 
@@ -115,10 +116,15 @@ Shared by zip and copy-structure:
 2. Optional `.gitignore` merge (`ignoreGitIgnore`)
 3. Optional dot-file rule (`.*`) when `ignoreDotFiles`
 4. Optional `$*` / `**/$*` when `ignoreDollarFiles`
-5. `excludePaths` → workspace-relative or absolute path exclusion
-6. Binary check via `isbinaryfile`
-7. `maxFileSize` cap (placeholder text if exceeded)
-8. Skip output zip path if it appears during collection
+5. Optional Git/GitHub metadata soft-delete (`softDeleteGitMetadata`) overrides those ignore rules for repository control files (`.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, `.git-blame-ignore-revs`) so their real contents remain available for validation, while local `.git` internals are replaced by one explicit artificial marker outside `.git` by default
+6. `excludePaths` → workspace-relative or absolute path exclusion (still hard-excludes matching paths)
+7. Binary check via `isbinaryfile`
+8. `maxFileSize` cap (placeholder text if exceeded)
+9. Skip output zip path if it appears during collection
+
+Soft-delete keeps repository control files available for AI archive comparisons and tests while avoiding local Git state. `.github` descendants are traversed and exported normally so workflow, Dependabot, CodeQL, Pages, and policy tests can inspect them. `.git` is not traversed and is not created in the archive by default; a single `_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt` marker is emitted outside `.git` to avoid exporting remotes, refs, branches, local history, hooks, object database, or credentials while also avoiding false `Path(".git").exists()` checks. `export2ai.softDeleteGitMetadata.realGitPathPlaceholder` can opt into the older `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` marker layout.
+
+Unreadable repository-control files and directories are not dropped silently. Export2AI logs the filesystem error and keeps the archive/tree path visible with an `Export2AI Repository-Control Read Error` placeholder or `EXPORT2AI_READ_ERROR.txt` marker, so an AI can distinguish "export/read problem" from "file missing from the repository."
 
 `export2ai.copyFileContent` does not use the ignore pipeline because a user explicitly selected one file and asked for its content.
 

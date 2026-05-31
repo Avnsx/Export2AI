@@ -81,6 +81,8 @@ export async function prepareIgnoreContext(
       ignoreGitIgnore: config.ignoreGitIgnore,
       ignoreDotFiles: config.ignoreDotFiles,
       ignoreDollarFiles: config.ignoreDollarFiles,
+      softDeleteGitMetadata: config.softDeleteGitMetadata,
+      softDeleteGitMetadataRealGitPathPlaceholder: config.softDeleteGitMetadataRealGitPathPlaceholder,
       excludePatterns: config.excludePatterns,
       excludePaths: config.excludePaths
     }
@@ -165,7 +167,10 @@ export async function copyProjectStructure(rootUri?: vscode.Uri): Promise<void> 
           "",
           isExcludedByResourcePath,
           token,
-          targetUri
+          targetUri,
+          config.softDeleteGitMetadata,
+          config.softDeleteGitMetadataRealGitPathPlaceholder,
+          workspaceFolder.uri
         );
 
         const formatted = OutputFormatter.formatProjectStructureOnly(

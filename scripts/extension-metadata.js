@@ -40,7 +40,7 @@ function formatLastUpdatedLabel(isoDate) {
   const formatted = date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
-    day: "numeric",
+    day: "2-digit",
     timeZone: "UTC"
   });
   return `Last updated ${formatted}`;

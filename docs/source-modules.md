@@ -18,6 +18,7 @@
 | File | Responsibility |
 |------|----------------|
 | `fileProcessor.ts` | Recursive file collection, binary detection, UTF-8 decode, `processContent()` |
+| `gitMetadataSoftDelete.ts` | Classifies repository control files versus unsafe local `.git` data and creates the external soft-delete marker |
 | `commentProfiles.ts` | Extension → comment syntax profile map; settings markdown builders |
 | `commentStripper.ts` | String-aware comment removal per profile |
 | `ignoreUtils.ts` | Gitignore loading, glob ignore instance, `excludePaths` checks |
@@ -52,6 +53,7 @@
 | `verify-build.js` | Ensures `out/extension.js` exists before VSIX pack (avoids double compile) |
 | `submenu-base.json` | Static folder-submenu items (copy structure, settings, open zip) |
 | `test-token-format.js` | Token format, Opus routing, status-bar labels, manifest hygiene |
+| `test-soft-delete.js` | Repository control file preservation, `.github` content compatibility, cache excludes, and `.git` traversal guard |
 | `test-debug-logger.js` | Mocked VS Code debug logger tests for setting scopes and Output-channel reveal |
 | `test-comment-strip.js` | Language-aware comment stripping assertions |
 | `test-model-format.js` | Model slug and zip filename helpers |
@@ -65,7 +67,7 @@
 
 | File | Responsibility |
 |------|----------------|
-| `run-critical-tests.js` | Runs all 10 critical release smoke targets or selected targets |
+| `run-critical-tests.js` | Runs all 11 critical release smoke targets or selected targets |
 | `README.md` | Target list and examples for scoped test runs |
 
 ## Root config

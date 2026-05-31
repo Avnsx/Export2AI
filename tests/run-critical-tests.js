@@ -53,6 +53,12 @@ const TARGETS = [
     commands: [npmRun("test:tokens")]
   },
   {
+    name: "soft-delete",
+    description: "Repository control file preservation, cache excludes, and .git traversal guard.",
+    needsCompile: true,
+    commands: [npmRun("test:soft-delete")]
+  },
+  {
     name: "explorer-badges",
     description: "Explorer decoration provider guard: badges off by default, opt-in only, outside-workspace clear.",
     needsCompile: true,

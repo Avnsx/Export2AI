@@ -10,7 +10,9 @@ const settings = {
   ignoreGitIgnore: true,
   ignoreDotFiles: true,
   ignoreDollarFiles: true,
-  excludePatterns: ["node_modules", "build", "out", ".git"],
+  softDeleteGitMetadata: true,
+  softDeleteGitMetadataRealGitPathPlaceholder: false,
+  excludePatterns: ["node_modules", "build", "out", ".git", "__pycache__", ".pytest_cache", ".cache", ".tmp"],
   excludePaths: [],
   compressCode: false,
   removeComments: false,
@@ -273,7 +275,7 @@ function badgeFor(uri) {
       subscriptions: [],
       extension: {
         id: "avnsx.export2ai",
-        packageJSON: { publisher: "avnsx", name: "export2ai", version: "1.2.7" }
+        packageJSON: { publisher: "avnsx", name: "export2ai", version: "1.2.8" }
       },
       extensionPath: root
     });

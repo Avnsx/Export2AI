@@ -117,12 +117,13 @@ npm install
 npm run compile           # precompile (menus) → tsc → postcompile (comment sync + merge)
 npm run slim:package      # before commit — strips fat manifest
 npm run test:tokens
+npm run test:soft-delete
 npm run test:debug-logger
 npm run test:comments
 npm run test:model-format
 npm run test:menu-merge   # submenu shape + palette hides + no bucket rows
 npm run test:explorer-badges # runtime provider gate: badges off by default, opt-in only
-npm run test:critical        # 10 targetable release smoke checks
+npm run test:critical        # 11 targetable release smoke checks
 npm run test:marketplace-assets
 npm run test:live
 npm run test:settings-nav
@@ -169,7 +170,7 @@ Full reference: **[docs/comment-stripping.md](./docs/comment-stripping.md)**
 2. **Match existing style** — CommonJS output, strict TypeScript, async/await.
 3. **Config keys** must stay `export2ai.*`.
 4. **User-visible strings** — prefix `Export2AI:` for errors/warnings where applicable.
-5. **Manifest inside zip:** `_EXPORT2AI_MANIFEST.txt` includes `Target model:` from `llmModel`.
+5. **Manifest inside zip:** `_EXPORT2AI_MANIFEST.txt` includes `Target model:` from `llmModel`, the source folder basename, redacted source-path status, soft-delete settings, and collection counts. It must not leak the absolute local source path.
 6. **Zip naming:** `{folderBasename}-{model-slug}-context-{YYYY-MM-DD-HHMMSS}.zip` — folder **basename only** (capped at 40 chars) + compact timestamp; see `modelFormat.ts` (`formatFolderNameSegment`, `formatCompactTimestamp`).
 
 ---
@@ -193,6 +194,7 @@ Full reference: **[docs/comment-stripping.md](./docs/comment-stripping.md)**
 | **npm.autoDetect** | Kept `off` as belt-and-suspenders; no longer critical now the manifest is small. |
 | **vsce DEP0040** | Suppressed in `npm run package` only. |
 | **Legacy zip names** | `*-chatgpt-context-*.zip` excluded by default; new pattern `*-*-context-*.zip`. |
+| **Git metadata soft-delete** | Keep real repository-control files (`.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, `.git-blame-ignore-revs`) but never create `.git/` by default. The default marker is `_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt`; `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` is allowed only when `export2ai.softDeleteGitMetadata.realGitPathPlaceholder` is explicitly true. |
 
 Full write-up: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
 
@@ -204,6 +206,7 @@ Full write-up: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
 - [ ] `npm run compile` succeeds
 - [ ] `npm run test:critical` passes for release-level smoke, or a named `npm run test:critical:<target>` is run for scoped changes
 - [ ] `npm run test:tokens` passes (includes manifest-hygiene: no bucket commands, palette hides)
+- [ ] `npm run test:soft-delete` passes
 - [ ] `npm run test:debug-logger` passes
 - [ ] `npm run test:comments` passes
 - [ ] `npm run test:model-format` passes

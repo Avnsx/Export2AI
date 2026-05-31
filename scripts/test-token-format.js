@@ -242,6 +242,18 @@ function testManifestHygiene() {
     getConfigurationProperty(pkg, "export2ai.showExplorerTokenBadges").default === false,
     "Explorer token badges are opt-in by default"
   );
+  assert(
+    getConfigurationProperty(pkg, "export2ai.softDeleteGitMetadata").default === true,
+    "Git/GitHub metadata soft-delete is enabled by default"
+  );
+  assert(
+    getConfigurationProperty(pkg, "export2ai.softDeleteGitMetadata.realGitPathPlaceholder").default === false,
+    ".git path placeholder mode is opt-in"
+  );
+  const defaultExcludes = getConfigurationProperty(pkg, "export2ai.excludePatterns").default;
+  for (const expected of ["__pycache__", ".pytest_cache", ".cache", ".tmp"]) {
+    assert(defaultExcludes.includes(expected), `default excludes include ${expected}`);
+  }
   console.log(`manifest hygiene: ok (${commands.length} commands, no bucket commands, generated rows hidden from palette)`);
 }
 

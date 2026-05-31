@@ -1,7 +1,7 @@
 {
   "name": "export2ai",
   "displayName": "Export2AI",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "description": "Create compact AI-ready zip archives from the current Cursor or VS Code workspace.",
   "icon": "icons/icon-1254x1254.png",
   "main": "./out/extension.js",
@@ -68,210 +68,6 @@
         "title": "Export2AI: Copy Content to Clipboard",
         "category": "Export2AI",
         "icon": "$(copy)"
-      },
-      {
-        "command": "export2ai.modelTarget.gpt-5-5",
-        "title": "Target model: gpt-5.5",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.gpt-5-5",
-        "title": "Zip Folder for gpt-5.5",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.gpt-5-5-pro",
-        "title": "Target model: gpt-5.5-pro",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.gpt-5-5-pro",
-        "title": "Zip Folder for gpt-5.5-pro",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.gpt-5-4",
-        "title": "Target model: gpt-5.4",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.gpt-5-4",
-        "title": "Zip Folder for gpt-5.4",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.gpt-4o",
-        "title": "Target model: gpt-4o",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.gpt-4o",
-        "title": "Zip Folder for gpt-4o",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.gpt-4-1",
-        "title": "Target model: gpt-4.1",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.gpt-4-1",
-        "title": "Zip Folder for gpt-4.1",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.gpt-4",
-        "title": "Target model: gpt-4",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.gpt-4",
-        "title": "Zip Folder for gpt-4",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.gpt-3-5-turbo",
-        "title": "Target model: gpt-3.5-turbo",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.gpt-3-5-turbo",
-        "title": "Zip Folder for gpt-3.5-turbo",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.o3-mini",
-        "title": "Target model: o3-mini",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.o3-mini",
-        "title": "Zip Folder for o3-mini",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.o4-mini",
-        "title": "Target model: o4-mini",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.o4-mini",
-        "title": "Zip Folder for o4-mini",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.claude-opus-4-8",
-        "title": "Target model: claude-opus-4-8",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.claude-opus-4-8",
-        "title": "Zip Folder for claude-opus-4-8",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.claude-opus-4-7",
-        "title": "Target model: claude-opus-4-7",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.claude-opus-4-7",
-        "title": "Zip Folder for claude-opus-4-7",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.claude-sonnet-4-6",
-        "title": "Target model: claude-sonnet-4-6",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.claude-sonnet-4-6",
-        "title": "Zip Folder for claude-sonnet-4-6",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.claude-opus-4-6",
-        "title": "Target model: claude-opus-4-6",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.claude-opus-4-6",
-        "title": "Zip Folder for claude-opus-4-6",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.claude-haiku-4-5",
-        "title": "Target model: claude-haiku-4-5",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.claude-haiku-4-5",
-        "title": "Zip Folder for claude-haiku-4-5",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.gemini-2-5-pro",
-        "title": "Target model: gemini-2.5-pro",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.gemini-2-5-pro",
-        "title": "Zip Folder for gemini-2.5-pro",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.grok-3",
-        "title": "Target model: grok-3",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.grok-3",
-        "title": "Zip Folder for grok-3",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
-      },
-      {
-        "command": "export2ai.modelTarget.custom",
-        "title": "Target model: (custom — see Settings)",
-        "category": "Export2AI",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "export2ai.zipFor.custom",
-        "title": "Zip Folder (custom model in Settings)",
-        "category": "Export2AI",
-        "icon": "$(file-zip)"
       }
     ],
     "submenus": [
@@ -301,142 +97,6 @@
         {
           "command": "export2ai.copyFileContent",
           "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.gpt-5-5",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-5-5",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.gpt-5-5-pro",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-5-5-pro",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.gpt-5-4",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-5-4",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.gpt-4o",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-4o",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.gpt-4-1",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-4-1",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.gpt-4",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-4",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.gpt-3-5-turbo",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-3-5-turbo",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.o3-mini",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.o3-mini",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.o4-mini",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.o4-mini",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.claude-opus-4-8",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.claude-opus-4-8",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.claude-opus-4-7",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.claude-opus-4-7",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.claude-sonnet-4-6",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.claude-sonnet-4-6",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.claude-opus-4-6",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.claude-opus-4-6",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.claude-haiku-4-5",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.claude-haiku-4-5",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.gemini-2-5-pro",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.gemini-2-5-pro",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.grok-3",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.grok-3",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.modelTarget.custom",
-          "when": "false"
-        },
-        {
-          "command": "export2ai.zipFor.custom",
-          "when": "false"
         }
       ],
       "explorer/context": [
@@ -451,195 +111,7 @@
           "group": "7_modification@51"
         }
       ],
-      "export2ai.submenu": [
-        {
-          "command": "export2ai.modelTarget.gpt-5-5",
-          "when": "config.export2ai.llmModel == 'gpt-5.5' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-5-5",
-          "when": "config.export2ai.llmModel == 'gpt-5.5' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.gpt-5-5-pro",
-          "when": "config.export2ai.llmModel == 'gpt-5.5-pro' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-5-5-pro",
-          "when": "config.export2ai.llmModel == 'gpt-5.5-pro' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.gpt-5-4",
-          "when": "config.export2ai.llmModel == 'gpt-5.4' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-5-4",
-          "when": "config.export2ai.llmModel == 'gpt-5.4' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.gpt-4o",
-          "when": "config.export2ai.llmModel == 'gpt-4o' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-4o",
-          "when": "config.export2ai.llmModel == 'gpt-4o' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.gpt-4-1",
-          "when": "config.export2ai.llmModel == 'gpt-4.1' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-4-1",
-          "when": "config.export2ai.llmModel == 'gpt-4.1' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.gpt-4",
-          "when": "config.export2ai.llmModel == 'gpt-4' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-4",
-          "when": "config.export2ai.llmModel == 'gpt-4' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.gpt-3-5-turbo",
-          "when": "config.export2ai.llmModel == 'gpt-3.5-turbo' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.gpt-3-5-turbo",
-          "when": "config.export2ai.llmModel == 'gpt-3.5-turbo' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.o3-mini",
-          "when": "config.export2ai.llmModel == 'o3-mini' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.o3-mini",
-          "when": "config.export2ai.llmModel == 'o3-mini' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.o4-mini",
-          "when": "config.export2ai.llmModel == 'o4-mini' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.o4-mini",
-          "when": "config.export2ai.llmModel == 'o4-mini' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.claude-opus-4-8",
-          "when": "config.export2ai.llmModel == 'claude-opus-4-8' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.claude-opus-4-8",
-          "when": "config.export2ai.llmModel == 'claude-opus-4-8' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.claude-opus-4-7",
-          "when": "config.export2ai.llmModel == 'claude-opus-4-7' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.claude-opus-4-7",
-          "when": "config.export2ai.llmModel == 'claude-opus-4-7' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.claude-sonnet-4-6",
-          "when": "config.export2ai.llmModel == 'claude-sonnet-4-6' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.claude-sonnet-4-6",
-          "when": "config.export2ai.llmModel == 'claude-sonnet-4-6' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.claude-opus-4-6",
-          "when": "config.export2ai.llmModel == 'claude-opus-4-6' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.claude-opus-4-6",
-          "when": "config.export2ai.llmModel == 'claude-opus-4-6' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.claude-haiku-4-5",
-          "when": "config.export2ai.llmModel == 'claude-haiku-4-5' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.claude-haiku-4-5",
-          "when": "config.export2ai.llmModel == 'claude-haiku-4-5' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.gemini-2-5-pro",
-          "when": "config.export2ai.llmModel == 'gemini-2.5-pro' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.gemini-2-5-pro",
-          "when": "config.export2ai.llmModel == 'gemini-2.5-pro' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.grok-3",
-          "when": "config.export2ai.llmModel == 'grok-3' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.grok-3",
-          "when": "config.export2ai.llmModel == 'grok-3' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.modelTarget.custom",
-          "when": "config.export2ai.llmModel != 'gpt-5.5' && config.export2ai.llmModel != 'gpt-5.5-pro' && config.export2ai.llmModel != 'gpt-5.4' && config.export2ai.llmModel != 'gpt-4o' && config.export2ai.llmModel != 'gpt-4.1' && config.export2ai.llmModel != 'gpt-4' && config.export2ai.llmModel != 'gpt-3.5-turbo' && config.export2ai.llmModel != 'o3-mini' && config.export2ai.llmModel != 'o4-mini' && config.export2ai.llmModel != 'claude-opus-4-8' && config.export2ai.llmModel != 'claude-opus-4-7' && config.export2ai.llmModel != 'claude-sonnet-4-6' && config.export2ai.llmModel != 'claude-opus-4-6' && config.export2ai.llmModel != 'claude-haiku-4-5' && config.export2ai.llmModel != 'gemini-2.5-pro' && config.export2ai.llmModel != 'grok-3' && export2ai.enableTokenCounting",
-          "group": "0_model@1"
-        },
-        {
-          "command": "export2ai.zipFor.custom",
-          "when": "config.export2ai.llmModel != 'gpt-5.5' && config.export2ai.llmModel != 'gpt-5.5-pro' && config.export2ai.llmModel != 'gpt-5.4' && config.export2ai.llmModel != 'gpt-4o' && config.export2ai.llmModel != 'gpt-4.1' && config.export2ai.llmModel != 'gpt-4' && config.export2ai.llmModel != 'gpt-3.5-turbo' && config.export2ai.llmModel != 'o3-mini' && config.export2ai.llmModel != 'o4-mini' && config.export2ai.llmModel != 'claude-opus-4-8' && config.export2ai.llmModel != 'claude-opus-4-7' && config.export2ai.llmModel != 'claude-sonnet-4-6' && config.export2ai.llmModel != 'claude-opus-4-6' && config.export2ai.llmModel != 'claude-haiku-4-5' && config.export2ai.llmModel != 'gemini-2.5-pro' && config.export2ai.llmModel != 'grok-3' && !export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.zipSelectedFolder",
-          "when": "export2ai.enableTokenCounting",
-          "group": "1_zip@1"
-        },
-        {
-          "command": "export2ai.copyProjectStructure",
-          "group": "1_zip@2"
-        },
-        {
-          "command": "export2ai.openOutputFolder",
-          "group": "2_zip@2"
-        },
-        {
-          "command": "export2ai.openSettings",
-          "group": "3_zip@3"
-        }
-      ],
+      "export2ai.submenu": [],
       "view/title": [
         {
           "submenu": "export2ai.submenu",
@@ -655,7 +127,7 @@
         "properties": {
           "export2ai.extensionInfo": {
             "type": "string",
-            "default": "Extension version v.1.2.7 · Last updated May 31, 2026",
+            "default": "Extension version v.1.2.8 · Last updated June 01, 2026",
             "readOnly": true,
             "order": -100
           }
@@ -710,6 +182,19 @@
             "order": 2,
             "description": "Skip $* and **/$* paths (common temp-file patterns)."
           },
+          "export2ai.softDeleteGitMetadata": {
+            "type": "boolean",
+            "default": true,
+            "order": 3,
+            "description": "Keep repository control files such as .github, .gitignore, and .gitattributes in exports while replacing unsafe local .git internals with a harmless marker outside .git by default.",
+            "markdownDescription": "Keep repository control files such as `.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, and `.git-blame-ignore-revs` in exports even when broad dot-file ignores are enabled.\n\nWhen enabled, Export2AI improves full-source validation compatibility by preserving CI workflows, Dependabot config, archive rules, and other repository files that tests may inspect. The unsafe local `.git` directory is still soft-deleted: Export2AI does **not** traverse it and, by default, writes `_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt` outside `.git` so test suites that check `Path(\".git\").exists()` do not mistake the export for a real Git repository. Remotes, refs, branches, local history, hooks, object database, and credentials are not exported.\n\nUnreadable repository-control paths stay visible as `Export2AI Repository-Control Read Error` placeholders or `EXPORT2AI_READ_ERROR.txt` markers instead of silently disappearing.\n\nExplicit `excludePaths` entries still hard-exclude matching paths."
+          },
+          "export2ai.softDeleteGitMetadata.realGitPathPlaceholder": {
+            "type": "boolean",
+            "default": false,
+            "order": 4,
+            "description": "Advanced compatibility option. Write the .git placeholder at .git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt instead of outside .git. Default: false."
+          },
           "export2ai.excludePatterns": {
             "type": "array",
             "default": [
@@ -722,14 +207,18 @@
               "build",
               "out",
               ".git",
+              "__pycache__",
+              ".pytest_cache",
+              ".cache",
+              ".tmp",
               "*-chatgpt-context-*.zip",
               "*-*-context-*.zip"
             ],
             "items": {
               "type": "string"
             },
-            "order": 3,
-            "description": "Glob patterns excluded from every zip (e.g. node_modules, build output, prior Export2AI zips)."
+            "order": 5,
+            "description": "Glob patterns excluded from every zip (e.g. node_modules, build output, prior Export2AI zips). Soft-delete may restore repository-control paths; use excludePaths to hard-exclude those."
           },
           "export2ai.excludePaths": {
             "type": "array",
@@ -737,13 +226,13 @@
             "items": {
               "type": "string"
             },
-            "order": 4,
+            "order": 6,
             "description": "Workspace-relative paths to exclude entirely (folders or files)."
           },
           "export2ai.maxFileSize": {
             "type": "number",
             "default": 1048576,
-            "order": 5,
+            "order": 7,
             "description": "Maximum file size in bytes to include in the zip. Larger files become a placeholder entry. Default: 1 MB."
           },
           "export2ai.fileConcurrency": {
@@ -751,7 +240,7 @@
             "default": 4,
             "minimum": 1,
             "maximum": 32,
-            "order": 6,
+            "order": 8,
             "description": "Parallel file reads when scanning large folders (clamped 1–32 at runtime)."
           }
         }
@@ -880,6 +369,7 @@
     "test:live": "node scripts/live-test.js",
     "test:explorer-badges": "node scripts/test-explorer-badges.js",
     "test:tokens": "node scripts/test-token-format.js",
+    "test:soft-delete": "node scripts/test-soft-delete.js",
     "test:debug-logger": "node scripts/test-debug-logger.js",
     "test:comments": "node scripts/test-comment-strip.js",
     "test:menu-merge": "node scripts/test-menu-merge.js",
@@ -890,6 +380,7 @@
     "test:critical:list": "node tests/run-critical-tests.js --list",
     "test:critical:compile": "node tests/run-critical-tests.js compile",
     "test:critical:tokens": "node tests/run-critical-tests.js tokens",
+    "test:critical:soft-delete": "node tests/run-critical-tests.js soft-delete",
     "test:critical:explorer-badges": "node tests/run-critical-tests.js explorer-badges",
     "test:critical:debug-logger": "node tests/run-critical-tests.js debug-logger",
     "test:critical:comments": "node tests/run-critical-tests.js comments",

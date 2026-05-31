@@ -4,6 +4,8 @@ export interface Export2AIConfiguration {
   ignoreGitIgnore: boolean;
   ignoreDotFiles: boolean;
   ignoreDollarFiles: boolean;
+  softDeleteGitMetadata: boolean;
+  softDeleteGitMetadataRealGitPathPlaceholder: boolean;
   excludePatterns: string[];
   excludePaths: string[];
   compressCode: boolean;
@@ -37,14 +39,28 @@ export interface ProcessFileOptions {
   maxFileSize: number;
   compressCode: boolean;
   removeComments: boolean;
+  softDeleteGitMetadata: boolean;
+  softDeleteGitMetadataRealGitPathPlaceholder: boolean;
   isExcludedByResourcePath: (resourceUri: vscode.Uri) => boolean;
   zipOutputPath: string;
+}
+
+export interface FileCollectionSummary {
+  directoriesVisited: number;
+  ignoredDirectories: number;
+  ignoredEntries: number;
+  excludedEntries: number;
+  softDeletedEntries: number;
+  candidateFiles: number;
+  includedFiles: number;
+  skippedFiles: number;
 }
 
 export interface CollectFilesOptions extends ProcessFileOptions {
   fileConcurrency?: number;
   cancellationToken?: vscode.CancellationToken;
   onProgress?: (progress: CollectProgress) => void;
+  onSummary?: (summary: FileCollectionSummary) => void;
 }
 
 export type TokenCountMethod =

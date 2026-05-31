@@ -124,7 +124,9 @@ async function createZip(sourcePath, workspaceRoot, config) {
   archive.append([
     "Export2AI Manifest",
     `Target model: ${config.llmModel}`,
-    `Files: ${files.length}`,
+    `Source folder: ${baseName}`,
+    "Source path redacted: true",
+    `Included files: ${files.length}`,
     `Estimated tokens: ${tokenCount}`
   ].join("\n"), { name: "_EXPORT2AI_MANIFEST.txt" });
 
@@ -141,7 +143,9 @@ async function createZip(sourcePath, workspaceRoot, config) {
     ignoreGitIgnore: true,
     ignoreDotFiles: true,
     ignoreDollarFiles: true,
-    excludePatterns: ["node_modules", "*.log", "*.tmp", "dist", "build", "out", "*-chatgpt-context-*.zip", "*-*-context-*.zip"],
+    softDeleteGitMetadata: true,
+    softDeleteGitMetadataRealGitPathPlaceholder: false,
+    excludePatterns: ["node_modules", "*.log", "*.tmp", "dist", "build", "out", "__pycache__", ".pytest_cache", ".cache", ".tmp", "*-chatgpt-context-*.zip", "*-*-context-*.zip"],
     excludePaths: [],
     compressCode: false,
     removeComments: false,

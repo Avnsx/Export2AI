@@ -28,7 +28,7 @@ Export2AI is a [Cursor](https://cursor.com) / [VS Code](https://code.visualstudi
 
 ### 1️⃣ Install
 
-**From a marketplace (when published):**
+**From a marketplace:**
 
 Search for **Export2AI** in Cursor, VS Code Marketplace, or Open VSX.
 Published marketplace identity: `avnsx.export2ai`.
@@ -41,7 +41,7 @@ npm run compile
 npm run package
 ```
 
-Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick `build/export2ai-1.2.7.vsix`.
+Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick `build/export2ai-1.2.8.vsix`.
 
 ### 2️⃣ Zip your project
 
@@ -109,7 +109,7 @@ These open the **extension-specific settings page** via VS Code’s `@ext:` rout
 
 At the **top** of the settings page, a read-only row shows:
 
-`Extension version v.1.2.7 · Last updated May 31, 2026`
+`Extension version v.1.2.8 · Last updated June 01, 2026`
 
 That string is synced automatically from `package.json` version and `CHANGELOG.md` when the extension is built.
 
@@ -128,7 +128,9 @@ This avoids slow global Settings search, which could freeze Cursor when filterin
 | `export2ai.ignoreGitIgnore` | Skip files listed in `.gitignore` | `true` |
 | `export2ai.ignoreDotFiles` | Skip `.env`, `.git`, etc. | `true` |
 | `export2ai.ignoreDollarFiles` | Skip `$`-prefixed temp files (e.g. `$RECYCLE.BIN`) | `true` |
-| `export2ai.excludePatterns` | Glob patterns to skip (`node_modules`, `dist`, …) | See defaults |
+| `export2ai.softDeleteGitMetadata` | Keep repository control files (`.github`, `.gitignore`, `.gitattributes`, …) while replacing unsafe local `.git` data with a harmless marker outside `.git` by default | `true` |
+| `export2ai.softDeleteGitMetadata.realGitPathPlaceholder` | Advanced compatibility mode: put the `.git` marker at `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` instead of outside `.git` | `false` |
+| `export2ai.excludePatterns` | Glob patterns to skip (`node_modules`, `dist`, …); use `excludePaths` to hard-exclude repository-control files restored by Soft-Delete | See defaults |
 | `export2ai.excludePaths` | Workspace-relative paths to skip entirely | `[]` |
 | `export2ai.commentStripLanguages` | Read-only list of supported comment syntax families | Auto-synced at build |
 | `export2ai.compressCode` | Trim whitespace & blank lines in exported text (see Settings for guidance) | `false` |
@@ -197,12 +199,20 @@ For API-exact Opus 4.7+ counts, use Anthropic’s [token counting API](https://p
 
 ## 🚫 What gets excluded by default?
 
-- `node_modules`, `dist`, `build`, `out`, `.git`
+- `node_modules`, `dist`, `build`, `out`
+- Python/tool caches such as `__pycache__`, `.pytest_cache`, `.cache`, `.tmp`
+- `.git` internals (external soft-delete marker by default)
 - Log/temp/backup files (`*.log`, `*.tmp`, …)
 - Previous Export2AI zips (`*-chatgpt-context-*.zip`, `*-*-context-*.zip`)
 - Dot files (if `ignoreDotFiles` is on)
 - Dollar-prefixed files (if `ignoreDollarFiles` is on)
 - Anything in `.gitignore` (if `ignoreGitIgnore` is on)
+
+By default, Git/GitHub metadata uses **soft-delete** instead of broad dotfile removal. Repository control files such as `.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, and `.git-blame-ignore-revs` are exported with their real contents so CI/workflow/archive tests can inspect them. The unsafe local `.git` directory is not traversed and is not created in the zip by default; Export2AI writes `_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt` outside `.git` so tests that check `Path(".git").exists()` do not mistake the export for a real Git repository. Remotes, refs, branches, hooks, object database, credentials, and local history are not exported.
+
+The zip manifest records the source folder name and `Source path redacted: true`; it does not include the absolute local source path. If you need the older `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` layout for a specialized workflow, enable `export2ai.softDeleteGitMetadata.realGitPathPlaceholder`.
+
+If a repository-control file or folder cannot be read, the zip keeps that path visible with an explicit `Export2AI Repository-Control Read Error` placeholder or `EXPORT2AI_READ_ERROR.txt` marker instead of silently dropping it.
 
 ---
 
@@ -230,6 +240,7 @@ npm run compile          # generate menus → tsc → sync settings → merge pa
 npm run slim:package     # shrink package.json before commit (recommended)
 npm run watch            # compile on save
 npm run test:tokens      # token format, Opus routing, manifest hygiene
+npm run test:soft-delete # repository control files + .git marker guard
 npm run test:debug-logger # debug setting scopes + Output channel reveal
 npm run test:menu-merge  # submenu shape + Command Palette hides
 npm run test:explorer-badges # Explorer badge provider gate

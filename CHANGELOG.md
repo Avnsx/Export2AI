@@ -4,6 +4,15 @@ All notable changes to Export2AI are documented in this file.
 
 ## [Unreleased]
 
+## [1.2.8] - 2026-06-01
+
+### Added
+
+- **Git/GitHub metadata soft-delete** — `export2ai.softDeleteGitMetadata` is enabled by default so repository control files like `.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, and `.git-blame-ignore-revs` are exported with real contents for validation compatibility, while local `.git` internals are not traversed.
+- **Safer `.git` placeholder default** — the artificial Git metadata marker now lives at `_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt` outside `.git` by default, so exported archives do not make `Path(".git").exists()` true for test suites that conditionally run Git commands. Advanced users can opt back into `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` with `export2ai.softDeleteGitMetadata.realGitPathPlaceholder`.
+- **Redacted manifest source path** — `_EXPORT2AI_MANIFEST.txt` now records the source folder name and `Source path redacted: true` instead of leaking an absolute local filesystem path.
+- **Cleaner cache defaults** — default excludes now also cover `__pycache__`, `.pytest_cache`, `.cache`, and `.tmp`.
+
 ## [1.2.7] - 2026-05-31
 
 ### Changed

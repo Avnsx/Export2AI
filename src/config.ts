@@ -15,6 +15,10 @@ const DEFAULT_EXCLUDE_PATTERNS = [
   "build",
   "out",
   ".git",
+  "__pycache__",
+  ".pytest_cache",
+  ".cache",
+  ".tmp",
   "*-chatgpt-context-*.zip",
   "*-*-context-*.zip"
 ];
@@ -30,6 +34,8 @@ export function getConfiguration(resource?: vscode.Uri): Export2AIConfiguration 
     ignoreGitIgnore: config.get<boolean>("ignoreGitIgnore", true),
     ignoreDotFiles: config.get<boolean>("ignoreDotFiles", true),
     ignoreDollarFiles: config.get<boolean>("ignoreDollarFiles", true),
+    softDeleteGitMetadata: config.get<boolean>("softDeleteGitMetadata", true),
+    softDeleteGitMetadataRealGitPathPlaceholder: config.get<boolean>("softDeleteGitMetadata.realGitPathPlaceholder", false),
     excludePatterns,
     excludePaths: config.get<string[]>("excludePaths") ?? [],
     compressCode: config.get<boolean>("compressCode", false),

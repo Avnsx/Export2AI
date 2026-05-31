@@ -1,6 +1,6 @@
 # Critical Smoke Tests
 
-This folder defines the 10 targetable checks we should run before release. The runner can execute the full matrix or one named target, so small changes do not require the whole suite every time. It always runs from the repository root, even when invoked from another working directory.
+This folder defines the 11 targetable checks we should run before release. The runner can execute the full matrix or one named target, so small changes do not require the whole suite every time. It always runs from the repository root, even when invoked from another working directory.
 
 ## Run
 
@@ -14,12 +14,13 @@ npm run test:critical -- --target explorer-badges,settings-nav
 
 Target-specific runs compile first when the target imports `out/`. Use `-- --skip-compile` only when you intentionally want to reuse existing compiled output.
 
-## The 10 Critical Targets
+## The 11 Critical Targets
 
 | Target | What it protects |
 |--------|------------------|
 | `compile` | Menu generation, TypeScript, settings sync, generated manifest |
 | `tokens` | Token labels, tokenizer routing, manifest hygiene, no bucket commands |
+| `soft-delete` | Repository control file preservation, cache excludes, `.git` traversal guard |
 | `explorer-badges` | Badge gate: off by default, opt-in only, outside-workspace clear, scoped status-bar tooltip |
 | `debug-logger` | Debug setting scopes and Output-channel reveal behavior |
 | `comments` | Language-aware comment stripping |

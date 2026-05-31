@@ -10,6 +10,6 @@ Technical documentation for the Export2AI VS Code / Cursor extension. User-facin
 | [Source modules](./source-modules.md) | Contributors, agents | Every `src/` file and `scripts/` utility |
 | [Configuration](./configuration.md) | Users, contributors | All `export2ai.*` settings |
 | [Comment stripping](./comment-stripping.md) | Users, contributors | Language profiles, extension map, limitations |
-| [Build & test](./build-and-test.md) | Contributors | Slim manifest, npm scripts, tests, VSIX |
+| [Build & test](./build-and-test.md) | Contributors | Slim manifest, npm scripts, tests, marketplace assets, `build/` VSIX output |
 
 **Source of truth:** TypeScript under `src/` and `package.slim.json`. When docs diverge from code, fix the docs.

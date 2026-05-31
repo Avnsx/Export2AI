@@ -30,7 +30,7 @@ Export2AI is a [Cursor](https://cursor.com) / [VS Code](https://code.visualstudi
 
 **From a marketplace (when published):**
 
-Search for **Export2AI** in Cursor, VS Code Marketplace, or Open VSX. The listing uses the packaged manifest icon from `icons/icon-128x128.png`.
+Search for **Export2AI** in Cursor, VS Code Marketplace, or Open VSX. The listing uses the packaged manifest icon from `icons/icon-1254x1254.png`.
 
 **From a `.vsix` file (local build):**
 
@@ -40,7 +40,7 @@ npm run compile
 npm run package
 ```
 
-Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick `export2ai-1.2.5.vsix`.
+Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick `build/export2ai-1.2.5.vsix`.
 
 ### 2️⃣ Zip your project
 
@@ -229,12 +229,13 @@ npm run slim:package     # shrink package.json before commit (recommended)
 npm run watch            # compile on save
 npm run test:tokens      # token format, Opus routing, manifest hygiene
 npm run test:menu-merge  # submenu shape + Command Palette hides
+npm run test:marketplace-assets # packaged icon asset hygiene
 npm run test:live        # smoke-test zip creation
 npm run test:settings-nav      # extension ID + extensionInfo metadata
-npm run package          # compile once + build export2ai-x.x.x.vsix
+npm run package          # compile once + build build/export2ai-x.x.x.vsix
 ```
 
-**Manifest workflow:** edit `package.slim.json` (not the generated `package.json`). `npm run compile` runs `precompile` (menu generation), TypeScript compile, then `postcompile` (comment settings sync + manifest merge). `package.json` stays small (~34 KB); if it ever balloons into the MB range you have reintroduced a generated-command explosion — see [docs/agent-chokepoints.md](./docs/agent-chokepoints.md).
+**Manifest workflow:** edit `package.slim.json` (not the generated `package.json`). `npm run compile` runs `precompile` (menu generation), TypeScript compile, then `postcompile` (comment settings sync + manifest merge). `npm run package` always writes VSIX files under `build/`. `package.json` stays small (~34 KB); if it ever balloons into the MB range you have reintroduced a generated-command explosion — see [docs/agent-chokepoints.md](./docs/agent-chokepoints.md).
 
 ### Documentation
 

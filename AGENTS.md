@@ -19,7 +19,7 @@ This document is for **AI coding agents** and **human contributors** working on 
 | **Entry point** | `src/extension.ts` → `out/extension.js` |
 | **Config namespace** | `export2ai.*` |
 | **Command prefix** | `export2ai.*` |
-| **Marketplace icon** | `icons/icon-128x128.png` |
+| **Marketplace icon** | `icons/icon-1254x1254.png` |
 | **Publisher** | `local` (change before marketplace publish) |
 | **Default `llmModel`** | `gpt-5.5` (`DEFAULT_LLM_MODEL` in `modelRegistry.ts`) |
 
@@ -36,6 +36,7 @@ Export2AI/
 ├── scripts/                      # build & test utilities (not shipped)
 ├── docs/                         # technical documentation
 ├── icons/                        # packaged marketplace icons + README banner
+├── build/                        # generated VSIX output (ignored)
 ├── package.slim.json             # **manifest source of truth** (hand-edited)
 ├── package.json                  # generated after compile (~34 KB) — do not hand-edit
 ├── CHANGELOG.md
@@ -58,7 +59,7 @@ Full file-by-file map: **[docs/source-modules.md](./docs/source-modules.md)**
 | **Token scan vs settings** | Full-repo scan on activate while opening Settings | 5 s deferred scan; 5 s post-settings cooldown; `settingsNavigationInProgress` |
 | **Model display** | Hardcoded “ChatGPT” in menus / `*-chatgpt-context-*.zip` | Unified `export2ai.llmModel` — see [target-model-ui.md](./docs/target-model-ui.md) |
 | **Manifest edit** | Hand-edit generated `package.json` | Edit `package.slim.json` + run `generate-all-menus.js` |
-| **Package VSIX** | `vscode:prepublish` runs full compile twice | `verify-build.js` only; `npm run package` compiles once |
+| **Package VSIX** | Let `vsce package` write into repo root | `npm run package` compiles once and writes `build/export2ai-x.x.x.vsix` |
 | **Dead context keys** | Add `setContext` keys no menu reads | Only `export2ai.enableTokenCounting` is consumed by menus |
 
 Details and rationale: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
@@ -115,14 +116,15 @@ npm run test:tokens
 npm run test:comments
 npm run test:model-format
 npm run test:menu-merge   # submenu shape + palette hides + no bucket rows
+npm run test:marketplace-assets
 npm run test:live
 npm run test:settings-nav
-npm run package           # compile once + VSIX (verify-build only in prepublish)
+npm run package           # compile once + build/export2ai-x.x.x.vsix
 ```
 
 Full pipeline: **[docs/build-and-test.md](./docs/build-and-test.md)**
 
-**Note:** `tsc` is fast (~2–3 s). `package.json` is now ~34 KB (~40 commands), so manifest parse is no longer a hang source. If you ever see it grow into the MB range again, you have reintroduced a generated-command explosion — stop and reconsider.
+**Note:** `tsc` is fast (~2–3 s). `package.json` is now ~34 KB (~40 commands), so manifest parse is no longer a hang source. `npm run package` writes VSIX files only to `build/`. If you ever see the manifest grow into the MB range again, you have reintroduced a generated-command explosion — stop and reconsider.
 
 ---
 
@@ -196,6 +198,7 @@ Full write-up: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
 - [ ] `npm run test:comments` passes
 - [ ] `npm run test:model-format` passes
 - [ ] `npm run test:menu-merge` passes (if menus/build changed)
+- [ ] `npm run test:marketplace-assets` passes after `npm run package` if manifest assets changed
 - [ ] `npm run test:live` passes
 - [ ] `npm run test:settings-nav` passes
 - [ ] `npm run slim:package` if committing

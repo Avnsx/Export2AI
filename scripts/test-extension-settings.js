@@ -144,8 +144,12 @@ assert.strictEqual(
 const packageManifest = require("../package.json");
 assert.strictEqual(
   packageManifest.icon,
-  "icons/icon-128x128.png",
+  "icons/icon-1254x1254.png",
   "manifest exposes packaged marketplace icon"
+);
+assert(
+  packageManifest.scripts.package.includes("scripts/package-vsix.js"),
+  "package script uses dedicated VSIX build wrapper"
 );
 const outputFormatSetting = getConfigurationProperty(packageManifest, "export2ai.outputFormat");
 assert.strictEqual(outputFormatSetting.default, "plaintext", "copy structure output defaults to plaintext");

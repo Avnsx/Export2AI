@@ -73,6 +73,7 @@ function extractChangelogSection(version) {
 
 function buildReleaseBody(version, section) {
   const vsixName = `export2ai-${version}.vsix`;
+  const localVsixPath = `build/${vsixName}`;
   const dateLine = section.date ? `_Released ${section.date}._\n\n` : "";
 
   const changelog = section.body
@@ -99,7 +100,7 @@ ${changelog}
 
 \`\`\`bash
 npm install
-npm run package   # builds ${vsixName}
+npm run package   # builds ${localVsixPath}
 \`\`\`
 
 ---

@@ -51,7 +51,7 @@ npm run slim:package
 
 ### Marketplace assets
 
-`package.slim.json` sets the shared marketplace icon to `icons/icon-128x128.png`. The generated `package.json`, Cursor, VS Code Marketplace, and Open VSX all read that manifest field from the packaged VSIX. Larger icon sources and the GitHub README banner remain in `icons/` for repository and publishing assets.
+`package.slim.json` sets the shared marketplace icon to `icons/icon-1254x1254.png`. VS Code documents the extension icon as at least 128x128, with 256x256 for Retina screens, and the current packaging flow accepts the larger square PNG. The generated `package.json`, Cursor, VS Code Marketplace, and Open VSX all read that manifest field from the packaged VSIX. Smaller icon variants and the GitHub README banner remain in `icons/` for surfaces that need fixed-size assets.
 
 ## npm scripts
 
@@ -62,12 +62,13 @@ npm run slim:package
 | `npm run generate:menus` | Regenerate model-target menus |
 | `npm run merge:package` | Merge slim + generated → `package.json` |
 | `npm run slim:package` | Strip generated commands/menus for git commit |
-| `npm run package` | Compile once + build `export2ai-x.x.x.vsix` |
+| `npm run package` | Compile once + build `build/export2ai-x.x.x.vsix` |
 | `npm run test:tokens` | Token format, Opus routing, status-bar labels, manifest hygiene |
 | `npm run test:comments` | Language-aware comment stripping |
 | `npm run test:model-format` | Zip filename / model slug helpers |
 | `npm run test:menu-merge` | Submenu shape, single zip row, palette hides, no bucket rows |
 | `npm run test:settings-nav` | Extension ID + extensionInfo metadata |
+| `npm run test:marketplace-assets` | Verifies `build/*.vsix` embeds the marketplace icon path and PNG dimensions |
 | `npm run test:live` | End-to-end zip smoke test |
 
 **Tests require compile first** — they import from `out/`.
@@ -78,9 +79,9 @@ npm run slim:package
 npm run package
 ```
 
-Runs **one** full compile, verifies `out/extension.js`, then builds the VSIX. `vscode:prepublish` only checks that compile output exists (avoids double compile).
+Runs **one** full compile, verifies `out/extension.js`, then builds the VSIX through `scripts/package-vsix.js`. `vscode:prepublish` only checks that compile output exists (avoids double compile).
 
-Output: `export2ai-{version}.vsix` in the repo root.
+Output: `build/export2ai-{version}.vsix`. Do not write release VSIX files to the repo root.
 
 Install: **Extensions → … → Install from VSIX**.
 
@@ -90,7 +91,7 @@ Or press **F5** (`.vscode/launch.json`) for Extension Development Host.
 
 **Ships:** `out/`, generated `package.json`, production `node_modules/`, `README.md`, `CHANGELOG.md`, `AGENTS.md`, `docs/`, `icons/`
 
-**Does not ship:** `src/`, `scripts/`, `package.slim.json`, `tsconfig.json`, `*.vsix`, test zips
+**Does not ship:** `src/`, `scripts/`, `package.slim.json`, `tsconfig.json`, `build/`, `*.vsix`, test zips
 
 ## Performance notes
 
@@ -109,7 +110,7 @@ git tag v1.2.5
 git push origin v1.2.5
 ```
 
-The workflow compiles, runs tests, builds `export2ai-{version}.vsix`, generates release notes from `CHANGELOG.md` via `scripts/release-notes.js`, and attaches the VSIX to a GitHub Release. Optional marketplace publish when `VSCE_PAT` / `OVSX_PAT` secrets are set.
+The workflow compiles, runs tests, builds `build/export2ai-{version}.vsix`, generates release notes from `CHANGELOG.md` via `scripts/release-notes.js`, and attaches the VSIX to a GitHub Release. Optional marketplace publish when `VSCE_PAT` / `OVSX_PAT` secrets are set.
 
 ## Release checklist
 
@@ -118,6 +119,7 @@ The workflow compiles, runs tests, builds `export2ai-{version}.vsix`, generates 
 - [ ] `npm run test:comments` passes
 - [ ] `npm run test:model-format` passes
 - [ ] `npm run test:menu-merge` passes (if menus/build changed)
+- [ ] `npm run package` then `npm run test:marketplace-assets` passes (if manifest/package assets changed)
 - [ ] `npm run test:live` passes
 - [ ] `npm run test:settings-nav` passes
 - [ ] `npm run slim:package` before commit

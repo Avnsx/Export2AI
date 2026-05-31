@@ -48,6 +48,7 @@
 | `extension-metadata.js` | Syncs `export2ai.extensionInfo` from version + `CHANGELOG.md` |
 | `configuration-utils.js` | Read settings from categorized or flat `contributes.configuration` |
 | `sync-comment-settings.js` | Syncs comment-strip markdown into `package.slim.json` from compiled `out/` |
+| `package-vsix.js` | Cross-platform VSIX pack wrapper; writes `build/export2ai-{version}.vsix` |
 | `verify-build.js` | Ensures `out/extension.js` exists before VSIX pack (avoids double compile) |
 | `submenu-base.json` | Static folder-submenu items (copy structure, settings, open zip) |
 | `test-token-format.js` | Token format, Opus routing, status-bar labels, manifest hygiene |
@@ -55,6 +56,7 @@
 | `test-model-format.js` | Model slug and zip filename helpers |
 | `test-menu-merge.js` | Submenu shape, single zip row, single-file copy row, palette hides, no bucket rows |
 | `test-extension-settings.js` | Extension ID resolution + metadata sync |
+| `test-marketplace-assets.js` | VSIX marketplace icon path, manifest asset, and PNG-dimension assertions |
 | `live-test.js` | End-to-end zip creation smoke test |
 
 ## Root config
@@ -67,3 +69,4 @@
 | `.vscodeignore` | Controls VSIX contents |
 | `CHANGELOG.md` | Release history; feeds `export2ai.extensionInfo` date |
 | `icons/` | Packaged marketplace icons and the GitHub README banner |
+| `build/` | Ignored VSIX output directory |

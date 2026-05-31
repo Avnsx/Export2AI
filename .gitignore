@@ -7,7 +7,8 @@ out/
 # Generated menu intermediates (recreated by `npm run generate:menus`)
 scripts/generated/*.json
 
-# VSIX packages and context zips
+# Build artifacts, VSIX packages, and context zips
+build/
 *.vsix
 *-context-*.zip
 *-chatgpt-context-*.zip

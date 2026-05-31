@@ -7,10 +7,12 @@ All notable changes to Export2AI are documented in this file.
 ### Added
 
 - **Single-file copy command** — right-click a file in Explorer and choose **Export2AI: Copy Content to Clipboard** to copy exact UTF-8 text without creating a zip. The command rejects folders, multi-selects, binary files, invalid UTF-8, read failures, and clipboard failures with visible Export2AI messages instead of quiet no-ops.
-- **Packaged extension artwork** — the VSIX manifest now points at `icons/icon-128x128.png` for Cursor, VS Code Marketplace, and Open VSX, and the README starts with the packaged `icons/gh_banner.png` banner at its native aspect ratio.
+- **Packaged extension artwork** — the VSIX manifest now points at `icons/icon-1254x1254.png` for Cursor, VS Code Marketplace, and Open VSX, and the README starts with the packaged `icons/gh_banner.png` banner at its native aspect ratio.
 
 ### Changed
 
+- **VSIX output folder** — `npm run package` now writes release packages to `build/export2ai-{version}.vsix` instead of the repository root. Release automation, docs, and release notes now use the same path.
+- **Marketplace asset validation** — release automation packages the VSIX before upload/publish and runs `test:marketplace-assets` against the embedded manifest icon path and PNG dimensions.
 - **Copy structure default format** — `export2ai.outputFormat` now defaults to `plaintext` instead of `markdown`.
 - **Instant Explorer folder badges (single-pass aggregation)** — token badges for every folder are now computed from **one** workspace walk instead of a separate subtree scan per folder. `TokenCounter.countFilesPerPath()` tokenizes each file once and `aggregateDirectoryEstimates()` sums those counts up each file's ancestor directories, caching the root and every folder in a single pass before firing one decoration-refresh event. `provideFileDecoration` is now a synchronous cache read (the same approach VS Code's built-in Git decoration provider uses).
 - **Full-extension debug logging** — `export2ai.debug` now covers activation, command registration, settings navigation, zip creation, copy-structure, single-file copy, token-estimate refreshes, ignore setup, and file collection. Output lines use the **Export2AI** channel and a compact local-PC timestamp instead of UTC ISO strings.

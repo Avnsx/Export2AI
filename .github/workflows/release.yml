@@ -49,6 +49,8 @@ jobs:
           npm run test:model-format
           npm run test:menu-merge
           npm run test:settings-nav
+          npm run package
+          npm run test:marketplace-assets
           npm run test:live
 
       - name: Resolve version
@@ -62,11 +64,9 @@ jobs:
             VERSION="$(node -p "require('./package.slim.json').version")"
           fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "vsix=export2ai-${VERSION}.vsix" >> "$GITHUB_OUTPUT"
+          echo "vsix=build/export2ai-${VERSION}.vsix" >> "$GITHUB_OUTPUT"
+          echo "vsix_name=export2ai-${VERSION}.vsix" >> "$GITHUB_OUTPUT"
           echo "Releasing version ${VERSION}"
-
-      - name: Package VSIX
-        run: npm run package
 
       - name: Generate release notes
         run: npm run release:notes -- --version "${{ steps.version.outputs.version }}" --output RELEASE_NOTES.md
@@ -74,7 +74,7 @@ jobs:
       - name: Upload VSIX as workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.version.outputs.vsix }}
+          name: ${{ steps.version.outputs.vsix_name }}
           path: ${{ steps.version.outputs.vsix }}
           if-no-files-found: error
 

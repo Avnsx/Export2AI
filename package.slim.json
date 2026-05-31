@@ -3,7 +3,7 @@
   "displayName": "Export2AI",
   "version": "1.2.5",
   "description": "Create compact AI-ready zip archives from the current Cursor or VS Code workspace.",
-  "icon": "icons/icon-128x128.png",
+  "icon": "icons/icon-1254x1254.png",
   "main": "./out/extension.js",
   "type": "commonjs",
   "publisher": "local",
@@ -336,7 +336,7 @@
     "compile": "tsc -p ./",
     "postcompile": "node scripts/sync-comment-settings.js && npm run merge:package",
     "watch": "tsc -watch -p ./",
-    "package": "npm run compile && node --disable-warning=DEP0040 ./node_modules/@vscode/vsce/vsce package",
+    "package": "npm run compile && node scripts/package-vsix.js",
     "vscode:prepublish": "node scripts/verify-build.js",
     "slim:package": "node scripts/slim-package.js",
     "release:notes": "node scripts/release-notes.js",
@@ -345,6 +345,7 @@
     "test:comments": "node scripts/test-comment-strip.js",
     "test:menu-merge": "node scripts/test-menu-merge.js",
     "test:model-format": "node scripts/test-model-format.js",
+    "test:marketplace-assets": "node scripts/test-marketplace-assets.js",
     "test:settings-nav": "node scripts/test-extension-settings.js"
   },
   "dependencies": {

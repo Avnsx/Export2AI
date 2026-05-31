@@ -155,10 +155,11 @@ VS Code can't compute titles at runtime, but showing the **active model** needs 
 
 ### Double compile on `npm run package` (fixed)
 - **`vscode:prepublish`** runs `scripts/verify-build.js` only (checks `out/extension.js` exists).
-- **`npm run package`** runs `compile` once, then vsce.
+- **`npm run package`** runs `compile` once, then `scripts/package-vsix.js` writes `build/export2ai-{version}.vsix`.
 
 ### VSIX hygiene
 - **`package.slim.json`** is in `.vscodeignore` (dev-only).
+- **VSIX output** belongs under `build/` only; do not rely on vsce's repo-root default.
 - No unused direct **`minimatch`** dependency (still transitive via archiver).
 
 ### What repo files are for
@@ -169,6 +170,7 @@ VS Code can't compute titles at runtime, but showing the **active model** needs 
 | `package-lock.json` | Yes | No | Reproducible `npm install` |
 | `node_modules/` | No (local) | Yes in VSIX (prod deps) | Build + runtime |
 | `scripts/generated/model-target-contributes.json` | Optional / regen | No | Build intermediate |
+| `build/` | No | No | Generated VSIX output |
 
 ---
 

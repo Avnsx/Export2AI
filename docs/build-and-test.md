@@ -55,7 +55,7 @@ npm run slim:package
 
 ### Local Publishing Env
 
-Local marketplace publishing credentials live in `.env.local`, which is ignored by Git. Expected keys:
+Local marketplace publishing credentials live in `.env.local`, which is ignored by Git and excluded from VSIX packages by `.vscodeignore`. Expected keys:
 
 ```bash
 OVSX_PAT=...

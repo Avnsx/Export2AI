@@ -4,6 +4,8 @@ const path = require("path");
 const zlib = require("zlib");
 
 const root = path.join(__dirname, "..");
+const EXPECTED_PUBLISHER = "avnsx";
+const EXPECTED_NAME = "export2ai";
 const EXPECTED_ICON = "icons/icon-1254x1254.png";
 const EXPECTED_ICON_PATH_IN_VSIX = `extension/${EXPECTED_ICON}`;
 const EXPECTED_ICON_SIZE = 1254;
@@ -92,6 +94,10 @@ function readZipEntries(zipPath) {
 const slimManifest = readJson("package.slim.json");
 const packageManifest = readJson("package.json");
 
+assert.strictEqual(slimManifest.publisher, EXPECTED_PUBLISHER, "slim manifest publisher");
+assert.strictEqual(slimManifest.name, EXPECTED_NAME, "slim manifest name");
+assert.strictEqual(packageManifest.publisher, EXPECTED_PUBLISHER, "generated manifest publisher");
+assert.strictEqual(packageManifest.name, EXPECTED_NAME, "generated manifest name");
 assert.strictEqual(slimManifest.icon, EXPECTED_ICON, "slim manifest uses highest-resolution marketplace icon");
 assert.strictEqual(packageManifest.icon, EXPECTED_ICON, "generated manifest uses highest-resolution marketplace icon");
 
@@ -107,6 +113,10 @@ const vsixPath = path.join(root, "build", `export2ai-${packageManifest.version}.
 assert(fs.existsSync(vsixPath), `VSIX exists at ${path.relative(root, vsixPath)}`);
 
 const vsix = readZipEntries(vsixPath);
+assert(
+  ![...vsix.entries.keys()].some(name => /^extension\/\.env(?:$|\.)/.test(name)),
+  "VSIX must not package local env or publishing credential files"
+);
 assert(vsix.entries.has("extension/package.json"), "VSIX contains extension/package.json");
 assert(vsix.entries.has("extension.vsixmanifest"), "VSIX contains extension.vsixmanifest");
 assert(vsix.entries.has(EXPECTED_ICON_PATH_IN_VSIX), `VSIX contains ${EXPECTED_ICON_PATH_IN_VSIX}`);
@@ -117,9 +127,19 @@ assert.deepStrictEqual(
 );
 
 const packagedManifest = JSON.parse(vsix.extract("extension/package.json").toString("utf8"));
+assert.strictEqual(packagedManifest.publisher, EXPECTED_PUBLISHER, "packaged manifest publisher");
+assert.strictEqual(packagedManifest.name, EXPECTED_NAME, "packaged manifest name");
 assert.strictEqual(packagedManifest.icon, EXPECTED_ICON, "packaged manifest icon path matches source");
 
 const packagedVsixManifest = vsix.extract("extension.vsixmanifest").toString("utf8");
+assert(
+  packagedVsixManifest.includes(`Id="${EXPECTED_NAME}"`),
+  "VSIX metadata extension id/name matches package name"
+);
+assert(
+  packagedVsixManifest.includes(`Publisher="${EXPECTED_PUBLISHER}"`),
+  "VSIX metadata publisher matches package publisher"
+);
 assert(
   packagedVsixManifest.includes(`<Icon>${EXPECTED_ICON_PATH_IN_VSIX}</Icon>`),
   "VSIX metadata icon path matches packaged icon"

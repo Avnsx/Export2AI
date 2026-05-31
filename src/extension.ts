@@ -8,7 +8,7 @@ import { formatModelCommandSlug } from "./utils/modelFormat";
 import { TokenCounter } from "./utils/tokenCounter";
 import { revealInSystemExplorer } from "./utils/systemExplorer";
 import { createZipArchive, ZipResult } from "./zipService";
-import { debugError, debugLog, setDebugOutputChannel } from "./utils/debugLogger";
+import { debugError, debugLog, isDebugLoggingEnabled, setDebugOutputChannel } from "./utils/debugLogger";
 
 let lastZipPath: string | undefined;
 let tokenEstimateManager: TokenEstimateManager | undefined;
@@ -266,18 +266,42 @@ function registerZipHandlers(context: vscode.ExtensionContext): void {
   );
 }
 
+function registerDebugConfigurationWatcher(context: vscode.ExtensionContext): void {
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (!event.affectsConfiguration("export2ai.debug")) {
+        return;
+      }
+
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (!isDebugLoggingEnabled(workspaceFolder?.uri)) {
+        return;
+      }
+
+      debugLog("debug: enabled", {
+        resource: workspaceFolder?.uri,
+        show: true,
+        details: {
+          workspace: workspaceFolder?.uri.fsPath
+        }
+      });
+    })
+  );
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
   setDebugOutputChannel(outputChannel);
   context.subscriptions.push(outputChannel);
   debugLog("extension: activate", {
-    show: false,
+    show: true,
     details: {
       extensionId: context.extension.id,
       version: context.extension.packageJSON?.version,
       workspaceFolders: vscode.workspace.workspaceFolders?.map(folder => folder.uri.fsPath) ?? []
     }
   });
+  registerDebugConfigurationWatcher(context);
   registerZipHandlers(context);
   registerModelTargetCommands(context);
   debugLog("extension: commands registered", {

@@ -6,7 +6,7 @@ Export2AI creates AI-ready zip archives from workspace folders. It applies ignor
 
 ## Entry point
 
-`src/extension.ts` — registers commands, owns session state (`lastZipPath`), wires `TokenEstimateManager`, and delegates zip creation to `zipService.ts`.
+`src/extension.ts` — activates after workbench startup (`onStartupFinished`), registers commands, owns session state (`lastZipPath`), wires `TokenEstimateManager`, and delegates zip creation to `zipService.ts`.
 
 ## Data flow: zip creation
 
@@ -100,11 +100,12 @@ See **[agent-chokepoints.md](./agent-chokepoints.md)** for why these guards exis
 High-level extension work
   → debugLog() / debugError() [debugLogger.ts]
   → live read of export2ai.debug
+  → export2ai.debug config changes reveal the channel and write "debug: enabled"
   → View -> Output -> Export2AI
   → [Export2AI {local short date/time}] scope: message key=value
 ```
 
-Debug mode covers activation/deactivation, command registration, settings navigation, zip creation, copy-structure, single-file copy, token estimate refreshes, ignore setup, and file collection. Routine debug entries are skipped when `export2ai.debug` is off; user-facing errors still surface through notifications/errors.
+Debug mode covers activation/deactivation, command registration, settings navigation, zip creation, copy-structure, single-file copy, token estimate refreshes, ignore setup, and file collection. The Output channel is revealed automatically when debug mode is already enabled at activation or when the setting is turned on at runtime. Routine debug entries are skipped when `export2ai.debug` is off; user-facing errors still surface through notifications/errors.
 
 ## Ignore pipeline
 

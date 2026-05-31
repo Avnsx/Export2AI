@@ -18,7 +18,7 @@ Export2AI is a [Cursor](https://cursor.com) / [VS Code](https://code.visualstudi
 | Without Export2AI | With Export2AI |
 |-------------------|----------------|
 | Manually pick files | One click on a folder |
-| Huge zips full of `node_modules` | Smart ignore rules |
+| Huge zips full of `temporary_files` | Smart ignore rules |
 | No idea how big the context is | Live token estimate |
 | Comments & whitespace bloat the zip | Optional compression |
 
@@ -30,7 +30,7 @@ Export2AI is a [Cursor](https://cursor.com) / [VS Code](https://code.visualstudi
 
 **From a marketplace (when published):**
 
-Search for **Export2AI** in Cursor, VS Code Marketplace, or Open VSX. The listing uses the packaged manifest icon from `icons/icon-1254x1254.png`.
+Search for **Export2AI** in Cursor, VS Code Marketplace, or Open VSX.
 
 **From a `.vsix` file (local build):**
 
@@ -116,8 +116,8 @@ This avoids slow global Settings search, which could freeze Cursor when filterin
 
 ### Troubleshooting settings navigation
 
-1. Enable **`export2ai.debug`** in `settings.json` if needed.
-2. Open **View → Output → Export2AI** and repeat the workflow. Debug lines are written only while the setting is on and use the local PC's short date/time format, e.g. `[Export2AI 05/30/26, 09:05:07 PM] ...`.
+1. Enable **`export2ai.debug`** in `settings.json` if needed. The **Export2AI** Output channel opens automatically when debug mode turns on.
+2. Repeat the workflow. Debug lines are written only while the setting is on and use the local PC's short date/time format, e.g. `[Export2AI 05/30/26, 09:05:07 PM] ...`. If the panel is hidden, open **View → Output → Export2AI**.
 3. For settings problems, confirm the log shows `settingsQuery=@ext:...` matching your extension ID (`publisher.name` from the manifest).
 4. If direct navigation fails, use the fallback actions (**Copy Extension ID**, **Open Extensions View**) and open settings from the extension’s gear icon.
 
@@ -141,7 +141,7 @@ This avoids slow global Settings search, which could freeze Cursor when filterin
 | `export2ai.includeManifest` | Add `_EXPORT2AI_MANIFEST.txt` inside zip | `true` |
 | `export2ai.compressionLevel` | Zip file pack tightness 0 (fast) – 9 (smallest upload); does not change token count after extract | `9` |
 | `export2ai.copyPathAfterCreate` | Copy zip path to clipboard after create | `true` |
-| `export2ai.debug` | Log full extension diagnostics to Output (activation, commands, zip/copy, single-file copy, token scans, settings navigation) | `false` |
+| `export2ai.debug` | Log full extension diagnostics to Output and reveal the Export2AI channel when enabled (activation, commands, zip/copy, single-file copy, token scans, settings navigation) | `false` |
 
 ---
 

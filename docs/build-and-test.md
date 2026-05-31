@@ -51,7 +51,7 @@ npm run slim:package
 
 ### Marketplace assets
 
-`package.slim.json` sets the shared marketplace icon to `icons/icon-1254x1254.png`. VS Code documents the extension icon as at least 128x128, with 256x256 for Retina screens, and the current packaging flow accepts the larger square PNG. The generated `package.json`, Cursor, VS Code Marketplace, and Open VSX all read that manifest field from the packaged VSIX. Smaller icon variants and the GitHub README banner remain in `icons/` for surfaces that need fixed-size assets.
+`package.slim.json` sets the shared marketplace icon to `icons/icon-1254x1254.png`. VS Code documents the extension icon as at least 128x128, with 256x256 for Retina screens, and the current packaging flow accepts the larger square PNG. The generated `package.json`, Cursor, VS Code Marketplace, and Open VSX all read that manifest field from the packaged VSIX. The GitHub README banner remains in `icons/`.
 
 ## npm scripts
 

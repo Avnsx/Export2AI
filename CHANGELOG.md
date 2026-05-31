@@ -16,6 +16,7 @@ All notable changes to Export2AI are documented in this file.
 - **Copy structure default format** — `export2ai.outputFormat` now defaults to `plaintext` instead of `markdown`.
 - **Instant Explorer folder badges (single-pass aggregation)** — token badges for every folder are now computed from **one** workspace walk instead of a separate subtree scan per folder. `TokenCounter.countFilesPerPath()` tokenizes each file once and `aggregateDirectoryEstimates()` sums those counts up each file's ancestor directories, caching the root and every folder in a single pass before firing one decoration-refresh event. `provideFileDecoration` is now a synchronous cache read (the same approach VS Code's built-in Git decoration provider uses).
 - **Full-extension debug logging** — `export2ai.debug` now covers activation, command registration, settings navigation, zip creation, copy-structure, single-file copy, token-estimate refreshes, ignore setup, and file collection. Output lines use the **Export2AI** channel and a compact local-PC timestamp instead of UTC ISO strings.
+- **Visible debug startup** — Export2AI now activates after workbench startup, so when `export2ai.debug` is already enabled the **Export2AI** Output channel is revealed with the activation log; when debug is turned on while the extension is running, the channel is revealed and a visible `debug: enabled` marker is written.
 
 ### Fixed
 

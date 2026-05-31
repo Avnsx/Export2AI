@@ -93,18 +93,28 @@ export function formatDebugLogLine(
   return `[${OUTPUT_CHANNEL_NAME} ${formatLocalCompactTimestamp(date)}] ${message}${detailText ? ` ${detailText}` : ""}`;
 }
 
+function revealDebugOutputChannel(): void {
+  const channel = outputChannel;
+  if (!channel) {
+    return;
+  }
+
+  channel.show(false);
+  setTimeout(() => channel.show(false), 100);
+}
+
 export function debugLog(message: string, options: DebugLogOptions = {}): void {
   if (!isDebugLoggingEnabled(options.resource)) {
     return;
   }
 
-  if (options.show) {
-    outputChannel?.show(true);
-  }
-
   const line = formatDebugLogLine(message, new Date(), options.details);
   outputChannel?.appendLine(line);
   console.log(line);
+
+  if (options.show) {
+    revealDebugOutputChannel();
+  }
 }
 
 export function debugError(

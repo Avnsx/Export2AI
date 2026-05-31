@@ -7,6 +7,10 @@ const root = path.join(__dirname, "..");
 const EXPECTED_ICON = "icons/icon-1254x1254.png";
 const EXPECTED_ICON_PATH_IN_VSIX = `extension/${EXPECTED_ICON}`;
 const EXPECTED_ICON_SIZE = 1254;
+const EXPECTED_ICON_ENTRIES = [
+  "extension/icons/gh_banner.png",
+  EXPECTED_ICON_PATH_IN_VSIX
+];
 
 function readJson(relativePath) {
   return JSON.parse(fs.readFileSync(path.join(root, relativePath), "utf8"));
@@ -106,6 +110,11 @@ const vsix = readZipEntries(vsixPath);
 assert(vsix.entries.has("extension/package.json"), "VSIX contains extension/package.json");
 assert(vsix.entries.has("extension.vsixmanifest"), "VSIX contains extension.vsixmanifest");
 assert(vsix.entries.has(EXPECTED_ICON_PATH_IN_VSIX), `VSIX contains ${EXPECTED_ICON_PATH_IN_VSIX}`);
+assert.deepStrictEqual(
+  [...vsix.entries.keys()].filter(name => name.startsWith("extension/icons/")).sort(),
+  EXPECTED_ICON_ENTRIES,
+  "VSIX packages only the supported icon asset and README banner"
+);
 
 const packagedManifest = JSON.parse(vsix.extract("extension/package.json").toString("utf8"));
 assert.strictEqual(packagedManifest.icon, EXPECTED_ICON, "packaged manifest icon path matches source");

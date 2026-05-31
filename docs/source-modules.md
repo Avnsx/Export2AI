@@ -68,5 +68,5 @@
 | `tsconfig.json` | TypeScript compile options (`src/` → `out/`) |
 | `.vscodeignore` | Controls VSIX contents |
 | `CHANGELOG.md` | Release history; feeds `export2ai.extensionInfo` date |
-| `icons/` | Packaged marketplace icons and the GitHub README banner |
+| `icons/` | Packaged marketplace icon and the GitHub README banner |
 | `build/` | Ignored VSIX output directory |

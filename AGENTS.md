@@ -35,7 +35,7 @@ Export2AI/
 ├── out/                          # compiled JS (shipped in VSIX)
 ├── scripts/                      # build & test utilities (not shipped)
 ├── docs/                         # technical documentation
-├── icons/                        # packaged marketplace icons + README banner
+├── icons/                        # packaged marketplace icon + README banner
 ├── build/                        # generated VSIX output (ignored)
 ├── package.slim.json             # **manifest source of truth** (hand-edited)
 ├── package.json                  # generated after compile (~34 KB) — do not hand-edit

@@ -28,6 +28,9 @@
   "engines": {
     "vscode": "^1.105.0"
   },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
     "commands": [
       {
@@ -837,7 +840,7 @@
             "type": "boolean",
             "default": false,
             "order": 0,
-            "description": "Log full Export2AI diagnostics to the Export2AI output channel (View → Output). When off, routine debug entries are not written."
+            "description": "Log full Export2AI diagnostics to the Export2AI output channel and reveal it when debug mode turns on (View → Output). When off, routine debug entries are not written."
           },
           "export2ai.exclude": {
             "type": "array",

@@ -4,6 +4,7 @@ const path = require("path");
 
 const root = path.join(__dirname, "..");
 const workspaceRoot = path.join(root, "tmp", "badge-runtime-workspace");
+const secondaryWorkspaceRoot = path.join(root, "tmp", "badge-runtime-secondary");
 
 const settings = {
   ignoreGitIgnore: true,
@@ -76,10 +77,21 @@ class EventEmitter {
 
 const workspaceUri = Uri.file(workspaceRoot);
 const srcUri = Uri.joinPath(workspaceUri, "src");
+const secondaryWorkspaceUri = Uri.file(secondaryWorkspaceRoot);
+const secondarySrcUri = Uri.joinPath(secondaryWorkspaceUri, "src");
 const workspaceFolder = {
   uri: workspaceUri,
   name: "badge-runtime-workspace",
   index: 0
+};
+const secondarySettings = {
+  ...settings,
+  llmModel: "claude-sonnet-4-6"
+};
+const secondaryWorkspaceFolder = {
+  uri: secondaryWorkspaceUri,
+  name: "badge-runtime-secondary",
+  index: 1
 };
 
 let capturedProvider;
@@ -93,10 +105,24 @@ function normalizeKey(fsPath) {
   return path.resolve(fsPath).toLowerCase();
 }
 
-function isInWorkspace(uri) {
+function isUnderRoot(uri, rootPath) {
   const target = normalizeKey(uri.fsPath);
-  const workspace = normalizeKey(workspaceRoot);
+  const workspace = normalizeKey(rootPath);
   return target === workspace || target.startsWith(`${workspace}${path.sep}`);
+}
+
+function getWorkspaceFolder(uri) {
+  if (isUnderRoot(uri, workspaceRoot)) {
+    return workspaceFolder;
+  }
+  if (isUnderRoot(uri, secondaryWorkspaceRoot)) {
+    return secondaryWorkspaceFolder;
+  }
+  return undefined;
+}
+
+function settingsForResource(resource) {
+  return resource && isUnderRoot(resource, secondaryWorkspaceRoot) ? secondarySettings : settings;
 }
 
 const vscodeMock = {
@@ -111,19 +137,20 @@ const vscodeMock = {
     Right: 2
   },
   workspace: {
-    workspaceFolders: [workspaceFolder],
+    workspaceFolders: [workspaceFolder, secondaryWorkspaceFolder],
     getWorkspaceFolder(uri) {
-      return isInWorkspace(uri) ? workspaceFolder : undefined;
+      return getWorkspaceFolder(uri);
     },
-    getConfiguration(section) {
+    getConfiguration(section, resource) {
       assert.strictEqual(section, "export2ai", "TokenEstimateManager only reads export2ai config");
+      const scopedSettings = settingsForResource(resource);
       return {
         get(key, fallback) {
-          return Object.prototype.hasOwnProperty.call(settings, key) ? settings[key] : fallback;
+          return Object.prototype.hasOwnProperty.call(scopedSettings, key) ? scopedSettings[key] : fallback;
         },
         inspect(key) {
           return {
-            globalValue: settings[key],
+            globalValue: scopedSettings[key],
             workspaceValue: undefined,
             globalLanguageValue: undefined,
             workspaceLanguageValue: undefined
@@ -282,18 +309,33 @@ function badgeFor(uri) {
     await manager.updateContextForUri(srcUri);
     assert(statusBarItem.tooltip.includes("Counted: folder src"), "selected folder estimate tooltip names folder scope");
 
+    secondarySettings.showExplorerTokenBadges = true;
+    await manager.updateContextForUri(secondarySrcUri);
+    assert(statusBarItem.tooltip.includes("Counted: folder src"), "multi-root selected folder tooltip names folder scope");
+    assert(statusBarItem.tooltip.includes("Model: claude-sonnet-4-6"), "multi-root selected folder tooltip uses that workspace model");
+    assert(statusBarItem.text.includes("claude-sonnet-4-6"), "multi-root selected folder status bar uses that workspace model");
+
     const enabledCollectCalls = collectCalls;
     assert.strictEqual(badgeFor(Uri.joinPath(workspaceUri, "empty-folder")), undefined, "uncached folder has no badge after full aggregation");
     assert.strictEqual(collectCalls, enabledCollectCalls, "provider remains synchronous after full aggregation");
 
     const reDisableEventStart = decorationEvents.length;
     settings.showExplorerTokenBadges = false;
+    secondarySettings.showExplorerTokenBadges = false;
     await manager.refreshWorkspaceEstimates();
     assert.strictEqual(badgeFor(workspaceUri), undefined, "root badge clears after disabling setting");
     assert.strictEqual(badgeFor(srcUri), undefined, "child badge clears after disabling setting");
     assert(
       decorationEvents.slice(reDisableEventStart).some((event) => event === undefined),
       "disabling badges emits a full decoration clear"
+    );
+
+    const outsideEventStart = decorationEvents.length;
+    await manager.updateContextForUri(Uri.file(path.join(root, "tmp", "outside-workspace")));
+    assert.strictEqual(statusBarItem.visible, false, "status bar hides when the counted URI is outside every workspace");
+    assert(
+      decorationEvents.slice(outsideEventStart).some((event) => event === undefined),
+      "outside-workspace update emits a full decoration clear"
     );
 
     settings.enableTokenCounting = false;

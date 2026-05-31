@@ -46,7 +46,7 @@ Format: **`{model} · (est. ~47,382 tokens)`** (exact counts omit `~`)
 
 Implementation: `formatStatusBarZipLabel()` in `src/utils/tokenFormat.ts`, updated by `TokenEstimateManager.updateStatusBar()`.
 
-Hover → compact tooltip: counted scope (`workspace Export2AI` or `folder src`), model, token count, exact/approx offline estimate, and Settings hint.
+Hover → compact tooltip: counted scope (`workspace Export2AI` or `folder src`), model, token count, exact/approx offline estimate, and Settings hint. In multi-root workspaces, selected folders use that folder's workspace-specific model.
 
 Click → opens Export2AI settings.
 

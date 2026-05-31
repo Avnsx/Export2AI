@@ -676,7 +676,7 @@
             "type": "boolean",
             "default": false,
             "order": 1,
-            "description": "Show compact token-estimate badges on Explorer folders. Off by default to keep Cursor/VS Code Explorer clean; status bar and zip notifications still show estimates."
+            "description": "Opt in to compact token-estimate badges on Explorer folders. Default: off, so Cursor/VS Code Explorer stays clean; status bar and zip notifications still show estimates."
           },
           "export2ai.llmModel": {
             "type": "string",

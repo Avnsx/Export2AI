@@ -47,7 +47,7 @@ TokenEstimateManager [tokenEstimate.ts]
   → optional Explorer file-decoration badge per folder (formatTokenBadge; badge only, served from cache when enabled)
 ```
 
-The token estimate is surfaced in the status bar and post-zip notification. The status-bar tooltip names what was counted: the first workspace folder during the automatic scan, or the folder passed to the command. Optional Explorer decoration badges can be enabled with `export2ai.showExplorerTokenBadges` (default `false`); do not add automatic badge behavior outside that opt-in. There are **no per-count menu commands** (see "Why there is no token-bucket menu" below).
+The token estimate is surfaced in the status bar and post-zip notification. The status-bar tooltip names what was counted: the first workspace folder during the automatic scan, or the folder passed to the command. Selected folders in multi-root workspaces use that folder's workspace-specific model. Optional Explorer decoration badges can be enabled with `export2ai.showExplorerTokenBadges` (default `false`); do not add automatic badge behavior outside that opt-in. There are **no per-count menu commands** (see "Why there is no token-bucket menu" below).
 
 ### Single-pass folder aggregation (why badges no longer lazy-scan per folder)
 
@@ -163,7 +163,7 @@ That approach was removed because it was **pure cost with no surviving benefit**
 - **No menu surface left** — the Explorer submenu can only render a handful of rows, so the bucket rows were already dropped from the submenu; the `setContext('export2ai.tokenBucket', …)` had no consumer.
 - **Already covered elsewhere** — the exact token count shows in the **status bar** and **post-zip notification**. Per-folder Explorer decoration badges (`formatTokenBadge`) are optional, off by default, and must stay behind `export2ai.showExplorerTokenBadges`.
 
-Result: the manifest is ~34 KB with ~40 commands. **Do not reintroduce a per-count command set.** If a future requirement truly needs an in-menu count, use a *small* coarse bucket set (≤ ~25 rows) and hide the commands from the palette — never thousands.
+Result: the manifest is ~35 KB with ~40 commands. **Do not reintroduce a per-count command set.** If a future requirement truly needs an in-menu count, use a *small* coarse bucket set (≤ ~25 rows) and hide the commands from the palette — never thousands.
 
 ## Token counting
 

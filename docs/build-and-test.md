@@ -26,7 +26,7 @@ npm install
 | File | Size | Role |
 |------|------|------|
 | `package.slim.json` | ~30 KB | **Source of truth** — edit settings, commands, npm scripts |
-| `package.json` (generated) | **~34 KB** | Produced by merge — base + model-target commands |
+| `package.json` (generated) | **~35 KB** | Produced by merge — base + model-target commands |
 | `scripts/generated/model-target-contributes.json` | Small | Model-target + zipFor menu rows + palette hides |
 | `tests/` | Small | Targetable critical smoke-test runner and docs |
 
@@ -79,11 +79,11 @@ REPO=https://github.com/Avnsx/Export2AI
 | `npm run test:comments` | Language-aware comment stripping |
 | `npm run test:model-format` | Zip filename / model slug helpers |
 | `npm run test:menu-merge` | Submenu shape, single zip row, palette hides, no bucket rows |
-| `npm run test:explorer-badges` | Runtime smoke test for the Explorer file-decoration provider; badges off by default, opt-in only, tooltip scope labels |
+| `npm run test:explorer-badges` | Runtime smoke test for the Explorer file-decoration provider; badges off by default, opt-in only, outside-workspace clears, tooltip scope labels |
 | `npm run test:settings-nav` | Extension ID + extensionInfo metadata |
 | `npm run test:marketplace-assets` | Verifies `build/*.vsix` embeds the marketplace icon path and PNG dimensions |
 | `npm run test:live` | End-to-end zip smoke test |
-| `npm run test:critical` | Runs the 10 critical release smoke targets from `tests/` |
+| `npm run test:critical` | Runs the 10 critical release smoke targets from `tests/` using repo-root execution |
 | `npm run test:critical:list` | Lists target names for selective runs |
 | `npm run test:critical:<target>` | Runs one critical target, e.g. `tokens`, `live`, or `package-assets` |
 
@@ -114,14 +114,14 @@ Or press **F5** (`.vscode/launch.json`) for Extension Development Host.
 
 **Ships:** `out/`, generated `package.json`, production `node_modules/`, `README.md`, `CHANGELOG.md`, `AGENTS.md`, `docs/`, `icons/`
 
-**Does not ship:** `src/`, `scripts/`, `tests/`, `package.slim.json`, `tsconfig.json`, `build/`, `*.vsix`, test zips
+**Does not ship:** `src/`, `scripts/`, project `tests/`, dependency test folders, `package.slim.json`, `tsconfig.json`, `build/`, `*.vsix`, test zips
 
 ## Performance notes
 
 See **[agent-chokepoints.md](./agent-chokepoints.md)** for full detail. Short version:
 
 - **`tsc` is ~2–3 s** — not the main IDE hang source
-- **`package.json` is ~34 KB** — if it balloons into the MB range, you reintroduced a generated-command explosion
+- **`package.json` is ~35 KB** — if it balloons into the MB range, you reintroduced a generated-command explosion
 - **Never generate per-token-count commands** — the count lives in the status bar / notification. Explorer badges are opt-in only (`test:tokens` enforces zero bucket commands; `test:explorer-badges` enforces the badge gate).
 
 ## Releases (GitHub)
@@ -133,7 +133,7 @@ git tag v1.2.6
 git push origin v1.2.6
 ```
 
-The workflow compiles, runs tests, builds `build/export2ai-{version}.vsix`, generates release notes from `CHANGELOG.md` via `scripts/release-notes.js`, and attaches the VSIX to a GitHub Release. Optional marketplace publish when `VSCE_PAT` / `OVSX_PAT` secrets are set.
+The workflow runs `npm run test:critical`, builds `build/export2ai-{version}.vsix`, generates release notes from `CHANGELOG.md` via `scripts/release-notes.js`, and attaches the VSIX to a GitHub Release. Optional marketplace publish when `VSCE_PAT` / `OVSX_PAT` secrets are set.
 
 ## Release checklist
 

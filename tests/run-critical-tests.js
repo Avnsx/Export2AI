@@ -1,68 +1,105 @@
 #!/usr/bin/env node
 const { spawnSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
 
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+const repoRoot = path.join(__dirname, "..");
+
+function resolveNpmCliFromPath() {
+  if (process.platform !== "win32") {
+    return undefined;
+  }
+
+  for (const entry of (process.env.PATH || "").split(path.delimiter)) {
+    const npmCmd = path.join(entry, "npm.cmd");
+    const npmCli = path.join(entry, "node_modules", "npm", "bin", "npm-cli.js");
+    if (fs.existsSync(npmCmd) && fs.existsSync(npmCli)) {
+      return npmCli;
+    }
+  }
+
+  return undefined;
+}
+
+function resolveNpmBaseCommand() {
+  const npmExecPath = process.env.npm_execpath || resolveNpmCliFromPath();
+  if (npmExecPath) {
+    return [process.execPath, npmExecPath];
+  }
+
+  try {
+    return [process.execPath, require.resolve("npm/bin/npm-cli.js")];
+  } catch {
+    return [process.platform === "win32" ? "npm.cmd" : "npm"];
+  }
+}
+
+const npmBaseCommand = resolveNpmBaseCommand();
+
+function npmRun(scriptName) {
+  return [...npmBaseCommand, "run", scriptName];
+}
 
 const TARGETS = [
   {
     name: "compile",
     description: "Generate menus, compile TypeScript, sync settings, and merge package.json.",
-    commands: [[npmCommand, "run", "compile"]]
+    commands: [npmRun("compile")]
   },
   {
     name: "tokens",
     description: "Token format, tokenizer routing, status labels, and manifest hygiene.",
     needsCompile: true,
-    commands: [[npmCommand, "run", "test:tokens"]]
+    commands: [npmRun("test:tokens")]
   },
   {
     name: "explorer-badges",
-    description: "Explorer decoration provider guard: badges off by default, opt-in only.",
+    description: "Explorer decoration provider guard: badges off by default, opt-in only, outside-workspace clear.",
     needsCompile: true,
-    commands: [[npmCommand, "run", "test:explorer-badges"]]
+    commands: [npmRun("test:explorer-badges")]
   },
   {
     name: "debug-logger",
     description: "Debug setting scopes and Output-channel reveal behavior.",
     needsCompile: true,
-    commands: [[npmCommand, "run", "test:debug-logger"]]
+    commands: [npmRun("test:debug-logger")]
   },
   {
     name: "comments",
     description: "Language-aware comment stripping and unchanged unknown file types.",
     needsCompile: true,
-    commands: [[npmCommand, "run", "test:comments"]]
+    commands: [npmRun("test:comments")]
   },
   {
     name: "model-format",
     description: "Model slugs, command slugs, folder-name caps, and zip filename shape.",
     needsCompile: true,
-    commands: [[npmCommand, "run", "test:model-format"]]
+    commands: [npmRun("test:model-format")]
   },
   {
     name: "menu-merge",
     description: "Explorer submenu shape, palette hides, and no token-bucket commands.",
     needsCompile: true,
-    commands: [[npmCommand, "run", "test:menu-merge"]]
+    commands: [npmRun("test:menu-merge")]
   },
   {
     name: "settings-nav",
     description: "Extension ID resolution, @ext settings route, and metadata sync.",
     needsCompile: true,
-    commands: [[npmCommand, "run", "test:settings-nav"]]
+    commands: [npmRun("test:settings-nav")]
   },
   {
     name: "live",
     description: "End-to-end zip smoke test against the local source tree.",
     needsCompile: true,
-    commands: [[npmCommand, "run", "test:live"]]
+    commands: [npmRun("test:live")]
   },
   {
     name: "package-assets",
     description: "Build the VSIX and verify packaged marketplace assets.",
     commands: [
-      [npmCommand, "run", "package"],
-      [npmCommand, "run", "test:marketplace-assets"]
+      npmRun("package"),
+      npmRun("test:marketplace-assets")
     ]
   }
 ];
@@ -147,27 +184,15 @@ function commandLabel(command) {
   return command.map(part => (/\s/.test(part) ? JSON.stringify(part) : part)).join(" ");
 }
 
-function windowsShellQuote(part) {
-  if (/^[A-Za-z0-9_./:\\=-]+$/.test(part)) {
-    return part;
-  }
-  return `"${part.replace(/"/g, '\\"')}"`;
-}
-
 function runCommand(command, targetName) {
   console.log(`\n[critical:${targetName}] ${commandLabel(command)}`);
-  const result = process.platform === "win32"
-    ? spawnSync(command.map(windowsShellQuote).join(" "), {
-      cwd: process.cwd(),
-      env: process.env,
-      shell: true,
-      stdio: "inherit"
-    })
-    : spawnSync(command[0], command.slice(1), {
-      cwd: process.cwd(),
-      env: process.env,
-      stdio: "inherit"
-    });
+  const useShellForCommandShim = process.platform === "win32" && /\.cmd$/i.test(command[0]);
+  const result = spawnSync(command[0], command.slice(1), {
+    cwd: repoRoot,
+    env: process.env,
+    shell: useShellForCommandShim,
+    stdio: "inherit"
+  });
 
   if (result.error) {
     throw result.error;

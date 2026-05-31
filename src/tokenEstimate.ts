@@ -18,8 +18,8 @@ import {
 } from "./utils/tokenFormat";
 
 export class TokenEstimateManager implements vscode.Disposable {
-  private readonly cache = new Map<string, { count: number; approximate: boolean; methodLabel: string }>();
-  private readonly pending = new Map<string, Promise<number>>();
+  private readonly cache = new Map<string, { count: number; approximate: boolean; methodLabel: string; model: string }>();
+  private readonly pending = new Map<string, Promise<number | undefined>>();
   private readonly disposables: vscode.Disposable[] = [];
   private readonly decorationEmitter = new vscode.EventEmitter<vscode.Uri | undefined>();
   private debounceTimer: NodeJS.Timeout | undefined;
@@ -27,6 +27,7 @@ export class TokenEstimateManager implements vscode.Disposable {
   private enabled = false;
   private explorerBadgesEnabled = false;
   private refreshGeneration = 0;
+  private estimateGeneration = 0;
   private initialScanTimer: NodeJS.Timeout | undefined;
   /** Workspace roots whose entire subtree has been aggregated, so badges come from cache only. */
   private readonly fullyScannedRoots = new Set<string>();
@@ -62,6 +63,7 @@ export class TokenEstimateManager implements vscode.Disposable {
             resource: vscode.workspace.workspaceFolders?.[0]?.uri,
             details: { section: "export2ai" }
           });
+          this.invalidatePendingEstimates();
           this.cache.clear();
           this.fullyScannedRoots.clear();
           this.decorationEmitter.fire(undefined);
@@ -140,6 +142,7 @@ export class TokenEstimateManager implements vscode.Disposable {
       debugLog("token-estimate: context update skipped", {
         details: { reason: "no workspace folder", uri: uri.fsPath }
       });
+      this.clearTokenEstimateUi();
       await this.publishEstimate(0, false, true);
       return;
     }
@@ -148,20 +151,23 @@ export class TokenEstimateManager implements vscode.Disposable {
     this.enabled = config.enableTokenCounting;
     this.explorerBadgesEnabled = this.enabled && config.showExplorerTokenBadges;
     if (!this.enabled) {
-      this.statusBarItem?.hide();
-      this.decorationEmitter.fire(undefined);
+      this.clearTokenEstimateUi();
       await this.publishEstimate(0, false, true);
       return;
     }
 
     const count = await this.estimateAndCache(uri, workspaceFolder, this.enabled);
+    if (count === undefined) {
+      return;
+    }
     const cached = this.cache.get(uri.fsPath.toLowerCase());
     await this.publishEstimate(
       count ?? 0,
       this.enabled,
       cached?.approximate ?? true,
       cached?.methodLabel,
-      this.formatEstimateScope(uri, workspaceFolder)
+      this.formatEstimateScope(uri, workspaceFolder),
+      config.llmModel
     );
   }
 
@@ -169,40 +175,75 @@ export class TokenEstimateManager implements vscode.Disposable {
     uri: vscode.Uri,
     workspaceFolder: vscode.WorkspaceFolder,
     enabled: boolean
-  ): Promise<number> {
+  ): Promise<number | undefined> {
+    const config = getConfiguration(workspaceFolder.uri);
     const cacheKey = uri.fsPath.toLowerCase();
+    const pendingKey = `${cacheKey}\u0000${config.llmModel}`;
+    const estimateGeneration = this.estimateGeneration;
     const cached = this.cache.get(cacheKey);
-    if (cached !== undefined) {
+    if (cached !== undefined && cached.model === config.llmModel) {
       debugLog("token-estimate: cache hit", {
         resource: workspaceFolder.uri,
         details: { uri: uri.fsPath, count: cached.count, approximate: cached.approximate, method: cached.methodLabel }
       });
       return cached.count;
     }
+    if (cached !== undefined) {
+      this.cache.delete(cacheKey);
+    }
 
-    const inflight = this.pending.get(cacheKey);
+    const inflight = this.pending.get(pendingKey);
     if (inflight) {
       debugLog("token-estimate: awaiting in-flight estimate", {
         resource: workspaceFolder.uri,
-        details: { uri: uri.fsPath }
+        details: { uri: uri.fsPath, model: config.llmModel }
       });
       return inflight;
     }
 
-    const config = getConfiguration(workspaceFolder.uri);
     debugLog("token-estimate: estimate start", {
       resource: workspaceFolder.uri,
       details: { uri: uri.fsPath, model: config.llmModel }
     });
     const task = this.getTokenInfo(uri, workspaceFolder, config)
       .then(async tokenInfo => {
+        this.pending.delete(pendingKey);
+        if (estimateGeneration !== this.estimateGeneration) {
+          debugLog("token-estimate: invalidated estimate dropped", {
+            resource: workspaceFolder.uri,
+            details: { uri: uri.fsPath, model: config.llmModel }
+          });
+          return undefined;
+        }
+
+        const currentConfig = getConfiguration(workspaceFolder.uri);
+        this.enabled = currentConfig.enableTokenCounting;
+        this.explorerBadgesEnabled = this.enabled && currentConfig.showExplorerTokenBadges;
+        if (!this.enabled || currentConfig.llmModel !== config.llmModel) {
+          if (!this.enabled) {
+            this.clearTokenEstimateUi();
+          } else {
+            this.decorationEmitter.fire(undefined);
+          }
+          debugLog("token-estimate: stale estimate dropped", {
+            resource: workspaceFolder.uri,
+            details: {
+              uri: uri.fsPath,
+              model: config.llmModel,
+              currentModel: currentConfig.llmModel,
+              enabled: this.enabled
+            }
+          });
+          return undefined;
+        }
+
         const estimate = {
           count: tokenInfo.inputTokens,
           approximate: tokenInfo.approximate,
-          methodLabel: TokenCounter.getMethodLabel(tokenInfo.method)
+          methodLabel: TokenCounter.getMethodLabel(tokenInfo.method),
+          model: config.llmModel
         };
         this.cache.set(cacheKey, estimate);
-        this.pending.delete(cacheKey);
         this.decorationEmitter.fire(this.explorerBadgesEnabled ? uri : undefined);
         if (this.isWorkspaceRoot(uri, workspaceFolder)) {
           await this.publishEstimate(
@@ -210,7 +251,8 @@ export class TokenEstimateManager implements vscode.Disposable {
             enabled,
             estimate.approximate,
             estimate.methodLabel,
-            this.formatEstimateScope(uri, workspaceFolder)
+            this.formatEstimateScope(uri, workspaceFolder),
+            config.llmModel
           );
         }
         debugLog("token-estimate: estimate finished", {
@@ -225,15 +267,15 @@ export class TokenEstimateManager implements vscode.Disposable {
         return estimate.count;
       })
       .catch(error => {
-        this.pending.delete(cacheKey);
+        this.pending.delete(pendingKey);
         debugError("token-estimate: estimate failed", error, {
           resource: workspaceFolder.uri,
-          details: { cacheKey, uri: uri.fsPath }
+          details: { cacheKey, uri: uri.fsPath, model: config.llmModel }
         });
         throw error;
       });
 
-    this.pending.set(cacheKey, task);
+    this.pending.set(pendingKey, task);
     return task;
   }
 
@@ -315,7 +357,7 @@ export class TokenEstimateManager implements vscode.Disposable {
       const dirUri = relativeDir
         ? vscode.Uri.joinPath(workspaceFolder.uri, ...relativeDir.split("/"))
         : workspaceFolder.uri;
-      this.cache.set(dirUri.fsPath.toLowerCase(), { count, approximate, methodLabel });
+      this.cache.set(dirUri.fsPath.toLowerCase(), { count, approximate, methodLabel, model });
     }
 
     return { count: dirTotals.get("") ?? 0, approximate, methodLabel };
@@ -333,7 +375,8 @@ export class TokenEstimateManager implements vscode.Disposable {
     this.cache.set(rootKey, {
       count: tokenInfo.inputTokens,
       approximate: tokenInfo.approximate,
-      methodLabel
+      methodLabel,
+      model
     });
     return {
       count: tokenInfo.inputTokens,
@@ -350,6 +393,21 @@ export class TokenEstimateManager implements vscode.Disposable {
         this.cache.delete(key);
       }
     }
+  }
+
+  private clearTokenEstimateUi(): void {
+    this.invalidatePendingEstimates();
+    this.enabled = false;
+    this.explorerBadgesEnabled = false;
+    this.cache.clear();
+    this.fullyScannedRoots.clear();
+    this.statusBarItem?.hide();
+    this.decorationEmitter.fire(undefined);
+  }
+
+  private invalidatePendingEstimates(): void {
+    this.estimateGeneration += 1;
+    this.pending.clear();
   }
 
   private provideDecoration(uri: vscode.Uri): vscode.FileDecoration | undefined {
@@ -443,6 +501,7 @@ export class TokenEstimateManager implements vscode.Disposable {
       this.enabled = false;
       debugLog("token-estimate: refresh skipped", { details: { reason: "no workspace folder", generation } });
       if (generation === this.refreshGeneration) {
+        this.clearTokenEstimateUi();
         await this.publishEstimate(0, false, true);
       }
       return;
@@ -458,9 +517,7 @@ export class TokenEstimateManager implements vscode.Disposable {
     await vscode.commands.executeCommand("setContext", "export2ai.enableTokenCounting", this.enabled);
 
     if (!this.enabled) {
-      this.statusBarItem?.hide();
-      this.fullyScannedRoots.delete(workspaceFolder.uri.fsPath.toLowerCase());
-      this.decorationEmitter.fire(undefined);
+      this.clearTokenEstimateUi();
       if (generation === this.refreshGeneration) {
         await this.publishEstimate(0, false, true);
       }
@@ -498,7 +555,8 @@ export class TokenEstimateManager implements vscode.Disposable {
         root.count,
         root.approximate,
         root.methodLabel,
-        this.formatEstimateScope(workspaceFolder.uri, workspaceFolder)
+        this.formatEstimateScope(workspaceFolder.uri, workspaceFolder),
+        config.llmModel
       );
       // Refresh every visible folder badge in one event. When Explorer badges are off,
       // this clears stale decorations left by earlier builds or previous setting states.
@@ -528,7 +586,8 @@ export class TokenEstimateManager implements vscode.Disposable {
     count: number,
     approximate: boolean,
     methodLabel?: string,
-    countedScope?: string
+    countedScope?: string,
+    llmModel?: string
   ): void {
     if (!this.statusBarItem) {
       this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 90);
@@ -537,13 +596,12 @@ export class TokenEstimateManager implements vscode.Disposable {
     }
 
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    const llmModel = workspaceFolder ? getConfiguration(workspaceFolder.uri).llmModel : undefined;
-
-    this.statusBarItem.text = `$(file-zip) ${formatStatusBarZipLabel(llmModel ?? "", count, approximate)}`;
+    const model = llmModel ?? (workspaceFolder ? getConfiguration(workspaceFolder.uri).llmModel : undefined);
+    this.statusBarItem.text = `$(file-zip) ${formatStatusBarZipLabel(model ?? "", count, approximate)}`;
     const scope = countedScope ?? (workspaceFolder
       ? this.formatEstimateScope(workspaceFolder.uri, workspaceFolder)
       : "current workspace");
-    this.statusBarItem.tooltip = formatTokenTooltip(count, approximate, methodLabel, llmModel, scope);
+    this.statusBarItem.tooltip = formatTokenTooltip(count, approximate, methodLabel, model, scope);
     this.statusBarItem.show();
   }
 
@@ -552,11 +610,12 @@ export class TokenEstimateManager implements vscode.Disposable {
     enabled: boolean,
     approximate: boolean,
     methodLabel?: string,
-    countedScope?: string
+    countedScope?: string,
+    llmModel?: string
   ): Promise<void> {
     await vscode.commands.executeCommand("setContext", "export2ai.enableTokenCounting", enabled);
     if (enabled) {
-      this.updateStatusBar(count, approximate, methodLabel, countedScope);
+      this.updateStatusBar(count, approximate, methodLabel, countedScope, llmModel);
     }
   }
 

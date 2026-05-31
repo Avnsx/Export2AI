@@ -56,7 +56,7 @@
 | `test-comment-strip.js` | Language-aware comment stripping assertions |
 | `test-model-format.js` | Model slug and zip filename helpers |
 | `test-menu-merge.js` | Submenu shape, single zip row, single-file copy row, palette hides, no bucket rows |
-| `test-explorer-badges.js` | Runtime badge-provider guard: badges off by default, opt-in only, tooltip scope labels |
+| `test-explorer-badges.js` | Runtime badge-provider guard: badges off by default, opt-in only, outside-workspace clears, tooltip scope labels |
 | `test-extension-settings.js` | Extension ID resolution + metadata sync |
 | `test-marketplace-assets.js` | VSIX marketplace icon path, manifest asset, and PNG-dimension assertions |
 | `live-test.js` | End-to-end zip creation smoke test |
@@ -73,7 +73,7 @@
 | File | Role |
 |------|------|
 | `package.slim.json` | **Manifest source of truth** — edit settings, commands, scripts here |
-| `package.json` | Generated after compile (~34 KB) — do not hand-edit |
+| `package.json` | Generated after compile (~35 KB) — do not hand-edit |
 | `tsconfig.json` | TypeScript compile options (`src/` → `out/`) |
 | `.vscodeignore` | Controls VSIX contents |
 | `CHANGELOG.md` | Release history; feeds `export2ai.extensionInfo` date |

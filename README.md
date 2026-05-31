@@ -208,7 +208,7 @@ For API-exact Opus 4.7+ counts, use Anthropic’s [token counting API](https://p
 
 ## ⚠️ Known limitations
 
-- Token status bar reflects the **first workspace folder** in multi-root workspaces.
+- The automatic background token scan reflects the **first workspace folder** in multi-root workspaces; selected folders use that folder's workspace-specific settings.
 - **`removeComments`** uses language-aware rules by file extension (C-family, Python `#`, SQL `--`, HTML `<!-- -->`, PowerShell `<# #>`, batch `REM`, etc.). String literals are preserved where possible; edge cases inside regex or nested strings may still lose text. Plain `.json`, `.md`, and unknown extensions are unchanged.
 - The live token count is shown in the status bar and post-zip notification — **not** inside a menu row (VS Code menu titles are static). Explorer folder badges are opt-in and off by default.
 - **`lastZipPath`** is session-only and lost on window reload.
@@ -241,7 +241,7 @@ npm run test:settings-nav      # extension ID + extensionInfo metadata
 npm run package          # compile once + build build/export2ai-x.x.x.vsix
 ```
 
-**Manifest workflow:** edit `package.slim.json` (not the generated `package.json`). `npm run compile` runs `precompile` (menu generation), TypeScript compile, then `postcompile` (comment settings sync + manifest merge). `npm run package` always writes VSIX files under `build/`. `package.json` stays small (~34 KB); if it ever balloons into the MB range you have reintroduced a generated-command explosion — see [docs/agent-chokepoints.md](./docs/agent-chokepoints.md).
+**Manifest workflow:** edit `package.slim.json` (not the generated `package.json`). `npm run compile` runs `precompile` (menu generation), TypeScript compile, then `postcompile` (comment settings sync + manifest merge). `npm run package` always writes VSIX files under `build/`. `package.json` stays small (~35 KB); if it ever balloons into the MB range you have reintroduced a generated-command explosion — see [docs/agent-chokepoints.md](./docs/agent-chokepoints.md).
 
 ### Documentation
 

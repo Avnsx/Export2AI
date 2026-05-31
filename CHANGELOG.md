@@ -8,11 +8,13 @@ All notable changes to Export2AI are documented in this file.
 
 - **Clearer token tooltip** — the status-bar hover now says what was counted (`workspace ...` or `folder ...`), plus model, token count, and exact/approx status.
 - **Explorer token badges stay opt-in** — `export2ai.showExplorerTokenBadges` remains default `false`; disabled mode clears stale decorations and avoids URI-specific badge refreshes.
-- **VSIX asset hygiene** — backup banner source `icons/gh_banner_original.png` is excluded from packaged extensions; the VSIX ships only the marketplace icon and README banner.
+- **Token estimate hardening** — outside-workspace selections now clear stale status/badges, selected folders in multi-root workspaces use that workspace's model, and stale in-flight estimates are dropped.
+- **Release CI parity** — the tagged release workflow now runs the same `npm run test:critical` smoke matrix used locally.
+- **VSIX hygiene** — backup banner source and dependency test folders are excluded from packaged extensions; the VSIX ships only runtime code plus marketplace/README assets.
 
 ### Added
 
-- **Badge regression test** — `npm run test:explorer-badges` verifies badges are off by default, opt-in only, and status-bar tooltips include the counted scope.
+- **Badge regression test** — `npm run test:explorer-badges` verifies badges are off by default, opt-in only, clear on outside-workspace selections, and keep scoped status-bar tooltips.
 - **Targetable smoke matrix** — `tests/` adds 10 critical release targets via `npm run test:critical` and `npm run test:critical:<target>`.
 
 ## [1.2.6] - 2026-05-31

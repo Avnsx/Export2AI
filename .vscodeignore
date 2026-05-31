@@ -11,6 +11,10 @@ node_modules/@types/**
 node_modules/typescript/**
 node_modules/@vscode/**
 node_modules/@types/**
+node_modules/**/test/**
+node_modules/**/tests/**
+node_modules/**/*.test.js
+node_modules/**/*.spec.js
 icons/gh_banner_original.png
 **/.github/**
 build/**

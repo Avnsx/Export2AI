@@ -39,7 +39,7 @@ Export2AI/
 ├── icons/                        # packaged marketplace icon + README banner
 ├── build/                        # generated VSIX output (ignored)
 ├── package.slim.json             # **manifest source of truth** (hand-edited)
-├── package.json                  # generated after compile (~34 KB) — do not hand-edit
+├── package.json                  # generated after compile (~35 KB) — do not hand-edit
 ├── CHANGELOG.md
 ├── README.md                     # user-facing quick start
 ├── tsconfig.json
@@ -66,7 +66,7 @@ Full file-by-file map: **[docs/source-modules.md](./docs/source-modules.md)**
 
 Details and rationale: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
 
-> **History (1.2.3):** the ~10,900 `export2ai.zip.bucket.{N}` command system was **removed**. It bloated `package.json` to ~1.9–4 MB, polluted the Command Palette, and was the root cause of Cursor settings/activate hangs — while duplicating status-bar and notification estimates. `package.json` is now ~34 KB. **Do not bring it back.** See [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) §1.
+> **History (1.2.3):** the ~10,900 `export2ai.zip.bucket.{N}` command system was **removed**. It bloated `package.json` to ~1.9–4 MB, polluted the Command Palette, and was the root cause of Cursor settings/activate hangs — while duplicating status-bar and notification estimates. `package.json` is now ~35 KB. **Do not bring it back.** See [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) §1.
 
 ---
 
@@ -131,7 +131,7 @@ npm run package           # compile once + build/export2ai-x.x.x.vsix
 
 Full pipeline: **[docs/build-and-test.md](./docs/build-and-test.md)**
 
-**Note:** `tsc` is fast (~2–3 s). `package.json` is now ~34 KB (~40 commands), so manifest parse is no longer a hang source. `npm run package` writes VSIX files only to `build/`. If you ever see the manifest grow into the MB range again, you have reintroduced a generated-command explosion — stop and reconsider.
+**Note:** `tsc` is fast (~2–3 s). `package.json` is now ~35 KB (~40 commands), so manifest parse is no longer a hang source. `npm run package` writes VSIX files only to `build/`. If you ever see the manifest grow into the MB range again, you have reintroduced a generated-command explosion — stop and reconsider.
 
 ---
 

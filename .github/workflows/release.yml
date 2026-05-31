@@ -45,17 +45,7 @@ jobs:
         run: npm ci
 
       - name: Compile & test
-        run: |
-          npm run compile
-          npm run test:tokens
-          npm run test:debug-logger
-          npm run test:comments
-          npm run test:model-format
-          npm run test:menu-merge
-          npm run test:settings-nav
-          npm run package
-          npm run test:marketplace-assets
-          npm run test:live
+        run: npm run test:critical
 
       - name: Resolve version
         id: version

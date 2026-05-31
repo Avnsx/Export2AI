@@ -1,6 +1,6 @@
 # Critical Smoke Tests
 
-This folder defines the 10 targetable checks we should run before release. The runner can execute the full matrix or one named target, so small changes do not require the whole suite every time.
+This folder defines the 10 targetable checks we should run before release. The runner can execute the full matrix or one named target, so small changes do not require the whole suite every time. It always runs from the repository root, even when invoked from another working directory.
 
 ## Run
 
@@ -20,7 +20,7 @@ Target-specific runs compile first when the target imports `out/`. Use `-- --ski
 |--------|------------------|
 | `compile` | Menu generation, TypeScript, settings sync, generated manifest |
 | `tokens` | Token labels, tokenizer routing, manifest hygiene, no bucket commands |
-| `explorer-badges` | Badge gate: off by default, opt-in only, scoped status-bar tooltip |
+| `explorer-badges` | Badge gate: off by default, opt-in only, outside-workspace clear, scoped status-bar tooltip |
 | `debug-logger` | Debug setting scopes and Output-channel reveal behavior |
 | `comments` | Language-aware comment stripping |
 | `model-format` | Model slugs and zip filename shape |

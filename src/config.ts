@@ -20,7 +20,7 @@ const DEFAULT_EXCLUDE_PATTERNS = [
 ];
 
 export function getConfiguration(resource?: vscode.Uri): Export2AIConfiguration {
-  const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
+  const config = vscode.workspace.getConfiguration(CONFIG_SECTION, resource);
 
   const legacyExclude = config.get<string[]>("exclude");
   const excludePatterns = config.get<string[]>("excludePatterns")

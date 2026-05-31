@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="https://i.imgur.com/RpgluFc.png" alt="Export2AI" width="1672" height="941">
-</p>
-
 # Export2AI 📦
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./LICENSE.txt)
@@ -10,6 +6,10 @@
 **Zip your project for AI — clean, compact, and ready to upload.**
 
 Export2AI is a [Cursor](https://cursor.com) / [VS Code](https://code.visualstudio.com) extension that turns your workspace (or any folder) into a tidy `.zip` file you can drop into ChatGPT, Claude, or any other AI chat. It skips junk like `node_modules`, shrinks code where it can, and tells you how many tokens you're about to use (exact for OpenAI models, approximate for others).
+
+<p align="center">
+  <img src="https://i.imgur.com/RpgluFc.png" alt="Export2AI banner">
+</p>
 
 ---
 
@@ -41,7 +41,7 @@ npm run compile
 npm run package
 ```
 
-Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick `build/export2ai-1.2.5.vsix`.
+Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick `build/export2ai-1.2.6.vsix`.
 
 ### 2️⃣ Zip your project
 

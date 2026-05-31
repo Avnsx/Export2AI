@@ -2,6 +2,12 @@
 
 All notable changes to Export2AI are documented in this file.
 
+## [1.2.6] - 2026-05-31
+
+### Changed
+
+- **Marketplace README spacing** — moved the README heading and summary above the banner image and removed fixed banner dimensions so Open VSX / Cursor render the Overview tab without large blank vertical gaps.
+
 ## [1.2.5] - 2026-05-31
 
 ### Added

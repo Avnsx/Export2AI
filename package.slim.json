@@ -357,7 +357,7 @@
     "archiver": "^8.0.0",
     "gpt-tokenizer": "^3.4.0",
     "ignore": "^7.0.5",
-    "isbinaryfile": "^5.0.6"
+    "isbinaryfile": "^6.0.0"
   },
   "devDependencies": {
     "@types/archiver": "^7.0.0",

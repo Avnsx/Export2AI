@@ -1,9 +1,9 @@
 import { TextDecoder } from "util";
 import * as vscode from "vscode";
 import ignore from "ignore";
-import { isBinaryFile } from "isbinaryfile";
 import { getConfiguration } from "./config";
 import { CollectProgress, Export2AIConfiguration } from "./types";
+import { isBinaryBuffer } from "./utils/binaryFile";
 import { OutputFormatter } from "./utils/formatters";
 import { IgnoreUtils } from "./utils/ignoreUtils";
 import { ProjectTreeGenerator } from "./utils/projectTree";
@@ -296,7 +296,7 @@ export async function copyFileContentToClipboard(
 
     let binary = false;
     try {
-      binary = await isBinaryFile(fileBuffer, stat.size);
+      binary = await isBinaryBuffer(fileBuffer, stat.size);
     } catch (error) {
       debugError("copy-file-content: binary detection failed; attempting text decode", error, {
         resource: workspaceFolder?.uri ?? targetUri,

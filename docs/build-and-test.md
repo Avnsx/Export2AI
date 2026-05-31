@@ -28,6 +28,7 @@ npm install
 | `package.slim.json` | ~30 KB | **Source of truth** — edit settings, commands, npm scripts |
 | `package.json` (generated) | **~34 KB** | Produced by merge — base + model-target commands |
 | `scripts/generated/model-target-contributes.json` | Small | Model-target + zipFor menu rows + palette hides |
+| `tests/` | Small | Targetable critical smoke-test runner and docs |
 
 > **Note:** before 1.2.3 `package.json` was ~1.9–4 MB because of ~10,900 token-bucket commands. Those were removed (see [agent-chokepoints.md](./agent-chokepoints.md) §1); the manifest is now small.
 
@@ -82,8 +83,18 @@ REPO=https://github.com/Avnsx/Export2AI
 | `npm run test:settings-nav` | Extension ID + extensionInfo metadata |
 | `npm run test:marketplace-assets` | Verifies `build/*.vsix` embeds the marketplace icon path and PNG dimensions |
 | `npm run test:live` | End-to-end zip smoke test |
+| `npm run test:critical` | Runs the 10 critical release smoke targets from `tests/` |
+| `npm run test:critical:list` | Lists target names for selective runs |
+| `npm run test:critical:<target>` | Runs one critical target, e.g. `tokens`, `live`, or `package-assets` |
 
 **Tests require compile first** — they import from `out/`.
+
+For targeted checks, use `npm run test:critical:list` then run one target such as:
+
+```bash
+npm run test:critical:explorer-badges
+npm run test:critical -- tokens live
+```
 
 ## VSIX packaging
 
@@ -103,7 +114,7 @@ Or press **F5** (`.vscode/launch.json`) for Extension Development Host.
 
 **Ships:** `out/`, generated `package.json`, production `node_modules/`, `README.md`, `CHANGELOG.md`, `AGENTS.md`, `docs/`, `icons/`
 
-**Does not ship:** `src/`, `scripts/`, `package.slim.json`, `tsconfig.json`, `build/`, `*.vsix`, test zips
+**Does not ship:** `src/`, `scripts/`, `tests/`, `package.slim.json`, `tsconfig.json`, `build/`, `*.vsix`, test zips
 
 ## Performance notes
 
@@ -127,6 +138,7 @@ The workflow compiles, runs tests, builds `build/export2ai-{version}.vsix`, gene
 ## Release checklist
 
 - [ ] `npm run compile` succeeds
+- [ ] `npm run test:critical` passes for release-level smoke
 - [ ] `npm run test:tokens` passes (manifest hygiene: 0 bucket commands, palette hides)
 - [ ] `npm run test:debug-logger` passes
 - [ ] `npm run test:comments` passes

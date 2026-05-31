@@ -61,6 +61,13 @@
 | `test-marketplace-assets.js` | VSIX marketplace icon path, manifest asset, and PNG-dimension assertions |
 | `live-test.js` | End-to-end zip creation smoke test |
 
+## `tests/` — targetable critical smoke matrix (not shipped in VSIX)
+
+| File | Responsibility |
+|------|----------------|
+| `run-critical-tests.js` | Runs all 10 critical release smoke targets or selected targets |
+| `README.md` | Target list and examples for scoped test runs |
+
 ## Root config
 
 | File | Role |

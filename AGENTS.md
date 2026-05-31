@@ -34,6 +34,7 @@ Export2AI/
 ├── src/                          # TypeScript source (not shipped in VSIX)
 ├── out/                          # compiled JS (shipped in VSIX)
 ├── scripts/                      # build & test utilities (not shipped)
+├── tests/                        # targetable critical smoke-test runner (not shipped)
 ├── docs/                         # technical documentation
 ├── icons/                        # packaged marketplace icon + README banner
 ├── build/                        # generated VSIX output (ignored)
@@ -121,6 +122,7 @@ npm run test:comments
 npm run test:model-format
 npm run test:menu-merge   # submenu shape + palette hides + no bucket rows
 npm run test:explorer-badges # runtime provider gate: badges off by default, opt-in only
+npm run test:critical        # 10 targetable release smoke checks
 npm run test:marketplace-assets
 npm run test:live
 npm run test:settings-nav
@@ -200,6 +202,7 @@ Full write-up: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
 
 - [ ] Read [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) if you touched activate, menus, settings nav, or build
 - [ ] `npm run compile` succeeds
+- [ ] `npm run test:critical` passes for release-level smoke, or a named `npm run test:critical:<target>` is run for scoped changes
 - [ ] `npm run test:tokens` passes (includes manifest-hygiene: no bucket commands, palette hides)
 - [ ] `npm run test:debug-logger` passes
 - [ ] `npm run test:comments` passes

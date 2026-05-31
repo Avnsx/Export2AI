@@ -18,3 +18,4 @@ build/**
 *-chatgpt-context-*.zip
 package.slim.json
 scripts/**
+tests/**

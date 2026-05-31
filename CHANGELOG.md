@@ -13,6 +13,7 @@ All notable changes to Export2AI are documented in this file.
 ### Added
 
 - **Badge regression test** — `npm run test:explorer-badges` verifies badges are off by default, opt-in only, and status-bar tooltips include the counted scope.
+- **Targetable smoke matrix** — `tests/` adds 10 critical release targets via `npm run test:critical` and `npm run test:critical:<target>`.
 
 ## [1.2.6] - 2026-05-31
 

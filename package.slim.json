@@ -357,7 +357,19 @@
     "test:menu-merge": "node scripts/test-menu-merge.js",
     "test:model-format": "node scripts/test-model-format.js",
     "test:marketplace-assets": "node scripts/test-marketplace-assets.js",
-    "test:settings-nav": "node scripts/test-extension-settings.js"
+    "test:settings-nav": "node scripts/test-extension-settings.js",
+    "test:critical": "node tests/run-critical-tests.js",
+    "test:critical:list": "node tests/run-critical-tests.js --list",
+    "test:critical:compile": "node tests/run-critical-tests.js compile",
+    "test:critical:tokens": "node tests/run-critical-tests.js tokens",
+    "test:critical:explorer-badges": "node tests/run-critical-tests.js explorer-badges",
+    "test:critical:debug-logger": "node tests/run-critical-tests.js debug-logger",
+    "test:critical:comments": "node tests/run-critical-tests.js comments",
+    "test:critical:model-format": "node tests/run-critical-tests.js model-format",
+    "test:critical:menu-merge": "node tests/run-critical-tests.js menu-merge",
+    "test:critical:settings-nav": "node tests/run-critical-tests.js settings-nav",
+    "test:critical:live": "node tests/run-critical-tests.js live",
+    "test:critical:package-assets": "node tests/run-critical-tests.js package-assets"
   },
   "dependencies": {
     "@anthropic-ai/tokenizer": "^0.0.4",

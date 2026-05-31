@@ -2,6 +2,13 @@
 
 All notable changes to Export2AI are documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **Explorer token badges are opt-in** — `export2ai.showExplorerTokenBadges` now defaults to `false`, so Cursor/VS Code Explorer no longer gets compact folder token badges unless the user explicitly enables them. Existing stale decorations are cleared when badges are off.
+- **VSIX asset hygiene** — backup banner source `icons/gh_banner_original.png` is excluded from packaged extensions; the VSIX ships only the marketplace icon and README banner.
+
 ## [1.2.6] - 2026-05-31
 
 ### Added

@@ -36,7 +36,7 @@ When **token counting is disabled**:
 - **`Zip Folder for gpt-5.5`** — model-specific `export2ai.zipFor.*` command when config matches
 - **`Zip Folder (custom model in Settings)`** — fallback when model not in known list
 
-There is **no per-token-count menu row** — the count appears in the status bar, the Explorer decoration badge, and the post-zip notification (see [agent-chokepoints.md](./agent-chokepoints.md) §1).
+There is **no per-token-count menu row** — the count appears in the status bar and post-zip notification. Explorer folder badges are optional (`export2ai.showExplorerTokenBadges`, default `false`; see [agent-chokepoints.md](./agent-chokepoints.md) §1).
 
 Known models list: **`MENU_TARGET_MODELS`** in `src/utils/menuTargetModels.ts` (mirror in `scripts/menu-target-models.js`). All generated `modelTarget.*` / `zipFor.*` commands are hidden from the Command Palette (`when: "false"`).
 
@@ -50,17 +50,17 @@ Hover → compact tooltip: active model, token count, exact/approx offline estim
 
 Click → opens Export2AI settings.
 
-## Explorer folder badges
+## Optional Explorer Folder Badges
 
-Each folder that contains included source files shows a **2-character badge** (`formatTokenBadge`) — e.g. `47` for ~47k tokens.
+Explorer folder badges are controlled by **`export2ai.showExplorerTokenBadges`** and are **off by default**. When enabled, each folder that contains included source files shows a **2-character badge** (`formatTokenBadge`) — e.g. `47` for ~47k tokens. When disabled, `TokenEstimateManager` still computes the workspace status-bar estimate, but `provideFileDecoration` returns `undefined` and fires a full decoration refresh to clear stale badges.
 
 Implementation (`TokenEstimateManager` in `tokenEstimate.ts`):
 
 1. **One workspace walk** — `collectFilesUnder(workspaceRoot)` reads every included file once per refresh.
 2. **Per-file tokenize** — `TokenCounter.countFilesPerPath()` selects the tokenizer once and counts each file.
 3. **Aggregate up the tree** — `aggregateDirectoryEstimates()` sums each file's count into its ancestor folders and caches every folder in one pass.
-4. **Refresh all badges** — `onDidChangeFileDecorations(undefined)` updates every visible folder in one event (same pattern as VS Code's Git decoration provider).
-5. **Synchronous serve** — `provideFileDecoration` returns the cached badge; no per-folder subtree rescans after aggregation.
+4. **Refresh all badges** — `onDidChangeFileDecorations(undefined)` updates every visible folder in one event (same pattern as VS Code's Git decoration provider), or clears stale badges when the setting is off.
+5. **Synchronous serve** — `provideFileDecoration` returns the cached badge only when badge display is enabled; no per-folder subtree rescans after aggregation.
 
 The first scan is **deferred ~5 s** after activation (cold-start guard; see [agent-chokepoints.md](./agent-chokepoints.md) §3). File save/create/delete/rename triggers a debounced full refresh. Badge totals may differ from the zip notification by a few newline-boundary tokens — negligible at badge granularity.
 
@@ -70,7 +70,7 @@ The first scan is **deferred ~5 s** after activation (cold-start guard; see [age
 
 ## Limitation (VS Code)
 
-**Model name in the target row** is dynamic via config `when`-clauses for known models; custom models show the fallback target row. A live **token number cannot appear in a menu title** (VS Code limitation) — it is shown in the status bar, Explorer decoration badge, and notification instead.
+**Model name in the target row** is dynamic via config `when`-clauses for known models; custom models show the fallback target row. A live **token number cannot appear in a menu title** (VS Code limitation) — it is shown in the status bar and notification instead. Explorer folder badges are optional.
 
 The **status bar** and **zip filename** always reflect the live setting immediately.
 
@@ -83,7 +83,7 @@ The **status bar** and **zip filename** always reflect the live setting immediat
 | Progress / notification | `src/extension.ts` |
 | Target menu rows | `scripts/generate-model-target-menu.js` + `menu-target-models.js` |
 | Status bar token label | `src/utils/tokenFormat.ts` (`formatStatusBarZipLabel`) |
-| Explorer folder badge | `formatTokenBadge()` in `src/utils/tokenFormat.ts` |
+| Optional Explorer folder badge | `formatTokenBadge()` in `src/utils/tokenFormat.ts`; gated by `export2ai.showExplorerTokenBadges` |
 | Zip manifest | `src/zipService.ts` |
 | Folder aggregation | `aggregateDirectoryEstimates()` in `src/tokenEstimate.ts` |
 

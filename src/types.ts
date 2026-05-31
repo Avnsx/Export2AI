@@ -9,6 +9,7 @@ export interface Export2AIConfiguration {
   compressCode: boolean;
   removeComments: boolean;
   enableTokenCounting: boolean;
+  showExplorerTokenBadges: boolean;
   llmModel: string;
   compressionLevel: number;
   includeManifest: boolean;

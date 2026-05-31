@@ -110,7 +110,7 @@ See **[agent-chokepoints.md](./agent-chokepoints.md)** for full detail. Short ve
 
 - **`tsc` is ~2–3 s** — not the main IDE hang source
 - **`package.json` is ~34 KB** — if it balloons into the MB range, you reintroduced a generated-command explosion
-- **Never generate per-token-count commands** — the count lives in the status bar / decoration badge / notification (`test:tokens` enforces zero bucket commands)
+- **Never generate per-token-count commands** — the count lives in the status bar / notification, with optional Explorer decoration badges (`test:tokens` enforces zero bucket commands)
 
 ## Releases (GitHub)
 

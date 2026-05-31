@@ -35,6 +35,7 @@ export function getConfiguration(resource?: vscode.Uri): Export2AIConfiguration 
     compressCode: config.get<boolean>("compressCode", false),
     removeComments: config.get<boolean>("removeComments", false),
     enableTokenCounting: config.get<boolean>("enableTokenCounting", true),
+    showExplorerTokenBadges: config.get<boolean>("showExplorerTokenBadges", false),
     llmModel: config.get<string>("llmModel", DEFAULT_LLM_MODEL),
     compressionLevel: Math.min(9, Math.max(0, config.get<number>("compressionLevel", 9))),
     includeManifest: config.get<boolean>("includeManifest", true),

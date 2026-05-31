@@ -11,6 +11,7 @@ node_modules/@types/**
 node_modules/typescript/**
 node_modules/@vscode/**
 node_modules/@types/**
+icons/gh_banner_original.png
 **/.github/**
 build/**
 **/*.vsix

@@ -144,10 +144,16 @@
             "order": 0,
             "description": "Estimate token usage and show counts in the Explorer menu, status bar, and zip notifications."
           },
+          "export2ai.showExplorerTokenBadges": {
+            "type": "boolean",
+            "default": false,
+            "order": 1,
+            "description": "Show compact token-estimate badges on Explorer folders. Off by default to keep Cursor/VS Code Explorer clean; status bar and zip notifications still show estimates."
+          },
           "export2ai.llmModel": {
             "type": "string",
             "default": "gpt-5.5",
-            "order": 1,
+            "order": 2,
             "description": "Target AI model for offline token estimates, menu labels, zip filenames, and the in-zip manifest.",
             "markdownDescription": "Target AI model for **offline token estimates** when zipping or copying project structure. Export2AI picks a tokenizer from this name — nothing is sent to any API.\n\n**OpenAI (ChatGPT)** — exact offline count (no `~`). Names starting with `gpt-`, `o1`, `o3`, or `o4` work:\n- Modern: `gpt-5.5` *(default)*, `gpt-5.5-pro`, `gpt-5.4`, `gpt-4o`, `gpt-4.1`, `o3-mini`, `o4-mini`\n- Legacy: `gpt-4`, `gpt-3.5-turbo` *(uses a separate exact cl100k tokenizer)*\n\n**Anthropic (Claude)** — approximate count (shown with a `~` prefix). Any name starting with `claude` works:\n- **Opus 4.7+:** `claude-opus-4-8`, `claude-opus-4-7` — updated tokenizer (offline uplift on legacy baseline; dated IDs like `claude-opus-4-8-20260528` also match)\n- **Other Claude:** `claude-sonnet-4-6`, `claude-opus-4-6`, `claude-haiku-4-5` — legacy Claude tokenizer (~1–2% off)\n\n**Google, xAI, others** — rough `characters ÷ 4` estimate only (e.g. `gemini-2.5-pro`, `grok-3`). Exact tokenizers for these families are not bundled yet.\n\nUse the same model name you plan to paste or upload the zip into. Partial names match by prefix (e.g. `gpt-5.5-thinking` → o200k tokenizer)."
           }

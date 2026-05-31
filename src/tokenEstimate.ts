@@ -25,6 +25,7 @@ export class TokenEstimateManager implements vscode.Disposable {
   private debounceTimer: NodeJS.Timeout | undefined;
   private statusBarItem: vscode.StatusBarItem | undefined;
   private enabled = false;
+  private explorerBadgesEnabled = false;
   private refreshGeneration = 0;
   private initialScanTimer: NodeJS.Timeout | undefined;
   /** Workspace roots whose entire subtree has been aggregated, so badges come from cache only. */
@@ -34,10 +35,12 @@ export class TokenEstimateManager implements vscode.Disposable {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     const config = getConfiguration(workspaceFolder?.uri);
     this.enabled = config.enableTokenCounting;
+    this.explorerBadgesEnabled = this.enabled && config.showExplorerTokenBadges;
     debugLog("token-estimate: manager initialized", {
       resource: workspaceFolder?.uri,
       details: {
         enabled: this.enabled,
+        explorerBadgesEnabled: this.explorerBadgesEnabled,
         initialScanDelayMs: INITIAL_SCAN_DELAY_MS,
         workspace: workspaceFolder?.uri.fsPath
       }
@@ -61,6 +64,7 @@ export class TokenEstimateManager implements vscode.Disposable {
           });
           this.cache.clear();
           this.fullyScannedRoots.clear();
+          this.decorationEmitter.fire(undefined);
           this.scheduleRefresh();
         }
       }),
@@ -87,6 +91,10 @@ export class TokenEstimateManager implements vscode.Disposable {
         provideFileDecoration: (uri) => this.provideDecoration(uri)
       })
     );
+
+    if (!this.explorerBadgesEnabled) {
+      queueMicrotask(() => this.decorationEmitter.fire(undefined));
+    }
 
     // Defer the first scan so cold-start (e.g. opening Settings) is not competing with a full-repo token walk.
     this.initialScanTimer = setTimeout(() => {
@@ -292,6 +300,27 @@ export class TokenEstimateManager implements vscode.Disposable {
     return { count: dirTotals.get("") ?? 0, approximate, methodLabel };
   }
 
+  private countWorkspaceRootOnly(
+    workspaceFolder: vscode.WorkspaceFolder,
+    files: ReadonlyArray<FileContent>,
+    model: string
+  ): { count: number; approximate: boolean; methodLabel: string } {
+    const tokenInfo = TokenCounter.countFilesContent(files, model);
+    const methodLabel = TokenCounter.getMethodLabel(tokenInfo.method);
+    const rootKey = workspaceFolder.uri.fsPath.toLowerCase();
+    this.clearCacheUnderRoot(rootKey);
+    this.cache.set(rootKey, {
+      count: tokenInfo.inputTokens,
+      approximate: tokenInfo.approximate,
+      methodLabel
+    });
+    return {
+      count: tokenInfo.inputTokens,
+      approximate: tokenInfo.approximate,
+      methodLabel
+    };
+  }
+
   /** Drop cached estimates for a root and its descendants before repopulating from a fresh walk. */
   private clearCacheUnderRoot(rootKey: string): void {
     const prefix = rootKey.endsWith(path.sep) ? rootKey : `${rootKey}${path.sep}`;
@@ -303,7 +332,7 @@ export class TokenEstimateManager implements vscode.Disposable {
   }
 
   private provideDecoration(uri: vscode.Uri): vscode.FileDecoration | undefined {
-    if (!this.enabled || settingsNavigationInProgress) {
+    if (!this.enabled || !this.explorerBadgesEnabled || settingsNavigationInProgress) {
       return undefined;
     }
 
@@ -386,9 +415,10 @@ export class TokenEstimateManager implements vscode.Disposable {
 
     const config = getConfiguration(workspaceFolder.uri);
     this.enabled = config.enableTokenCounting;
+    this.explorerBadgesEnabled = this.enabled && config.showExplorerTokenBadges;
     debugLog("token-estimate: refresh start", {
       resource: workspaceFolder.uri,
-      details: { generation, enabled: this.enabled, model: config.llmModel, config }
+      details: { generation, enabled: this.enabled, explorerBadgesEnabled: this.explorerBadgesEnabled, model: config.llmModel, config }
     });
     await vscode.commands.executeCommand("setContext", "export2ai.enableTokenCounting", this.enabled);
 
@@ -420,12 +450,18 @@ export class TokenEstimateManager implements vscode.Disposable {
       }
 
       this.pending.clear();
-      const root = this.aggregateDirectoryEstimates(workspaceFolder, files, config.llmModel);
-      this.fullyScannedRoots.add(workspaceFolder.uri.fsPath.toLowerCase());
+      const root = this.explorerBadgesEnabled
+        ? this.aggregateDirectoryEstimates(workspaceFolder, files, config.llmModel)
+        : this.countWorkspaceRootOnly(workspaceFolder, files, config.llmModel);
+      if (this.explorerBadgesEnabled) {
+        this.fullyScannedRoots.add(workspaceFolder.uri.fsPath.toLowerCase());
+      } else {
+        this.fullyScannedRoots.delete(workspaceFolder.uri.fsPath.toLowerCase());
+      }
 
       this.updateStatusBar(root.count, root.approximate, root.methodLabel);
-      // Refresh every visible folder badge in one event. Firing `undefined` triggers a full
-      // decoration refresh without hitting VS Code's 250-resource per-event cap.
+      // Refresh every visible folder badge in one event. When Explorer badges are off,
+      // this clears stale decorations left by earlier builds or previous setting states.
       this.decorationEmitter.fire(undefined);
       debugLog("token-estimate: refresh finished", {
         resource: workspaceFolder.uri,
@@ -435,6 +471,7 @@ export class TokenEstimateManager implements vscode.Disposable {
           rootCount: root.count,
           approximate: root.approximate,
           method: root.methodLabel,
+          explorerBadgesEnabled: this.explorerBadgesEnabled,
           cachedFolders: this.cache.size,
           elapsedMs: Date.now() - started
         }

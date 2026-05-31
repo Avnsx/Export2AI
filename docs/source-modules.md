@@ -9,7 +9,7 @@
 | `types.ts` | `Export2AIConfiguration`, `FileContent`, `TokenCountMethod`, collect/zip option interfaces |
 | `zipService.ts` | `createZipArchive()`; archiver integration, in-zip manifest |
 | `projectService.ts` | Ignore context, copy project structure, single-file content copy, tree + formatter orchestration |
-| `tokenEstimate.ts` | `TokenEstimateManager` — status bar, Explorer decoration badge, deferred scans, single-pass per-folder aggregation (`aggregateDirectoryEstimates`) |
+| `tokenEstimate.ts` | `TokenEstimateManager` — status bar, optional Explorer decoration badge, deferred scans, single-pass per-folder aggregation when badges are enabled (`aggregateDirectoryEstimates`) |
 | `archiver-v8.d.ts` | Type declarations for archiver v8 `ZipArchive` |
 | `ignore.d.ts` | Type declarations for `ignore` package |
 
@@ -25,7 +25,7 @@
 | `formatters.ts` | Plaintext / markdown / XML structure output |
 | `tokenCounter.ts` | `selectTokenizer()` → family-specific counting; `countFilesContent` (joined) and `countFilesPerPath` (per-file, for folder aggregation) |
 | `anthropicTokenizer.ts` | Opus 4.7+ content-aware uplift heuristics |
-| `tokenFormat.ts` | Display strings, badge formatting, status-bar label, compact status-bar tooltip |
+| `tokenFormat.ts` | Display strings, optional badge formatting, status-bar label, compact status-bar tooltip |
 | `modelRegistry.ts` | `MODEL_REGISTRY`, `detectFamily`, `DEFAULT_LLM_MODEL` |
 | `modelFormat.ts` | Model file slug, command-id slug, compact folder-name + timestamp helpers, zip filename builder |
 | `menuTargetModels.ts` | `MENU_TARGET_MODELS` — models with config-scoped Explorer menu rows |

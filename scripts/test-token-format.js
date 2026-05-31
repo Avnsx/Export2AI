@@ -231,6 +231,14 @@ function testManifestHygiene() {
     getConfigurationProperty(pkg, "export2ai.llmModel").default === DEFAULT_LLM_MODEL,
     "package.json default matches DEFAULT_LLM_MODEL"
   );
+  assert(
+    getConfigurationProperty(pkg, "export2ai.enableTokenCounting").default === true,
+    "token counting remains enabled by default"
+  );
+  assert(
+    getConfigurationProperty(pkg, "export2ai.showExplorerTokenBadges").default === false,
+    "Explorer token badges are opt-in by default"
+  );
   console.log(`manifest hygiene: ok (${commands.length} commands, no bucket commands, generated rows hidden from palette)`);
 }
 

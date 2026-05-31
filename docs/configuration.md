@@ -11,7 +11,7 @@ The extension contributes **categorized settings** (array form in `package.slim.
 | Category | Settings |
 |----------|----------|
 | **Export2AI** | Extension info (read-only) |
-| **Token estimates** | `enableTokenCounting`, `llmModel` |
+| **Token estimates** | `enableTokenCounting`, `showExplorerTokenBadges`, `llmModel` |
 | **File collection** | Ignore rules, exclude patterns/paths, `maxFileSize`, `fileConcurrency` |
 | **Zip archive** | `compressCode`, `compressionLevel`, `includeManifest`, `copyPathAfterCreate` |
 | **Comments** | `removeComments`, `commentStripLanguages` (read-only reference) |
@@ -33,7 +33,8 @@ When adding a setting, place it in the matching category object in `package.slim
 | `export2ai.excludePaths` | string[] | `[]` | Workspace-relative paths to exclude entirely |
 | `export2ai.compressCode` | boolean | `false` | Reduces exported text size (trim whitespace, drop blank lines); see Settings UI for full guidance |
 | `export2ai.removeComments` | boolean | `false` | Strip comments per file type (see [comment-stripping.md](./comment-stripping.md)) |
-| `export2ai.enableTokenCounting` | boolean | `true` | Token estimates in status bar, Explorer badges, notifications |
+| `export2ai.enableTokenCounting` | boolean | `true` | Token estimates in status bar, Explorer menu state, and zip notifications |
+| `export2ai.showExplorerTokenBadges` | boolean | `false` | Optional compact token badges on Explorer folders; off by default to keep Cursor/VS Code Explorer clean |
 | `export2ai.llmModel` | string | `gpt-5.5` | **Target AI model** for token estimates, Explorer menu target row, status bar label, zip filename, and zip manifest — see [target-model-ui.md](./target-model-ui.md) |
 | `export2ai.maxFileSize` | number | `1048576` | Max bytes per file (larger → placeholder) |
 | `export2ai.maxDepth` | number | `5` | Tree depth for copy project structure |

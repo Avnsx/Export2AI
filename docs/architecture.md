@@ -43,17 +43,17 @@ TokenEstimateManager [tokenEstimate.ts]
        caching the root + every folder that contains an included file
   → setContext: export2ai.enableTokenCounting (drives menu visibility)
   → status bar (root estimate; model + `(est. N tokens)`; click → openSettings; compact tooltip)
-  → decorationEmitter.fire(undefined) → all folder badges refresh in one event
-  → Explorer file-decoration badge per folder (formatTokenBadge; badge only, served from cache)
+  → decorationEmitter.fire(undefined) → optional folder badges refresh or stale badges clear in one event
+  → optional Explorer file-decoration badge per folder (formatTokenBadge; badge only, served from cache when enabled)
 ```
 
-The token estimate is surfaced in **three** places — status bar, Explorer decoration badge, and the post-zip notification. There are **no per-count menu commands** (see "Why there is no token-bucket menu" below).
+The token estimate is surfaced in the status bar and post-zip notification. Optional Explorer decoration badges can be enabled with `export2ai.showExplorerTokenBadges` (default `false`). There are **no per-count menu commands** (see "Why there is no token-bucket menu" below).
 
 ### Single-pass folder aggregation (why badges no longer lazy-scan per folder)
 
 Earlier, `provideFileDecoration` kicked off a **separate** full subtree `collectFiles()` for each folder VS Code asked about, returning the badge only after that folder's scan completed and was cached. Two problems followed: badges appeared late (one folder at a time), and a file at depth *d* was read and tokenized **once per ancestor folder** (`O(depth × files)` redundant work).
 
-Now a refresh does **one** walk of the workspace root, tokenizes each file **once** (`countFilesPerPath`), and propagates each file's count up its ancestor directories (`aggregateDirectoryEstimates`). This caches the root and every folder in a single pass, then fires `onDidChangeFileDecorations(undefined)` so all visible badges update together. `provideFileDecoration` is then a synchronous cache read — the same pattern VS Code's built-in Git decoration provider uses (precompute a full map, serve synchronously).
+When Explorer badges are enabled, a refresh does **one** walk of the workspace root, tokenizes each file **once** (`countFilesPerPath`), and propagates each file's count up its ancestor directories (`aggregateDirectoryEstimates`). This caches the root and every folder in a single pass, then fires `onDidChangeFileDecorations(undefined)` so all visible badges update together. `provideFileDecoration` is then a synchronous cache read — the same pattern VS Code's built-in Git decoration provider uses (precompute a full map, serve synchronously). When badges are disabled, the same refresh clears stale decorations and caches only the root status-bar estimate.
 
 The summed per-folder estimate can differ from `countFilesContent()` (the joined-corpus count used by the zip notification) by a handful of newline-boundary tokens — negligible for an estimate and invisible at 2-character badge granularity. Per-folder on-demand scans survive **only** as a fallback during the initial ~5 s deferred-scan window (and for non-primary roots in multi-root workspaces); once a root is fully aggregated, uncached folders simply have no included files and show no badge.
 
@@ -161,7 +161,7 @@ That approach was removed because it was **pure cost with no surviving benefit**
 - **Command Palette pollution** — VS Code lists every command that has a `title` in the palette by default. 10,900 `Zip (~N tokens…)` rows flooded it.
 - **Manifest bloat** — `package.json` ballooned to ~1.9–4 MB, which slows the Settings UI, npm task detection, and extension-host parse (the original Cursor hang).
 - **No menu surface left** — the Explorer submenu can only render a handful of rows, so the bucket rows were already dropped from the submenu; the `setContext('export2ai.tokenBucket', …)` had no consumer.
-- **Already covered elsewhere** — the exact token count shows in the **status bar**, the per-folder **Explorer decoration badge** (`formatTokenBadge`), and the **post-zip notification**.
+- **Already covered elsewhere** — the exact token count shows in the **status bar** and **post-zip notification**. Per-folder Explorer decoration badges (`formatTokenBadge`) are optional and off by default.
 
 Result: the manifest is ~34 KB with ~40 commands. **Do not reintroduce a per-count command set.** If a future requirement truly needs an in-menu count, use a *small* coarse bucket set (≤ ~25 rows) and hide the commands from the palette — never thousands.
 

@@ -41,7 +41,7 @@ npm run compile
 npm run package
 ```
 
-Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick `build/export2ai-1.2.6.vsix`.
+Then in Cursor/VS Code: **Extensions → `...` → Install from VSIX** → pick `build/export2ai-1.2.7.vsix`.
 
 ### 2️⃣ Zip your project
 
@@ -109,7 +109,7 @@ These open the **extension-specific settings page** via VS Code’s `@ext:` rout
 
 At the **top** of the settings page, a read-only row shows:
 
-`Extension version v.1.2.6 · Last updated May 31, 2026`
+`Extension version v.1.2.7 · Last updated May 31, 2026`
 
 That string is synced automatically from `package.json` version and `CHANGELOG.md` when the extension is built.
 

@@ -4,11 +4,13 @@ All notable changes to Export2AI are documented in this file.
 
 ## [Unreleased]
 
+## [1.2.7] - 2026-05-31
+
 ### Changed
 
 - **Clearer token tooltip** — the status-bar hover now says what was counted (`workspace ...` or `folder ...`), plus model, token count, and exact/approx status.
-- **Explorer token badges stay opt-in** — `export2ai.showExplorerTokenBadges` remains default `false`; disabled mode clears stale decorations and avoids URI-specific badge refreshes.
-- **Token estimate hardening** — outside-workspace selections now clear stale status/badges, selected folders in multi-root workspaces use that workspace's model, and stale in-flight estimates are dropped.
+- **Explorer token badges stay opt-in** — `export2ai.showExplorerTokenBadges` remains default `false`; disabled/outside-workspace paths clear stale decorations and never reintroduce automatic badges.
+- **Token estimate hardening** — selected folders in multi-root workspaces use that workspace's model, and stale in-flight estimates are dropped before they can republish old UI.
 - **Release CI parity** — the tagged release workflow now runs the same `npm run test:critical` smoke matrix used locally.
 - **VSIX hygiene** — backup banner source and dependency test folders are excluded from packaged extensions; the VSIX ships only runtime code plus marketplace/README assets.
 

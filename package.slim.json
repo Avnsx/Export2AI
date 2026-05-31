@@ -1,7 +1,7 @@
 {
   "name": "export2ai",
   "displayName": "Export2AI",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Create compact AI-ready zip archives from the current Cursor or VS Code workspace.",
   "icon": "icons/icon-1254x1254.png",
   "main": "./out/extension.js",
@@ -127,7 +127,7 @@
         "properties": {
           "export2ai.extensionInfo": {
             "type": "string",
-            "default": "Extension version v.1.2.6 · Last updated May 31, 2026",
+            "default": "Extension version v.1.2.7 · Last updated May 31, 2026",
             "readOnly": true,
             "order": -100
           }

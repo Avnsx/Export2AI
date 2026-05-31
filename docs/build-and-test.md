@@ -129,8 +129,8 @@ See **[agent-chokepoints.md](./agent-chokepoints.md)** for full detail. Short ve
 Push a semver tag to trigger [`.github/workflows/release.yml`](../.github/workflows/release.yml):
 
 ```bash
-git tag v1.2.6
-git push origin v1.2.6
+git tag v1.2.7
+git push origin v1.2.7
 ```
 
 The workflow runs `npm run test:critical`, builds `build/export2ai-{version}.vsix`, generates release notes from `CHANGELOG.md` via `scripts/release-notes.js`, and attaches the VSIX to a GitHub Release. Optional marketplace publish when `VSCE_PAT` / `OVSX_PAT` secrets are set.

@@ -273,7 +273,7 @@ function badgeFor(uri) {
       subscriptions: [],
       extension: {
         id: "avnsx.export2ai",
-        packageJSON: { publisher: "avnsx", name: "export2ai", version: "1.2.6" }
+        packageJSON: { publisher: "avnsx", name: "export2ai", version: "1.2.7" }
       },
       extensionPath: root
     });

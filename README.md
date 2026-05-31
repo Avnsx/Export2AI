@@ -109,7 +109,7 @@ These open the **extension-specific settings page** via VS Code’s `@ext:` rout
 
 At the **top** of the settings page, a read-only row shows:
 
-`Extension version v.1.2.5 · Last updated May 31, 2026`
+`Extension version v.1.2.6 · Last updated May 31, 2026`
 
 That string is synced automatically from `package.json` version and `CHANGELOG.md` when the extension is built.
 
@@ -217,7 +217,7 @@ For API-exact Opus 4.7+ counts, use Anthropic’s [token counting API](https://p
 ## 📋 Requirements
 
 - **VS Code / Cursor** `^1.105.0`
-- **Node.js** 18+ (for building from source)
+- **Node.js** 24+ (for building from source and matching the release workflow)
 
 ---
 

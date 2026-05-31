@@ -4,12 +4,6 @@ All notable changes to Export2AI are documented in this file.
 
 ## [1.2.6] - 2026-05-31
 
-### Changed
-
-- **Marketplace README spacing** — moved the README heading and summary above the banner image and removed fixed banner dimensions so Open VSX / Cursor render the Overview tab without large blank vertical gaps.
-
-## [1.2.5] - 2026-05-31
-
 ### Added
 
 - **Single-file copy command** — right-click a file in Explorer and choose **Export2AI: Copy Content to Clipboard** to copy exact UTF-8 text without creating a zip. The command rejects folders, multi-selects, binary files, invalid UTF-8, read failures, and clipboard failures with visible Export2AI messages instead of quiet no-ops.
@@ -17,6 +11,7 @@ All notable changes to Export2AI are documented in this file.
 
 ### Changed
 
+- **Marketplace README spacing** — moved the README heading and summary above the banner image and removed fixed banner dimensions so Open VSX / Cursor render the Overview tab without large blank vertical gaps.
 - **VSIX output folder** — `npm run package` now writes release packages to `build/export2ai-{version}.vsix` instead of the repository root. Release automation, docs, and release notes now use the same path.
 - **Marketplace asset validation** — release automation packages the VSIX before upload/publish and runs `test:marketplace-assets` against the embedded manifest icon path and PNG dimensions.
 - **Copy structure default format** — `export2ai.outputFormat` now defaults to `plaintext` instead of `markdown`.

@@ -127,7 +127,7 @@
         "properties": {
           "export2ai.extensionInfo": {
             "type": "string",
-            "default": "Extension version v.1.2.5 · Last updated May 31, 2026",
+            "default": "Extension version v.1.2.6 · Last updated May 31, 2026",
             "readOnly": true,
             "order": -100
           }

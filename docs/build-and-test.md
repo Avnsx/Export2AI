@@ -135,7 +135,7 @@ git tag v1.2.8
 git push origin v1.2.8
 ```
 
-The workflow runs `npm run test:critical`, builds `build/export2ai-{version}.vsix`, generates release notes from `CHANGELOG.md` via `scripts/release-notes.js`, and attaches the VSIX to a GitHub Release. Optional marketplace publish when `VSCE_PAT` / `OVSX_PAT` secrets are set.
+The workflow runs `npm run test:critical`, builds `build/export2ai-{version}.vsix`, generates release notes from `CHANGELOG.md` via `scripts/release-notes.js`, and attaches the VSIX to a GitHub Release. Optional marketplace publish runs when `VSCE_PAT` / `OVSX_PAT` secrets are set. Open VSX publishing uses `--skip-duplicate` so the lane stays green when Open VSX reports a version as already uploaded but not active/visible yet.
 
 ## Release checklist
 

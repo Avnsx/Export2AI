@@ -109,11 +109,55 @@ function assertNoPathPrefix(paths, prefix, message) {
 function createIgnoreInstance() {
   const { IgnoreUtils } = require("../out/utils/ignoreUtils");
   const ig = IgnoreUtils.createIgnoreInstance(
-    ["node_modules", "*.log", "dist", "build", "out", ".git", "__pycache__", ".pytest_cache", ".cache", ".tmp"],
+    [
+      "node_modules",
+      "*.log",
+      "dist",
+      "site",
+      "build",
+      "out",
+      ".git",
+      "__pycache__",
+      ".pytest_cache",
+      ".cache",
+      ".tmp",
+      "**/*private*key*",
+      "**/*private-key*",
+      "**/*secret*key*",
+      "**/*signing*key*",
+      "**/*ed25519*key*",
+      "**/*rsa*key*",
+      "**/*.pem",
+      "**/*.key",
+      "**/*.p8",
+      "**/*.p12",
+      "**/*.pfx",
+      "**/id_rsa",
+      "**/id_dsa",
+      "**/id_ecdsa",
+      "**/id_ed25519",
+      "**/*.asc",
+      "**/*.gpg",
+      "**/.env",
+      "**/.env.*",
+      "**/*token*",
+      "**/*credential*",
+      "**/*credentials*",
+      "**/*secrets*",
+      "out*.json"
+    ],
     true,
     true
   );
-  ig.add("ignored-by-gitignore.txt");
+  ig.add([
+    "ignored-by-gitignore.txt",
+    "AGENTS.md",
+    "README.md",
+    "pyproject.toml",
+    "docs/",
+    "tests/",
+    "tools/"
+  ]);
   return ig;
 }
 
@@ -138,8 +182,17 @@ async function collect(rootUri, sourceUri, options = {}) {
 
   try {
     writeFile(path.join(tempRoot, "src", "index.ts"), "export const ok = true;\n");
+    writeFile(path.join(tempRoot, "AGENTS.md"), "agent rules\n");
+    writeFile(path.join(tempRoot, "README.md"), "# Project\n");
+    writeFile(path.join(tempRoot, "pyproject.toml"), "[project]\nname = \"demo\"\n");
+    writeFile(path.join(tempRoot, "docs", "guide.md"), "documentation\n");
+    writeFile(path.join(tempRoot, "tests", "test_app.py"), "def test_ok():\n    assert True\n");
+    writeFile(path.join(tempRoot, "tests", "test_token_flow.py"), "def test_token_flow():\n    assert True\n");
+    writeFile(path.join(tempRoot, "tools", "export_clean_archive.py"), "print('tool')\n");
+    writeFile(path.join(tempRoot, "tools", "generate_signing_key.py"), "print('generate test key')\n");
     writeFile(path.join(tempRoot, "_EXPORT2AI_GIT_METADATA_PLACEHOLDER.txt"), "real project file with legacy marker name\n");
     writeFile(path.join(tempRoot, ".env"), "SHOULD_NOT_EXPORT=true\n");
+    writeFile(path.join(tempRoot, ".env.local"), "SHOULD_NOT_EXPORT=true\n");
     writeFile(path.join(tempRoot, ".gitignore"), "node_modules\n.env\nignored-by-gitignore.txt\n");
     writeFile(path.join(tempRoot, ".gitattributes"), "*.ts text eol=lf\n");
     writeFile(path.join(tempRoot, ".github", "workflows", "ci.yml"), "name: real ci\nsecrets: ${{ secrets.PAT }}\n");
@@ -161,6 +214,15 @@ async function collect(rootUri, sourceUri, options = {}) {
     writeFile(path.join(tempRoot, ".pytest_cache", "CACHEDIR.TAG"), "cache\n");
     writeFile(path.join(tempRoot, ".cache", "tool", "state.json"), "{}\n");
     writeFile(path.join(tempRoot, ".tmp", "scratch.txt"), "tmp\n");
+    writeFile(path.join(tempRoot, "site", "index.html"), "<html></html>\n");
+    writeFile(path.join(tempRoot, "out-report.json"), "{\"leak\":true}\n");
+    writeFile(path.join(tempRoot, "docs", "private-key-notes.md"), "private key text\n");
+    writeFile(path.join(tempRoot, "docs", "secret-signing-key.pem"), "PRIVATE KEY\n");
+    writeFile(path.join(tempRoot, "tests", "fixture-token.txt"), "token\n");
+    writeFile(path.join(tempRoot, "tools", "id_ed25519"), "ssh key\n");
+    writeFile(path.join(tempRoot, ".github", "workflows", "signing-key.yml"), "name: should not export\n");
+    writeFile(path.join(tempRoot, ".github", "credentials.asc"), "credential\n");
+    writeFile(path.join(tempRoot, ".github", "credentials.yml"), "credential: should-not-export\n");
     readFileFailures.add(keyFor(path.join(tempRoot, ".github", "workflows", "unreadable.yml")));
     readDirectoryFailures.add(keyFor(path.join(tempRoot, ".github", "inaccessible")));
 
@@ -175,6 +237,26 @@ async function collect(rootUri, sourceUri, options = {}) {
     assert(!map.has(".pytest_cache/CACHEDIR.TAG"), ".pytest_cache remains hard-excluded");
     assert(!map.has(".cache/tool/state.json"), ".cache remains hard-excluded");
     assert(!map.has(".tmp/scratch.txt"), ".tmp remains hard-excluded");
+    assert(!map.has("site/index.html"), "site output remains hard-excluded");
+    assert(!map.has("out-report.json"), "out*.json remains hard-excluded");
+    assert(!map.has(".env.local"), ".env.* remains hard-excluded");
+
+    assert(map.has("AGENTS.md"), "AGENTS.md is preserved even when ignored");
+    assert(map.get("AGENTS.md").includes("agent rules"), "AGENTS.md real contents are exported");
+    assert(map.has("README.md"), "README.md is preserved even when ignored");
+    assert(map.has("pyproject.toml"), "pyproject.toml is preserved even when ignored");
+    assert(map.has("docs/guide.md"), "docs/ is preserved even when ignored");
+    assert(map.has("tests/test_app.py"), "tests/ is preserved even when ignored");
+    assert(map.has("tests/test_token_flow.py"), "test source files with token-related names remain available for validation");
+    assert(map.has("tools/export_clean_archive.py"), "tools/ is preserved even when ignored");
+    assert(map.has("tools/generate_signing_key.py"), "source tools with key-related names remain available for validation");
+
+    assert(!map.has("docs/private-key-notes.md"), "private*key paths are excluded even inside restored docs");
+    assert(!map.has("docs/secret-signing-key.pem"), "secret/signing key files are excluded even inside restored docs");
+    assert(!map.has("tests/fixture-token.txt"), "token paths are excluded even inside restored tests");
+    assert(!map.has("tools/id_ed25519"), "ssh key names are excluded even inside restored tools");
+    assert(!map.has(".github/credentials.asc"), "credential archive files are excluded even inside restored .github");
+    assert(!map.has(".github/credentials.yml"), "credential config outside workflows is excluded even inside restored .github");
 
     assert(map.has(".gitignore"), ".gitignore is preserved");
     assert(map.get(".gitignore").includes("node_modules"), ".gitignore original contents are exported");
@@ -187,6 +269,7 @@ async function collect(rootUri, sourceUri, options = {}) {
     assert(map.get(".github/workflows/ci.yml").includes("secrets.PAT"), "workflow secret references remain available for CI debugging");
     assert(map.has(".github/workflows/publish-policy.yml"), ".github publish policy workflow path is preserved");
     assert(map.get(".github/workflows/publish-policy.yml").includes("publish policy"), "publish policy workflow contents are exported");
+    assert(map.has(".github/workflows/signing-key.yml"), "workflow files with key-related names remain available for CI debugging");
     assert(map.has(".github/dependabot.yml"), "Dependabot config path is preserved");
     assert(map.get(".github/dependabot.yml").includes("version: 2"), "Dependabot config contents are exported");
     assert(map.has(".github/CODEOWNERS"), "CODEOWNERS path is preserved");
@@ -309,6 +392,9 @@ async function collect(rootUri, sourceUri, options = {}) {
     );
     assert(manifest.includes(`Source folder: ${path.basename(tempRoot)}`), "manifest records source folder name");
     assert(manifest.includes("Source path redacted: true"), "manifest records source path redaction");
+    assert(manifest.includes(".git was intentionally omitted."), "manifest states .git was intentionally omitted");
+    assert(manifest.includes("Credentials and private key material are intentionally omitted."), "manifest states credentials/key material are omitted");
+    assert(manifest.includes("This archive is for code-context analysis, not for publishing."), "manifest states archive purpose");
     assert(!manifest.includes(tempRoot), "manifest does not leak absolute source path");
     assert(!manifest.includes("Source: "), "manifest does not include legacy absolute Source line");
     assert(manifest.includes("Created: 2026-06-01T00:00:00.000Z"), "manifest records created timestamp");

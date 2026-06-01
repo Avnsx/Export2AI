@@ -6,6 +6,7 @@ import {
   buildGitMetadataPlaceholderPath,
   buildRepositoryControlReadErrorPath,
   isGitDirectoryPath,
+  isProtectedCredentialPath,
   resolveGitMetadataSoftDeleteAction
 } from "./gitMetadataSoftDelete";
 
@@ -68,6 +69,9 @@ export class ProjectTreeGenerator {
         const softDeleteAction = softDeleteGitMetadata
           ? resolveGitMetadataSoftDeleteAction(relativePath, workspaceRelativePath)
           : undefined;
+        if ((isProtectedCredentialPath(relativePath) || isProtectedCredentialPath(workspaceRelativePath))) {
+          return "";
+        }
         if (IgnoreUtils.isIgnored(ig, relativePath, true) && !softDeleteAction) {
           return "";
         }
@@ -92,6 +96,8 @@ export class ProjectTreeGenerator {
         const softDeleteAction = softDeleteGitMetadata
           ? resolveGitMetadataSoftDeleteAction(rootRelative, workspaceRelative)
           : undefined;
+        const isProtectedCredentialEntry = isProtectedCredentialPath(rootRelative)
+          || isProtectedCredentialPath(workspaceRelative);
 
         let isIgnored = false;
         let isExcludedByPath = false;
@@ -106,6 +112,10 @@ export class ProjectTreeGenerator {
           isExcludedByPath = isExcludedByResourcePath(fileUri);
         } catch (error) {
           console.error(`Export2AI: path exclusion failed for ${fileUri.toString()}`, error);
+        }
+
+        if (isProtectedCredentialEntry) {
+          continue;
         }
 
         if (softDeleteAction?.placeholder && !softDeleteGitMetadataRealGitPathPlaceholder && !isExcludedByPath) {

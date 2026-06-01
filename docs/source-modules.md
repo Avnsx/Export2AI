@@ -5,7 +5,7 @@
 | File | Responsibility |
 |------|----------------|
 | `extension.ts` | Activate/deactivate, command registration, zip UX, session `lastZipPath`, progress notifications |
-| `config.ts` | Reads `export2ai.*` from VS Code configuration; default exclude patterns; value clamps |
+| `config.ts` | Reads `export2ai.*` from VS Code configuration; merges built-in, disabled built-in, legacy, and additional exclude patterns; value clamps |
 | `types.ts` | `Export2AIConfiguration`, `FileContent`, `TokenCountMethod`, collect/zip option interfaces |
 | `zipService.ts` | `createZipArchive()`; archiver integration, in-zip manifest |
 | `projectService.ts` | Ignore context, copy project structure, single-file content copy, tree + formatter orchestration |
@@ -18,7 +18,7 @@
 | File | Responsibility |
 |------|----------------|
 | `fileProcessor.ts` | Recursive file collection, binary detection, UTF-8 decode, `processContent()` |
-| `gitMetadataSoftDelete.ts` | Classifies repository control files versus unsafe local `.git` data and creates the external soft-delete marker |
+| `gitMetadataSoftDelete.ts` | Classifies repository control/context paths, unsafe local `.git` data, protected credential/key paths, keyword-safe source/workflow exceptions, and creates the external soft-delete marker |
 | `commentProfiles.ts` | Extension → comment syntax profile map; settings markdown builders |
 | `commentStripper.ts` | String-aware comment removal per profile |
 | `ignoreUtils.ts` | Gitignore loading, glob ignore instance, `excludePaths` checks |
@@ -53,14 +53,14 @@
 | `verify-build.js` | Ensures `out/extension.js` exists before VSIX pack (avoids double compile) |
 | `submenu-base.json` | Static folder-submenu items (copy structure, settings, open zip) |
 | `test-token-format.js` | Token format, Opus routing, status-bar labels, manifest hygiene |
-| `test-soft-delete.js` | Repository control file preservation, `.github` content compatibility, cache excludes, and `.git` traversal guard |
+| `test-soft-delete.js` | Repository control/context preservation, `.github` content compatibility, cache and secret excludes, keyword-safe source/workflow exceptions, manifest redaction, unreadable-path placeholders, and `.git` traversal guard |
 | `test-debug-logger.js` | Mocked VS Code debug logger tests for setting scopes and Output-channel reveal |
 | `test-comment-strip.js` | Language-aware comment stripping assertions |
 | `test-model-format.js` | Model slug and zip filename helpers |
 | `test-menu-merge.js` | Submenu shape, single zip row, single-file copy row, palette hides, no bucket rows |
 | `test-explorer-badges.js` | Runtime badge-provider guard: badges off by default, opt-in only, outside-workspace clears, tooltip scope labels |
 | `test-extension-settings.js` | Extension ID resolution + metadata sync |
-| `test-marketplace-assets.js` | VSIX marketplace icon path, manifest asset, and PNG-dimension assertions |
+| `test-marketplace-assets.js` | VSIX marketplace icon path, README assets, PNG dimensions, and generated-context-zip exclusion |
 | `live-test.js` | End-to-end zip creation smoke test |
 
 ## `tests/` — targetable critical smoke matrix (not shipped in VSIX)
@@ -75,7 +75,7 @@
 | File | Role |
 |------|------|
 | `package.slim.json` | **Manifest source of truth** — edit settings, commands, scripts here |
-| `package.json` | Generated after compile (~35 KB) — do not hand-edit |
+| `package.json` | Working manifest; ~22.6 KB after `slim:package`, ~40.5 KB after compile — do not hand-edit |
 | `tsconfig.json` | TypeScript compile options (`src/` → `out/`) |
 | `.vscodeignore` | Controls VSIX contents |
 | `CHANGELOG.md` | Release history; feeds `export2ai.extensionInfo` date |

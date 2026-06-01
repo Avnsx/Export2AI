@@ -12,7 +12,7 @@ const settings = {
   ignoreDollarFiles: true,
   softDeleteGitMetadata: true,
   softDeleteGitMetadataRealGitPathPlaceholder: false,
-  excludePatterns: ["node_modules", "build", "out", ".git", "__pycache__", ".pytest_cache", ".cache", ".tmp"],
+  excludePatterns: ["node_modules", "build", "out", ".git", "__pycache__", ".pytest_cache", ".cache", ".tmp", "**/*token*", "**/*.pem", "**/*.key"],
   excludePaths: [],
   compressCode: false,
   removeComments: false,

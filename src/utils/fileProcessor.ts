@@ -14,6 +14,7 @@ import {
   createGitMetadataSoftDeletePlaceholder,
   createRepositoryControlReadErrorPlaceholder,
   isGitDirectoryPath,
+  isProtectedCredentialPath,
   resolveGitMetadataSoftDeleteAction
 } from "./gitMetadataSoftDelete";
 
@@ -107,6 +108,13 @@ export class FileProcessor {
       const softDeleteDirAction = options.softDeleteGitMetadata
         ? resolveGitMetadataSoftDeleteAction(relativeDirPath, workspaceRelativeDirPath)
         : undefined;
+      const isProtectedCredentialDir = isProtectedCredentialPath(relativeDirPath)
+        || isProtectedCredentialPath(workspaceRelativeDirPath);
+
+      if (relativeDirPath && isProtectedCredentialDir) {
+        ignoredDirectories += 1;
+        continue;
+      }
 
       if (options.isExcludedByResourcePath(dirUri)) {
         excludedEntries += 1;
@@ -155,12 +163,19 @@ export class FileProcessor {
         const softDeleteAction = options.softDeleteGitMetadata
           ? resolveGitMetadataSoftDeleteAction(relativePath, workspaceRelativePath)
           : undefined;
+        const isProtectedCredentialEntry = isProtectedCredentialPath(relativePath)
+          || isProtectedCredentialPath(workspaceRelativePath);
 
         if (IgnoreUtils.isIgnored(ig, relativePath, isDirectory)) {
-          if (!softDeleteAction) {
+          if (!softDeleteAction || isProtectedCredentialEntry) {
             ignoredEntries += 1;
             continue;
           }
+        }
+
+        if (isProtectedCredentialEntry) {
+          ignoredEntries += 1;
+          continue;
         }
 
         if (options.isExcludedByResourcePath(fileUri)) {

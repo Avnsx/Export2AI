@@ -27,7 +27,7 @@ User command (zipFolder)
 
 Zip naming: `{folderBasename}-{model-slug}-context-{YYYY-MM-DD-HHMMSS}.zip` in the workspace root. Only the folder's own name is used (not its nested path), capped at 40 chars, with a compact timestamp — e.g. `WinMGT-gpt-5.5-context-2026-05-30-182617.zip`.
 
-Optional manifest: `_EXPORT2AI_MANIFEST.txt` when `includeManifest` is true. It records the source folder name, created timestamp, soft-delete settings, included/excluded collection counts, and token estimate when enabled. The absolute local source path is redacted (`Source path redacted: true`).
+Optional manifest: `_EXPORT2AI_MANIFEST.txt` when `includeManifest` is true. It records the target model, source folder name, created timestamp, included/candidate/excluded collection counts, processed bytes, token estimate when enabled, ignore/soft-delete settings, compression/comment settings, file concurrency, and active exclude patterns. The absolute local source path is redacted (`Source path redacted: true`). The manifest also states that `.git`, credentials, and private key material were intentionally omitted and that the archive is for code-context analysis, not publishing.
 
 ## Data flow: token estimate
 
@@ -112,17 +112,18 @@ Debug mode covers activation/deactivation, command registration, settings naviga
 
 Shared by zip and copy-structure:
 
-1. `excludePatterns` → `ignore` package globs
+1. Built-in safe excludes (`useBuiltInExcludePatterns`, default `true`) minus `disabledBuiltInExcludePatterns`, plus additional `excludePatterns` → `ignore` package globs
 2. Optional `.gitignore` merge (`ignoreGitIgnore`)
 3. Optional dot-file rule (`.*`) when `ignoreDotFiles`
 4. Optional `$*` / `**/$*` when `ignoreDollarFiles`
-5. Optional Git/GitHub metadata soft-delete (`softDeleteGitMetadata`) overrides those ignore rules for repository control files (`.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, `.git-blame-ignore-revs`) so their real contents remain available for validation, while local `.git` internals are replaced by one explicit artificial marker outside `.git` by default
-6. `excludePaths` → workspace-relative or absolute path exclusion (still hard-excludes matching paths)
-7. Binary check via `isbinaryfile`
-8. `maxFileSize` cap (placeholder text if exceeded)
-9. Skip output zip path if it appears during collection
+5. Optional Git/GitHub metadata soft-delete (`softDeleteGitMetadata`) overrides those ignore rules for repository control/context files (`.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, `.git-blame-ignore-revs`, `AGENTS.md`, `README.md`, `pyproject.toml`, `docs/**`, `tests/**`, `tools/**`) so their real contents remain available for validation, while local `.git` internals are replaced by one explicit artificial marker outside `.git` by default
+6. Protected credential/key path guard blocks `.env*`, SSH key filenames, key/archive extensions, `out*.json`, and token/credential/private-key filename segments even inside restored repository-control/context paths; source/script files and `.github/workflows/*.yml|*.yaml` are not blocked only for keyword matches
+7. `excludePaths` → workspace-relative or absolute path exclusion (still hard-excludes matching paths)
+8. Binary check via `isbinaryfile`
+9. `maxFileSize` cap (placeholder text if exceeded)
+10. Skip output zip path if it appears during collection
 
-Soft-delete keeps repository control files available for AI archive comparisons and tests while avoiding local Git state. `.github` descendants are traversed and exported normally so workflow, Dependabot, CodeQL, Pages, and policy tests can inspect them. `.git` is not traversed and is not created in the archive by default; a single `_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` marker is emitted outside `.git` to avoid exporting remotes, refs, branches, local history, hooks, object database, or credentials while also avoiding false `Path(".git").exists()` checks. `export2ai.softDeleteGitMetadata.realGitPathPlaceholder` can opt into the older `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` marker layout.
+Soft-delete keeps repository control and context files available for AI archive comparisons and tests while avoiding local Git state. `.github` descendants are traversed and exported normally so workflow, Dependabot, CodeQL, Pages, and policy tests can inspect them. `AGENTS.md`, `README.md`, `pyproject.toml`, `docs/**`, `tests/**`, and `tools/**` are also restored when broad ignore rules would otherwise hide them. Actual credential/key material still wins over these includes; source/script files and `.github/workflows/*.yml|*.yaml` are not dropped only because their filename mentions token/key words. `.git` is not traversed and is not created in the archive by default; a single `_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` marker is emitted outside `.git` to avoid exporting remotes, refs, branches, local history, hooks, object database, or credentials while also avoiding false `Path(".git").exists()` checks. `export2ai.softDeleteGitMetadata.realGitPathPlaceholder` can opt into the older `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` marker layout.
 
 Unreadable repository-control files and directories are not dropped silently. Export2AI logs the filesystem error and keeps the archive/tree path visible with an `Export2AI Repository-Control Read Error` placeholder or `EXPORT2AI_READ_ERROR.txt` marker, so an AI can distinguish "export/read problem" from "file missing from the repository."
 
@@ -140,8 +141,9 @@ Unreadable repository-control files and directories are not dropped silently. Ex
 | `export2ai.copyFileContent` | Right-click a single file → copy exact UTF-8 text to clipboard (+ token label if counting on); hidden from Command Palette |
 | `export2ai.openOutputFolder` | Open last zip in OS file manager (session-scoped) |
 | `export2ai.openSettings` | Open extension settings via `@ext:` route |
+| `export2ai.showBuiltInExcludePatterns` | Show/manage the built-in exclude list in an IDE Quick Pick; also available as **Export2AI: Manage Built-in Exclude Patterns** in the Command Palette |
 
-The manifest holds **~40 commands total** — there is no longer a per-token-count command set. Generated `modelTarget.*` / `zipFor.*` commands and the right-click-only single-file copy command are hidden from the Command Palette with `when: false` so it stays clean.
+The generated manifest holds **~41 commands total** — there is no longer a per-token-count command set. Generated `modelTarget.*` / `zipFor.*` commands and the right-click-only single-file copy command are hidden from the Command Palette with `when: false` so it stays clean.
 
 ### Settings navigation (no hang)
 
@@ -169,7 +171,7 @@ That approach was removed because it was **pure cost with no surviving benefit**
 - **No menu surface left** — the Explorer submenu can only render a handful of rows, so the bucket rows were already dropped from the submenu; the `setContext('export2ai.tokenBucket', …)` had no consumer.
 - **Already covered elsewhere** — the exact token count shows in the **status bar** and **post-zip notification**. Per-folder Explorer decoration badges (`formatTokenBadge`) are optional, off by default, and must stay behind `export2ai.showExplorerTokenBadges`.
 
-Result: the manifest is ~35 KB with ~40 commands. **Do not reintroduce a per-count command set.** If a future requirement truly needs an in-menu count, use a *small* coarse bucket set (≤ ~25 rows) and hide the commands from the palette — never thousands.
+Result: the generated manifest is ~40.5 KB with ~41 commands, and the slim repo form is ~22.6 KB. **Do not reintroduce a per-count command set.** If a future requirement truly needs an in-menu count, use a *small* coarse bucket set (≤ ~25 rows) and hide the commands from the palette — never thousands.
 
 ## Token counting
 

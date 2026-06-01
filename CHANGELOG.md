@@ -8,10 +8,21 @@ All notable changes to Export2AI are documented in this file.
 
 ### Added
 
-- **Git/GitHub metadata soft-delete** — `export2ai.softDeleteGitMetadata` is enabled by default so repository control files like `.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, and `.git-blame-ignore-revs` are exported with real contents for validation compatibility, while local `.git` internals are not traversed.
-- **Safer `.git` placeholder default** — the artificial Git metadata marker now lives at `_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` outside `.git` by default, so exported archives do not make `Path(".git").exists()` true for test suites that conditionally run Git commands. Advanced users can opt back into `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` with `export2ai.softDeleteGitMetadata.realGitPathPlaceholder`.
-- **Redacted manifest source path** — `_EXPORT2AI_MANIFEST.txt` now records the source folder name and `Source path redacted: true` instead of leaking an absolute local filesystem path.
-- **Cleaner cache defaults** — default excludes now also cover `__pycache__`, `.pytest_cache`, `.cache`, and `.tmp`.
+- **Repository-aware soft-delete** — exports now keep real repository control files such as `.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, and `.git-blame-ignore-revs` while keeping unsafe local `.git` internals out of the archive.
+- **Editable safe defaults** — `export2ai.excludePatterns` is now a compact additional-pattern list, while **Export2AI: Manage Built-in Exclude Patterns** opens an IDE checklist for the 40 built-in excludes. Unchecked built-ins are stored in the enum-backed `export2ai.disabledBuiltInExcludePatterns` setting so they remain manually editable.
+- **Permanent context policy** — `AGENTS.md`, `README.md`, `pyproject.toml`, `docs/**`, `tests/**`, and `tools/**` are preserved for AI debugging and repository validation even when broad ignore rules would otherwise hide them.
+
+### Changed
+
+- **Safer `.git` marker layout** — the default artificial marker is now `_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt`, outside `.git`, so exported zips do not make `Path(".git").exists()` true. Advanced users can opt back into `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` with `export2ai.softDeleteGitMetadata.realGitPathPlaceholder`.
+- **Cleaner archive manifest** — `_EXPORT2AI_MANIFEST.txt` now records only the source folder name plus `Source path redacted: true`, and clearly states that `.git`, credentials, and private key material were intentionally omitted because the archive is for code-context analysis, not publishing.
+- **Broader junk and secret defaults** — default excludes now cover cache folders (`__pycache__`, `.pytest_cache`, `.cache`, `.tmp`), build/site output, `.env*`, private keys, token/credential filenames, `out*.json`, and previous Export2AI context zips.
+
+### Fixed
+
+- **False validation failures from missing repo files** — CI workflows, Dependabot config, `.gitignore`, `.gitattributes`, docs, tests, and tools stay available in exported zips so AI agents and repository tests no longer mistake a safe handoff archive for an incomplete source tree.
+- **False Git-repository detection** — `.git/` is no longer created by default, avoiding test suites that conditionally run `git ...` commands against a placeholder directory.
+- **Settings edge cases** — malformed built-in exclude settings are normalized, unknown values are ignored, failed QuickPick/settings updates are surfaced, and Explorer token badges remain opt-in only.
 
 ## [1.2.7] - 2026-05-31
 

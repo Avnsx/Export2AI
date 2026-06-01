@@ -6,6 +6,8 @@ export interface Export2AIConfiguration {
   ignoreDollarFiles: boolean;
   softDeleteGitMetadata: boolean;
   softDeleteGitMetadataRealGitPathPlaceholder: boolean;
+  useBuiltInExcludePatterns: boolean;
+  disabledBuiltInExcludePatterns: string[];
   excludePatterns: string[];
   excludePaths: string[];
   compressCode: boolean;

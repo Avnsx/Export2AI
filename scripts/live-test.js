@@ -126,6 +126,9 @@ async function createZip(sourcePath, workspaceRoot, config) {
     `Target model: ${config.llmModel}`,
     `Source folder: ${baseName}`,
     "Source path redacted: true",
+    ".git was intentionally omitted.",
+    "Credentials and private key material are intentionally omitted.",
+    "This archive is for code-context analysis, not for publishing.",
     `Included files: ${files.length}`,
     `Estimated tokens: ${tokenCount}`
   ].join("\n"), { name: "_EXPORT2AI_MANIFEST.txt" });
@@ -145,7 +148,7 @@ async function createZip(sourcePath, workspaceRoot, config) {
     ignoreDollarFiles: true,
     softDeleteGitMetadata: true,
     softDeleteGitMetadataRealGitPathPlaceholder: false,
-    excludePatterns: ["node_modules", "*.log", "*.tmp", "dist", "build", "out", "__pycache__", ".pytest_cache", ".cache", ".tmp", "*-chatgpt-context-*.zip", "*-*-context-*.zip"],
+    excludePatterns: ["node_modules", "*.log", "*.tmp", "*.temp", "*.bak", "dist", "site", "build", "out", ".git", "__pycache__", ".pytest_cache", ".cache", ".tmp", "**/*private*key*", "**/*private-key*", "**/*secret*key*", "**/*signing*key*", "**/*ed25519*key*", "**/*rsa*key*", "**/*.pem", "**/*.key", "**/*.p8", "**/*.p12", "**/*.pfx", "**/id_rsa", "**/id_dsa", "**/id_ecdsa", "**/id_ed25519", "**/*.asc", "**/*.gpg", "**/.env", "**/.env.*", "**/*token*", "**/*credential*", "**/*credentials*", "**/*secrets*", "out*.json", "*-chatgpt-context-*.zip", "*-*-context-*.zip"],
     excludePaths: [],
     compressCode: false,
     removeComments: false,

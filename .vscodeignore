@@ -20,6 +20,7 @@ icons/gh_banner_original.png
 build/**
 **/*.vsix
 *-chatgpt-context-*.zip
+*-*-context-*.zip
 package.slim.json
 scripts/**
 tests/**

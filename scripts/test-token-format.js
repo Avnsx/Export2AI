@@ -1,4 +1,5 @@
 const fs = require("fs");
+const Module = require("module");
 const path = require("path");
 const { getConfigurationProperty } = require("./configuration-utils");
 const { countTokens: countTokensAnthropic } = require("@anthropic-ai/tokenizer");
@@ -16,6 +17,36 @@ const { DEFAULT_LLM_MODEL, usesOpenAiCl100k, usesAnthropicOpusModernTokenizer, r
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
+  }
+}
+
+function getRuntimeConfigurationWith(settings) {
+  const originalLoad = Module._load;
+  const vscodeStub = {
+    workspace: {
+      getConfiguration: () => ({
+        get: (key, defaultValue) => Object.prototype.hasOwnProperty.call(settings, key)
+          ? settings[key]
+          : defaultValue,
+        inspect: (key) => ({ workspaceValue: settings[key] })
+      })
+    },
+    Uri: class Uri {}
+  };
+
+  delete require.cache[require.resolve("../out/config")];
+  delete require.cache[require.resolve("../out/utils/debugLogger")];
+  Module._load = function patchedLoad(request, parent, isMain) {
+    if (request === "vscode") {
+      return vscodeStub;
+    }
+    return originalLoad.apply(this, arguments);
+  };
+
+  try {
+    return require("../out/config").getConfiguration();
+  } finally {
+    Module._load = originalLoad;
   }
 }
 
@@ -44,6 +75,50 @@ function testDefaultModelRouting() {
   assert(defaultInfo.inputTokens === o200kDirect, "default count matches gpt-tokenizer o200k");
 
   console.log("default model routing: ok");
+}
+
+function testRuntimeExcludeDefaults() {
+  const defaultsOnly = getRuntimeConfigurationWith({});
+  assert(defaultsOnly.useBuiltInExcludePatterns === true, "built-in exclude switch defaults on");
+  assert(defaultsOnly.excludePatterns.includes("node_modules"), "runtime defaults include node_modules");
+  assert(defaultsOnly.excludePatterns.includes("**/*.pem"), "runtime defaults include credential file excludes");
+
+  const withAdditional = getRuntimeConfigurationWith({
+    excludePatterns: ["custom-cache", "node_modules"]
+  });
+  assert(withAdditional.excludePatterns.includes("custom-cache"), "additional excludes are appended");
+  assert(
+    withAdditional.excludePatterns.filter(pattern => pattern === "node_modules").length === 1,
+    "merged excludes are deduplicated"
+  );
+
+  const customOnly = getRuntimeConfigurationWith({
+    useBuiltInExcludePatterns: false,
+    excludePatterns: ["custom-only"]
+  });
+  assert(customOnly.excludePatterns.includes("custom-only"), "custom-only excludes are honored");
+  assert(!customOnly.excludePatterns.includes("node_modules"), "built-in excludes can be disabled explicitly");
+
+  const invalidBuiltInSwitch = getRuntimeConfigurationWith({
+    useBuiltInExcludePatterns: "false"
+  });
+  assert(invalidBuiltInSwitch.useBuiltInExcludePatterns === true, "invalid built-in switch falls back to safe default");
+  assert(invalidBuiltInSwitch.excludePatterns.includes("node_modules"), "invalid built-in switch keeps built-ins active");
+
+  const withDisabledBuiltIns = getRuntimeConfigurationWith({
+    disabledBuiltInExcludePatterns: [" node_modules ", "**/*.pem", "not-a-built-in"],
+    excludePatterns: ["custom-cache"]
+  });
+  assert(!withDisabledBuiltIns.excludePatterns.includes("node_modules"), "individual built-in exclude can be disabled");
+  assert(!withDisabledBuiltIns.excludePatterns.includes("**/*.pem"), "credential built-in exclude can be disabled explicitly");
+  assert(withDisabledBuiltIns.excludePatterns.includes("custom-cache"), "additional excludes still apply with disabled built-ins");
+  assert(!withDisabledBuiltIns.disabledBuiltInExcludePatterns.includes("not-a-built-in"), "unknown disabled built-ins are ignored");
+
+  const withInvalidDisabledList = getRuntimeConfigurationWith({
+    disabledBuiltInExcludePatterns: "node_modules"
+  });
+  assert(Array.isArray(withInvalidDisabledList.disabledBuiltInExcludePatterns), "invalid disabled built-ins value is normalized");
+  assert(withInvalidDisabledList.disabledBuiltInExcludePatterns.length === 0, "invalid disabled built-ins value does not crash or apply");
 }
 
 function testOpusModernSupport() {
@@ -250,10 +325,61 @@ function testManifestHygiene() {
     getConfigurationProperty(pkg, "export2ai.softDeleteGitMetadata.realGitPathPlaceholder").default === false,
     ".git path placeholder mode is opt-in"
   );
-  const defaultExcludes = getConfigurationProperty(pkg, "export2ai.excludePatterns").default;
-  for (const expected of ["__pycache__", ".pytest_cache", ".cache", ".tmp"]) {
-    assert(defaultExcludes.includes(expected), `default excludes include ${expected}`);
+  assert(
+    getConfigurationProperty(pkg, "export2ai.useBuiltInExcludePatterns").default === true,
+    "built-in safe excludes stay enabled by default"
+  );
+  assert(
+    Array.isArray(getConfigurationProperty(pkg, "export2ai.disabledBuiltInExcludePatterns").default)
+      && getConfigurationProperty(pkg, "export2ai.disabledBuiltInExcludePatterns").default.length === 0,
+    "disabled built-in excludes default to compact empty list"
+  );
+  const disabledBuiltInsSetting = getConfigurationProperty(pkg, "export2ai.disabledBuiltInExcludePatterns");
+  const excludePatternsSetting = getConfigurationProperty(pkg, "export2ai.excludePatterns");
+  const defaultExcludes = excludePatternsSetting.default;
+  assert(Array.isArray(defaultExcludes) && defaultExcludes.length === 0, "excludePatterns default stays compact in Settings UI");
+  const useBuiltInExcludesSetting = getConfigurationProperty(pkg, "export2ai.useBuiltInExcludePatterns");
+  const configSource = fs.readFileSync(path.join(__dirname, "..", "src", "config.ts"), "utf8");
+  for (const expected of [
+    "__pycache__",
+    ".pytest_cache",
+    ".cache",
+    ".tmp",
+    "site",
+    "**/*private*key*",
+    "**/*secret*key*",
+    "**/*signing*key*",
+    "**/*.pem",
+    "**/*.key",
+    "**/.env",
+    "**/.env.*",
+    "**/*token*",
+    "**/*credential*",
+    "**/*secrets*",
+    "out*.json"
+  ]) {
+    assert(configSource.includes(`"${expected}"`), `built-in excludes include ${expected}`);
   }
+  assert(
+    Array.isArray(disabledBuiltInsSetting.items.enum)
+      && disabledBuiltInsSetting.items.enum.length === 40
+      && disabledBuiltInsSetting.items.enum.every((pattern) => configSource.includes(`"${pattern}"`)),
+    "disabled built-in exclude setting exposes the editable built-in enum"
+  );
+  assert(
+    useBuiltInExcludesSetting.markdownDescription.includes("Built-in preview (first 6 of 40)")
+      && useBuiltInExcludesSetting.markdownDescription.includes("Export2AI: Manage Built-in Exclude Patterns")
+      && !useBuiltInExcludesSetting.markdownDescription.includes("command:"),
+    "built-in excludes settings copy shows compact preview and command-palette action without command URI"
+  );
+  assert(
+    disabledBuiltInsSetting.markdownDescription.includes("intentionally editable"),
+    "disabled built-in excludes setting explains manual editing behavior"
+  );
+  assert(
+    excludePatternsSetting.markdownDescription.includes("defaults to an empty array"),
+    "excludePatterns settings copy explains compact additional-list behavior"
+  );
   console.log(`manifest hygiene: ok (${commands.length} commands, no bucket commands, generated rows hidden from palette)`);
 }
 
@@ -261,6 +387,7 @@ function testManifestHygiene() {
   testDefaultModelRouting();
   testOpusModernSupport();
   testFormatters();
+  testRuntimeExcludeDefaults();
   testLiveTokenizer();
   testPerFileAggregation();
   testManifestHygiene();

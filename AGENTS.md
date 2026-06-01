@@ -39,7 +39,7 @@ Export2AI/
 ├── icons/                        # packaged marketplace icon + README banner
 ├── build/                        # generated VSIX output (ignored)
 ├── package.slim.json             # **manifest source of truth** (hand-edited)
-├── package.json                  # generated after compile (~35 KB) — do not hand-edit
+├── package.json                  # generated working manifest; ~22.6 KB after slim, ~40.5 KB after compile
 ├── CHANGELOG.md
 ├── README.md                     # user-facing quick start
 ├── tsconfig.json
@@ -66,7 +66,7 @@ Full file-by-file map: **[docs/source-modules.md](./docs/source-modules.md)**
 
 Details and rationale: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
 
-> **History (1.2.3):** the ~10,900 `export2ai.zip.bucket.{N}` command system was **removed**. It bloated `package.json` to ~1.9–4 MB, polluted the Command Palette, and was the root cause of Cursor settings/activate hangs — while duplicating status-bar and notification estimates. `package.json` is now ~35 KB. **Do not bring it back.** See [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) §1.
+> **History (1.2.3):** the ~10,900 `export2ai.zip.bucket.{N}` command system was **removed**. It bloated `package.json` to ~1.9–4 MB, polluted the Command Palette, and was the root cause of Cursor settings/activate hangs — while duplicating status-bar and notification estimates. `package.json` is now small (~22.6 KB after `slim:package`, ~40.5 KB after compile). **Do not bring it back.** See [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) §1.
 
 ---
 
@@ -132,7 +132,7 @@ npm run package           # compile once + build/export2ai-x.x.x.vsix
 
 Full pipeline: **[docs/build-and-test.md](./docs/build-and-test.md)**
 
-**Note:** `tsc` is fast (~2–3 s). `package.json` is now ~35 KB (~40 commands), so manifest parse is no longer a hang source. `npm run package` writes VSIX files only to `build/`. If you ever see the manifest grow into the MB range again, you have reintroduced a generated-command explosion — stop and reconsider.
+**Note:** `tsc` is fast (~2–3 s). `package.json` is now small (~22.6 KB after `slim:package`, ~40.5 KB / ~41 commands after compile), so manifest parse is no longer a hang source. `npm run package` writes VSIX files only to `build/`. If you ever see the manifest grow into the MB range again, you have reintroduced a generated-command explosion — stop and reconsider.
 
 ---
 
@@ -158,7 +158,7 @@ Read-only display settings (not read at runtime): `export2ai.extensionInfo`, `ex
 
 Full reference: **[docs/comment-stripping.md](./docs/comment-stripping.md)**
 
-- 18 syntax families, 120+ extensions in `commentProfiles.ts`
+- 18 syntax families, 175 extensions in `commentProfiles.ts`
 - String-aware scanner in `commentStripper.ts`
 - Settings markdown synced via `scripts/sync-comment-settings.js` on `postcompile`
 
@@ -195,6 +195,8 @@ Full reference: **[docs/comment-stripping.md](./docs/comment-stripping.md)**
 | **vsce DEP0040** | Suppressed in `npm run package` only. |
 | **Legacy zip names** | `*-chatgpt-context-*.zip` excluded by default; new pattern `*-*-context-*.zip`. |
 | **Git metadata soft-delete** | Keep real repository-control files (`.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, `.git-blame-ignore-revs`) but never create `.git/` by default. The default marker is `_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt`; `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` is allowed only when `export2ai.softDeleteGitMetadata.realGitPathPlaceholder` is explicitly true. |
+| **Context include policy** | Keep `AGENTS.md`, `README.md`, `pyproject.toml`, `docs/**`, `tests/**`, and `tools/**` available even when broad ignore rules hide them. Actual credential/key material stays excluded, but source/script files and `.github/workflows/*.yml|*.yaml` are not dropped only because their filename mentions token/key words. |
+| **Built-in excludes UI** | Keep the 40 safe defaults enabled via `export2ai.useBuiltInExcludePatterns` default `true`; `export2ai.excludePatterns` defaults to `[]` for additional project patterns so Settings does not render a long array. The full list is managed by the `export2ai.showBuiltInExcludePatterns` Command Palette action; unchecked built-ins are stored in the intentionally editable enum-backed `export2ai.disabledBuiltInExcludePatterns` array and are included again. |
 
 Full write-up: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
 
@@ -212,7 +214,7 @@ Full write-up: **[docs/agent-chokepoints.md](./docs/agent-chokepoints.md)**
 - [ ] `npm run test:model-format` passes
 - [ ] `npm run test:menu-merge` passes (if menus/build changed)
 - [ ] `npm run test:explorer-badges` passes
-- [ ] `npm run test:marketplace-assets` passes after `npm run package` if manifest assets changed
+- [ ] `npm run test:marketplace-assets` passes after `npm run package` if manifest/package assets or VSIX hygiene changed
 - [ ] `npm run test:live` passes
 - [ ] `npm run test:settings-nav` passes
 - [ ] `npm run slim:package` if committing

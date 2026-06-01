@@ -117,6 +117,10 @@ assert(
   ![...vsix.entries.keys()].some(name => /^extension\/\.env(?:$|\.)/.test(name)),
   "VSIX must not package local env or publishing credential files"
 );
+assert(
+  ![...vsix.entries.keys()].some(name => /^extension\/[^/]+-[^-]+-context-\d{4}-\d{2}-\d{2}-\d{6}\.zip$/.test(name)),
+  "VSIX must not package generated Export2AI context zips"
+);
 assert(vsix.entries.has("extension/package.json"), "VSIX contains extension/package.json");
 assert(vsix.entries.has("extension.vsixmanifest"), "VSIX contains extension.vsixmanifest");
 assert(vsix.entries.has(EXPECTED_ICON_PATH_IN_VSIX), `VSIX contains ${EXPECTED_ICON_PATH_IN_VSIX}`);

@@ -9,6 +9,88 @@ const GIT_METADATA_FILE_NAMES = new Set([
   ".mailmap"
 ]);
 
+const PROJECT_CONTEXT_FILE_NAMES = new Set([
+  "agents.md",
+  "readme.md",
+  "pyproject.toml"
+]);
+
+const PROJECT_CONTEXT_DIRECTORY_NAMES = new Set([
+  "docs",
+  "tests",
+  "tools"
+]);
+
+const PROTECTED_CREDENTIAL_EXTENSIONS = [
+  ".pem",
+  ".key",
+  ".p8",
+  ".p12",
+  ".pfx",
+  ".asc",
+  ".gpg"
+];
+
+const PROTECTED_CREDENTIAL_FILE_NAMES = new Set([
+  ".env",
+  "id_dsa",
+  "id_ecdsa",
+  "id_ed25519",
+  "id_rsa"
+]);
+
+const PROTECTED_CREDENTIAL_SEGMENT_PATTERNS = [
+  /private.*key/,
+  /private-key/,
+  /secret.*key/,
+  /signing.*key/,
+  /ed25519.*key/,
+  /rsa.*key/,
+  /token/,
+  /credential/,
+  /credentials/,
+  /secrets/
+];
+
+const KEYWORD_EXEMPT_SOURCE_EXTENSIONS = new Set([
+  ".bat",
+  ".c",
+  ".cc",
+  ".cjs",
+  ".cmd",
+  ".cpp",
+  ".cs",
+  ".cxx",
+  ".go",
+  ".h",
+  ".hpp",
+  ".ini",
+  ".java",
+  ".js",
+  ".jsx",
+  ".kt",
+  ".kts",
+  ".lua",
+  ".mjs",
+  ".php",
+  ".pl",
+  ".pm",
+  ".ps1",
+  ".py",
+  ".rb",
+  ".rs",
+  ".sh",
+  ".swift",
+  ".ts",
+  ".tsx",
+  ".zsh"
+]);
+
+const GITHUB_WORKFLOW_EXTENSIONS = new Set([
+  ".yaml",
+  ".yml"
+]);
+
 export const GIT_DIRECTORY_PLACEHOLDER_FILE = "EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt";
 export const EXTERNAL_GIT_METADATA_PLACEHOLDER_PATH = `_EXPORT2AI_PLACEHOLDERS/git/${GIT_DIRECTORY_PLACEHOLDER_FILE}`;
 export const REPOSITORY_CONTROL_READ_ERROR_FILE = "EXPORT2AI_READ_ERROR.txt";
@@ -50,7 +132,52 @@ export function isRepositoryControlPath(relativePath: string | undefined): boole
     return false;
   }
 
-  return segments.some(segment => segment === ".github" || GIT_METADATA_FILE_NAMES.has(segment));
+  return segments.some(segment => {
+    const lower = segment.toLowerCase();
+    return segment === ".github"
+      || GIT_METADATA_FILE_NAMES.has(segment)
+      || PROJECT_CONTEXT_FILE_NAMES.has(lower)
+      || PROJECT_CONTEXT_DIRECTORY_NAMES.has(lower);
+  });
+}
+
+export function isProtectedCredentialPath(relativePath: string | undefined): boolean {
+  const segments = splitPath(relativePath).map(segment => segment.toLowerCase());
+  if (segments.length === 0) {
+    return false;
+  }
+
+  return segments.some((segment, index) => {
+    if (PROTECTED_CREDENTIAL_FILE_NAMES.has(segment) || segment.startsWith(".env.")) {
+      return true;
+    }
+
+    if (segment.startsWith("out") && segment.endsWith(".json")) {
+      return true;
+    }
+
+    if (PROTECTED_CREDENTIAL_EXTENSIONS.some(ext => segment.endsWith(ext))) {
+      return true;
+    }
+
+    if (!PROTECTED_CREDENTIAL_SEGMENT_PATTERNS.some(pattern => pattern.test(segment))) {
+      return false;
+    }
+
+    const extension = path.posix.extname(segment);
+    if (KEYWORD_EXEMPT_SOURCE_EXTENSIONS.has(extension)) {
+      return false;
+    }
+
+    if (GITHUB_WORKFLOW_EXTENSIONS.has(extension)
+      && index >= 2
+      && segments[index - 2] === ".github"
+      && segments[index - 1] === "workflows") {
+      return false;
+    }
+
+    return true;
+  });
 }
 
 function resolveGitMetadataPath(relativePath: string | undefined): string | undefined {

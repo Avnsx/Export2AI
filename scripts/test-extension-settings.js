@@ -1,4 +1,6 @@
 const assert = require("assert");
+const Module = require("module");
+const path = require("path");
 const {
   buildExtensionSettingsQuery,
   resolveExtensionId
@@ -176,4 +178,294 @@ assert.doesNotThrow(
   "missing info property does not throw"
 );
 
-console.log("extension settings navigation tests passed.");
+class Disposable {
+  constructor(callback = () => {}) {
+    this.callback = callback;
+  }
+
+  dispose() {
+    this.callback();
+  }
+}
+
+class Uri {
+  constructor(fsPath) {
+    this.fsPath = fsPath;
+  }
+
+  toString() {
+    return `file:///${this.fsPath.replace(/\\/g, "/")}`;
+  }
+
+  static file(fsPath) {
+    return new Uri(fsPath);
+  }
+}
+
+function clearExtensionModuleCache() {
+  for (const relative of [
+    "../out/extension",
+    "../out/config",
+    "../out/utils/debugLogger"
+  ]) {
+    delete require.cache[require.resolve(relative)];
+  }
+}
+
+async function runBuiltInExcludeCommandScenario({
+  settings,
+  workspaceFolders,
+  quickPick,
+  update
+}) {
+  const originalLoad = Module._load;
+  const registeredCommands = new Map();
+  const quickPickCalls = [];
+  const updateCalls = [];
+  const infoMessages = [];
+  const errorMessages = [];
+
+  const config = {
+    get(key, fallback) {
+      return Object.prototype.hasOwnProperty.call(settings, key) ? settings[key] : fallback;
+    },
+    async update(key, value, target) {
+      updateCalls.push({ key, value, target });
+      if (update) {
+        await update(key, value, target);
+      }
+      settings[key] = value;
+    },
+    inspect(key) {
+      return { workspaceValue: settings[key], globalValue: undefined };
+    }
+  };
+
+  const vscodeMock = {
+    Disposable,
+    Uri,
+    ConfigurationTarget: {
+      Global: 1,
+      Workspace: 2
+    },
+    CancellationError: class CancellationError extends Error {},
+    ProgressLocation: {
+      Notification: 15
+    },
+    workspace: {
+      workspaceFolders,
+      getConfiguration(section) {
+        assert.strictEqual(section, "export2ai", "built-in excludes command reads export2ai config");
+        return config;
+      },
+      getWorkspaceFolder() {
+        return workspaceFolders[0];
+      },
+      asRelativePath(uri) {
+        return uri.fsPath;
+      },
+      onDidChangeConfiguration() {
+        return new Disposable();
+      },
+      fs: {
+        async stat() {
+          return { type: 1, size: 0 };
+        }
+      }
+    },
+    window: {
+      async showQuickPick(items, options) {
+        quickPickCalls.push({ items, options });
+        return quickPick(items, options);
+      },
+      async showInformationMessage(message) {
+        infoMessages.push(message);
+        return undefined;
+      },
+      async showErrorMessage(message) {
+        errorMessages.push(message);
+        return undefined;
+      },
+      async showWarningMessage() {
+        return undefined;
+      },
+      createOutputChannel() {
+        return { appendLine() {}, show() {}, dispose() {} };
+      },
+      withProgress() {
+        throw new Error("withProgress should not be reached by built-in exclude tests");
+      }
+    },
+    commands: {
+      registerCommand(command, handler) {
+        registeredCommands.set(command, handler);
+        return new Disposable(() => registeredCommands.delete(command));
+      }
+    },
+    env: {
+      clipboard: {
+        async writeText() {}
+      }
+    }
+  };
+
+  Module._load = function patchedLoad(request, parent, isMain) {
+    if (request === "vscode") {
+      return vscodeMock;
+    }
+    if (request === "./utils/debugLogger") {
+      return {
+        debugError() {},
+        debugLog() {},
+        disposeDebugOutputChannel() {},
+        isDebugLoggingEnabled() {
+          return false;
+        }
+      };
+    }
+    if (parent?.filename.endsWith(`${path.sep}out${path.sep}extension.js`)) {
+      if (request === "./projectService") {
+        return { copyFileContentToClipboard() {}, copyProjectStructure() {} };
+      }
+      if (request === "./tokenEstimate") {
+        return { TokenEstimateManager: class TokenEstimateManager { dispose() {} } };
+      }
+      if (request === "./utils/extensionSettings") {
+        return { openOwnExtensionSettings: async () => {} };
+      }
+      if (request === "./utils/menuTargetModels") {
+        return { MENU_TARGET_MODELS: [] };
+      }
+      if (request === "./utils/modelFormat") {
+        return { formatModelCommandSlug: value => value };
+      }
+      if (request === "./utils/tokenCounter") {
+        return { TokenCounter: { formatTokenLabel: () => "(est. 0 tokens)" } };
+      }
+      if (request === "./utils/systemExplorer") {
+        return { revealInSystemExplorer: async () => {} };
+      }
+      if (request === "./zipService") {
+        return { createZipArchive: async () => { throw new Error("zip should not run"); } };
+      }
+    }
+    return originalLoad.call(this, request, parent, isMain);
+  };
+
+  try {
+    clearExtensionModuleCache();
+    const { activate, deactivate } = require("../out/extension");
+    const subscriptions = [];
+    activate({
+      subscriptions,
+      extension: {
+        id: "avnsx.export2ai",
+        packageJSON: { publisher: "avnsx", name: "export2ai", version: "1.2.8" }
+      }
+    });
+
+    const handler = registeredCommands.get("export2ai.showBuiltInExcludePatterns");
+    assert(handler, "built-in excludes command is registered");
+    await handler();
+    deactivate();
+  } finally {
+    Module._load = originalLoad;
+    clearExtensionModuleCache();
+  }
+
+  return { quickPickCalls, updateCalls, infoMessages, errorMessages };
+}
+
+async function testBuiltInExcludeCommand() {
+  const workspaceFolder = { uri: Uri.file("C:\\repo"), name: "repo", index: 0 };
+  const success = await runBuiltInExcludeCommandScenario({
+    settings: {
+      useBuiltInExcludePatterns: true,
+      disabledBuiltInExcludePatterns: [" node_modules ", "**/*.pem", "**/*.pem", "not-a-built-in", 42]
+    },
+    workspaceFolders: [workspaceFolder],
+    quickPick(items, options) {
+      assert.strictEqual(items.length, 40, "checklist exposes every built-in pattern");
+      assert.strictEqual(options.canPickMany, true, "checklist allows multi-pick");
+      assert.strictEqual(items.find(item => item.label === "node_modules").picked, false, "trimmed disabled built-in is pre-unchecked");
+      assert.strictEqual(items.find(item => item.label === "**/*.pem").picked, false, "disabled credential pattern is pre-unchecked");
+      const enabled = new Set(items.map(item => item.label));
+      enabled.delete(".git");
+      enabled.delete("**/*.pem");
+      return items.filter(item => enabled.has(item.label));
+    }
+  });
+  assert.deepStrictEqual(
+    success.updateCalls[0],
+    {
+      key: "disabledBuiltInExcludePatterns",
+      value: [".git", "**/*.pem"],
+      target: 2
+    },
+    "command writes unchecked built-ins to workspace settings"
+  );
+  assert(success.infoMessages[0].includes("2 built-in exclude pattern"), "successful update reports disabled count");
+
+  const cancel = await runBuiltInExcludeCommandScenario({
+    settings: { useBuiltInExcludePatterns: true, disabledBuiltInExcludePatterns: [] },
+    workspaceFolders: [workspaceFolder],
+    quickPick() {
+      return undefined;
+    }
+  });
+  assert.strictEqual(cancel.updateCalls.length, 0, "cancelled checklist does not write settings");
+  assert.strictEqual(cancel.infoMessages.length, 0, "cancelled checklist stays quiet");
+
+  const quickPickFailure = await runBuiltInExcludeCommandScenario({
+    settings: { useBuiltInExcludePatterns: true, disabledBuiltInExcludePatterns: [] },
+    workspaceFolders: [workspaceFolder],
+    quickPick() {
+      throw new Error("simulated quick-pick failure");
+    }
+  });
+  assert.strictEqual(quickPickFailure.updateCalls.length, 0, "quick-pick failure does not write settings");
+  assert(
+    quickPickFailure.errorMessages[0].includes("Failed to show built-in exclude patterns"),
+    "quick-pick failure is surfaced to the user"
+  );
+
+  const updateFailure = await runBuiltInExcludeCommandScenario({
+    settings: { useBuiltInExcludePatterns: true, disabledBuiltInExcludePatterns: [] },
+    workspaceFolders: [workspaceFolder],
+    quickPick(items) {
+      return items.slice(0, 1);
+    },
+    update() {
+      throw new Error("simulated update failure");
+    }
+  });
+  assert.strictEqual(updateFailure.infoMessages.length, 0, "failed update does not claim success");
+  assert(
+    updateFailure.errorMessages[0].includes("Failed to update built-in exclude patterns"),
+    "update failure is surfaced to the user"
+  );
+
+  const builtInsOff = await runBuiltInExcludeCommandScenario({
+    settings: { useBuiltInExcludePatterns: false, disabledBuiltInExcludePatterns: [] },
+    workspaceFolders: [],
+    quickPick(items, options) {
+      assert(options.title.includes("currently off"), "title flags globally disabled built-ins");
+      return items.filter(item => item.label !== "node_modules");
+    }
+  });
+  assert.strictEqual(builtInsOff.updateCalls[0].target, 1, "no-workspace update uses global target");
+  assert.deepStrictEqual(builtInsOff.updateCalls[0].value, ["node_modules"], "unchecked item is saved while built-ins are off");
+  assert(
+    builtInsOff.infoMessages[0].includes("Re-enable export2ai.useBuiltInExcludePatterns"),
+    "success message explains saved list is inactive while built-ins are off"
+  );
+}
+
+testBuiltInExcludeCommand()
+  .then(() => {
+    console.log("extension settings navigation tests passed.");
+  })
+  .catch((error) => {
+    console.error("extension settings navigation tests failed:", error);
+    process.exit(1);
+  });

@@ -1,5 +1,10 @@
 import * as vscode from "vscode";
-import { getConfiguration } from "./config";
+import {
+  DEFAULT_EXCLUDE_PATTERNS,
+  getBooleanSetting,
+  getConfiguration,
+  normalizeDisabledBuiltInExcludePatterns
+} from "./config";
 import { copyFileContentToClipboard, copyProjectStructure } from "./projectService";
 import { TokenEstimateManager } from "./tokenEstimate";
 import { openOwnExtensionSettings } from "./utils/extensionSettings";
@@ -222,6 +227,70 @@ async function openOutputFolder(): Promise<void> {
   await revealZipInSystemExplorer(lastZipPath);
 }
 
+async function showBuiltInExcludePatterns(): Promise<void> {
+  const config = vscode.workspace.getConfiguration("export2ai");
+  const disabledBuiltInExcludePatterns = normalizeDisabledBuiltInExcludePatterns(
+    config.get<unknown>("disabledBuiltInExcludePatterns", [])
+  );
+  const disabledBuiltIns = new Set(disabledBuiltInExcludePatterns);
+  const builtInsEnabled = getBooleanSetting(config, "useBuiltInExcludePatterns", true);
+  let selected: Array<{ label: string }> | undefined;
+
+  try {
+    selected = await vscode.window.showQuickPick(
+      DEFAULT_EXCLUDE_PATTERNS.map((pattern, index) => ({
+        label: pattern,
+        description: disabledBuiltIns.has(pattern) ? "included again" : "excluded",
+        detail: `Built-in #${index + 1}`,
+        picked: !disabledBuiltIns.has(pattern)
+      })),
+      {
+        title: builtInsEnabled
+          ? "Export2AI: Manage Built-in Exclude Patterns"
+          : "Export2AI: Manage Built-in Exclude Patterns (built-ins currently off)",
+        placeHolder: builtInsEnabled
+          ? "Checked = excluded. Uncheck a built-in pattern to include/allow matching files again."
+          : "Built-ins are off; re-enable useBuiltInExcludePatterns for this checklist to affect exports.",
+        canPickMany: true,
+        matchOnDescription: true
+      }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    debugError("settings: failed to show built-in exclude list", error, { show: true });
+    vscode.window.showErrorMessage(`Export2AI: Failed to show built-in exclude patterns: ${message}`);
+    return;
+  }
+
+  if (!selected) {
+    return;
+  }
+
+  const selectedPatterns = new Set(selected.map(item => item.label));
+  const nextDisabled = DEFAULT_EXCLUDE_PATTERNS.filter(pattern => !selectedPatterns.has(pattern));
+  const target = vscode.workspace.workspaceFolders?.length
+    ? vscode.ConfigurationTarget.Workspace
+    : vscode.ConfigurationTarget.Global;
+
+  try {
+    await config.update("disabledBuiltInExcludePatterns", nextDisabled, target);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    debugError("settings: failed to update built-in exclude list", error, { show: true });
+    vscode.window.showErrorMessage(`Export2AI: Failed to update built-in exclude patterns: ${message}`);
+    return;
+  }
+
+  const activeSuffix = builtInsEnabled
+    ? ""
+    : " Re-enable export2ai.useBuiltInExcludePatterns for this list to affect exports.";
+  vscode.window.showInformationMessage(
+    nextDisabled.length
+      ? `Export2AI: ${nextDisabled.length} built-in exclude pattern(s) disabled.${activeSuffix}`
+      : `Export2AI: All built-in exclude patterns are active.${activeSuffix}`
+  );
+}
+
 function registerModelTargetCommands(context: vscode.ExtensionContext): void {
   const openSettings = () => {
     void openOwnExtensionSettings(context).catch(error => {
@@ -261,7 +330,8 @@ function registerZipHandlers(context: vscode.ExtensionContext): void {
         debugError("settings: unhandled openSettings failure", error, { show: true });
         void vscode.window.showErrorMessage(`Export2AI: Failed to open settings: ${message}`);
       });
-    })
+    }),
+    vscode.commands.registerCommand("export2ai.showBuiltInExcludePatterns", showBuiltInExcludePatterns)
   );
 }
 

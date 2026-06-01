@@ -33,7 +33,7 @@ These are **never** modified:
 | `"` | Vim script |
 | `%` | LaTeX, TeX, BibTeX |
 
-The full extension map is in `EXTENSION_TO_PROFILE` inside `src/utils/commentProfiles.ts` (120+ extensions).
+The full extension map is in `EXTENSION_TO_PROFILE` inside `src/utils/commentProfiles.ts` (175 extensions).
 
 ## Special cases
 

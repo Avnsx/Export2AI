@@ -20,7 +20,7 @@ Target-specific runs compile first when the target imports `out/`. Use `-- --ski
 |--------|------------------|
 | `compile` | Menu generation, TypeScript, settings sync, generated manifest |
 | `tokens` | Token labels, tokenizer routing, manifest hygiene, no bucket commands |
-| `soft-delete` | Repository control file preservation, cache excludes, `.git` traversal guard |
+| `soft-delete` | Repository control/context preservation, cache and secret excludes, keyword-safe source/workflow exceptions, manifest redaction, unreadable-path placeholders, `.git` traversal guard |
 | `explorer-badges` | Badge gate: off by default, opt-in only, outside-workspace clear, scoped status-bar tooltip |
 | `debug-logger` | Debug setting scopes and Output-channel reveal behavior |
 | `comments` | Language-aware comment stripping |
@@ -28,4 +28,4 @@ Target-specific runs compile first when the target imports `out/`. Use `-- --ski
 | `menu-merge` | Explorer submenu, palette hides, single zip row |
 | `settings-nav` | Extension ID resolution and settings metadata |
 | `live` | End-to-end zip creation smoke test |
-| `package-assets` | VSIX build plus packaged marketplace asset validation |
+| `package-assets` | VSIX build plus marketplace asset and generated-context-zip validation |

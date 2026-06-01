@@ -130,7 +130,9 @@ This avoids slow global Settings search, which could freeze Cursor when filterin
 | `export2ai.ignoreDollarFiles` | Skip `$`-prefixed temp files (e.g. `$RECYCLE.BIN`) | `true` |
 | `export2ai.softDeleteGitMetadata` | Keep repository control files (`.github`, `.gitignore`, `.gitattributes`, …) while replacing unsafe local `.git` data with a harmless marker outside `.git` by default | `true` |
 | `export2ai.softDeleteGitMetadata.realGitPathPlaceholder` | Advanced compatibility mode: put the `.git` marker at `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` instead of outside `.git` | `false` |
-| `export2ai.excludePatterns` | Glob patterns to skip (`node_modules`, `dist`, …); use `excludePaths` to hard-exclude repository-control files restored by Soft-Delete | See defaults |
+| `export2ai.useBuiltInExcludePatterns` | Keep Export2AI's safe built-in exclude list active | `true` |
+| `export2ai.disabledBuiltInExcludePatterns` | Built-in exclude patterns disabled through the **Manage Built-in Exclude Patterns** checklist or enum-backed array so matching files can be included again | `[]` |
+| `export2ai.excludePatterns` | Additional glob patterns to skip; appended to built-ins unless `useBuiltInExcludePatterns` is off | `[]` |
 | `export2ai.excludePaths` | Workspace-relative paths to skip entirely | `[]` |
 | `export2ai.commentStripLanguages` | Read-only list of supported comment syntax families | Auto-synced at build |
 | `export2ai.compressCode` | Trim whitespace & blank lines in exported text (see Settings for guidance) | `false` |
@@ -199,18 +201,21 @@ For API-exact Opus 4.7+ counts, use Anthropic’s [token counting API](https://p
 
 ## 🚫 What gets excluded by default?
 
-- `node_modules`, `dist`, `build`, `out`
+- `node_modules`, `dist`, `site`, `build`, `out`
 - Python/tool caches such as `__pycache__`, `.pytest_cache`, `.cache`, `.tmp`
 - `.git` internals (external soft-delete marker by default)
+- Credential and private-key material such as `*.pem`, `*.key`, `*.p8`, `*.p12`, `*.pfx`, `id_rsa`, `id_ed25519`, `.env`, `.env.*`, `*token*`, `*credential*`, `*secrets*`, and `out*.json`
 - Log/temp/backup files (`*.log`, `*.tmp`, …)
 - Previous Export2AI zips (`*-chatgpt-context-*.zip`, `*-*-context-*.zip`)
 - Dot files (if `ignoreDotFiles` is on)
 - Dollar-prefixed files (if `ignoreDollarFiles` is on)
 - Anything in `.gitignore` (if `ignoreGitIgnore` is on)
 
-By default, Git/GitHub metadata uses **soft-delete** instead of broad dotfile removal. Repository control files such as `.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, and `.git-blame-ignore-revs` are exported with their real contents so CI/workflow/archive tests can inspect them. The unsafe local `.git` directory is not traversed and is not created in the zip by default; Export2AI writes `_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` outside `.git` so tests that check `Path(".git").exists()` do not mistake the export for a real Git repository. Remotes, refs, branches, hooks, object database, credentials, and local history are not exported.
+In Settings, `export2ai.useBuiltInExcludePatterns` shows a compact preview with the first six built-in patterns. Run **Export2AI: Manage Built-in Exclude Patterns** from the Command Palette to open the full built-in list inside the IDE as an editable checklist. Checked patterns stay excluded; unchecked patterns are stored in `export2ai.disabledBuiltInExcludePatterns` and are included again. That setting is also intentionally editable as an enum-backed array, so the built-ins are never hidden away or inaccessible. `export2ai.excludePatterns` stays an empty additional-pattern array by default, so the native Settings page does not render all 40 built-ins unless you explicitly manage them.
 
-The zip manifest records the source folder name and `Source path redacted: true`; it does not include the absolute local source path. If you need the older `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` layout for a specialized workflow, enable `export2ai.softDeleteGitMetadata.realGitPathPlaceholder`.
+By default, Git/GitHub metadata uses **soft-delete** instead of broad dotfile removal. Repository control files such as `.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, and `.git-blame-ignore-revs` are exported with their real contents so CI/workflow/archive tests can inspect them. Project context paths `AGENTS.md`, `README.md`, `pyproject.toml`, `docs/**`, `tests/**`, and `tools/**` are also kept even when broad `.gitignore` rules would hide them. Actual credential/key material stays excluded, but source/script files and `.github/workflows/*.yml|*.yaml` are not dropped only because their filename mentions token/key words. The unsafe local `.git` directory is not traversed and is not created in the zip by default; Export2AI writes `_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` outside `.git` so tests that check `Path(".git").exists()` do not mistake the export for a real Git repository. Remotes, refs, branches, hooks, object database, credentials, and local history are not exported.
+
+The zip manifest records the source folder name and `Source path redacted: true`; it does not include the absolute local source path. It also states that `.git`, credentials, and private key material were intentionally omitted and that the archive is for code-context analysis, not publishing. If you need the older `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` layout for a specialized workflow, enable `export2ai.softDeleteGitMetadata.realGitPathPlaceholder`.
 
 If a repository-control file or folder cannot be read, the zip keeps that path visible with an explicit `Export2AI Repository-Control Read Error` placeholder or `EXPORT2AI_READ_ERROR.txt` marker instead of silently dropping it.
 
@@ -252,7 +257,7 @@ npm run test:settings-nav      # extension ID + extensionInfo metadata
 npm run package          # compile once + build build/export2ai-x.x.x.vsix
 ```
 
-**Manifest workflow:** edit `package.slim.json` (not the generated `package.json`). `npm run compile` runs `precompile` (menu generation), TypeScript compile, then `postcompile` (comment settings sync + manifest merge). `npm run package` always writes VSIX files under `build/`. `package.json` stays small (~35 KB); if it ever balloons into the MB range you have reintroduced a generated-command explosion — see [docs/agent-chokepoints.md](./docs/agent-chokepoints.md).
+**Manifest workflow:** edit `package.slim.json` (not the generated `package.json`). `npm run compile` runs `precompile` (menu generation), TypeScript compile, then `postcompile` (comment settings sync + manifest merge). `npm run slim:package` writes the slim manifest back to both `package.slim.json` and `package.json` before commit. `npm run package` always writes VSIX files under `build/`. `package.json` stays small (~22.6 KB after slim, ~40.5 KB after compile); if it ever balloons into the MB range you have reintroduced a generated-command explosion — see [docs/agent-chokepoints.md](./docs/agent-chokepoints.md).
 
 ### Documentation
 
@@ -261,13 +266,12 @@ npm run package          # compile once + build build/export2ai-x.x.x.vsix
 | [docs/README.md](./docs/README.md) | Documentation index |
 | [AGENTS.md](./AGENTS.md) | **Agent guide — read before structural changes** |
 | [docs/agent-chokepoints.md](./docs/agent-chokepoints.md) | Hang prevention & performance traps |
-| [docs/architecture.md](./docs/architecture.md) | Data flows, commands, why there is no token-bucket menu |
+| [docs/architecture.md](./docs/architecture.md) | Data flows, commands, ignore/soft-delete pipeline |
 | [docs/target-model-ui.md](./docs/target-model-ui.md) | Unified `llmModel` display |
 | [docs/source-modules.md](./docs/source-modules.md) | Every `src/` and `scripts/` file |
 | [docs/configuration.md](./docs/configuration.md) | All `export2ai.*` settings |
 | [docs/comment-stripping.md](./docs/comment-stripping.md) | Comment removal by language |
 | [docs/build-and-test.md](./docs/build-and-test.md) | Build pipeline, tests, VSIX |
-| [AGENTS.md](./AGENTS.md) | AI agent & contributor conventions |
 
 ---
 

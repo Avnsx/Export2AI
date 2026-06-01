@@ -31,7 +31,9 @@ When adding a setting, place it in the matching category object in `package.slim
 | `export2ai.ignoreDollarFiles` | boolean | `true` | Skip `$*` and `**/$*` (temp files) |
 | `export2ai.softDeleteGitMetadata` | boolean | `true` | Preserve repository control files with real contents while replacing unsafe local `.git` internals with a harmless marker outside `.git` by default |
 | `export2ai.softDeleteGitMetadata.realGitPathPlaceholder` | boolean | `false` | Advanced opt-in to write `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt`; default writes `_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` so test suites do not see a fake Git repository |
-| `export2ai.excludePatterns` | string[] | See below | Glob patterns to exclude; `softDeleteGitMetadata` may restore repository-control paths, so use `excludePaths` for intentional hard exclusion of those paths |
+| `export2ai.useBuiltInExcludePatterns` | boolean | `true` | Keep Export2AI's built-in safe exclude list active |
+| `export2ai.disabledBuiltInExcludePatterns` | string[] | `[]` | Built-in exclude patterns disabled through the **Manage Built-in Exclude Patterns** checklist or enum-backed array so matching files can be included again |
+| `export2ai.excludePatterns` | string[] | `[]` | Additional glob patterns appended to the built-in safe excludes unless `useBuiltInExcludePatterns` is disabled |
 | `export2ai.excludePaths` | string[] | `[]` | Workspace-relative paths to exclude entirely |
 | `export2ai.compressCode` | boolean | `false` | Reduces exported text size (trim whitespace, drop blank lines); see Settings UI for full guidance |
 | `export2ai.removeComments` | boolean | `false` | Strip comments per file type (see [comment-stripping.md](./comment-stripping.md)) |
@@ -69,17 +71,19 @@ These settings show a **plain-language `description`** under the control plus a 
 
 Run `npm run compile` after editing manifest or `commentProfiles.ts`.
 
-### Default `excludePatterns`
+### Built-in default exclude patterns
 
 ```
-node_modules, *.log, *.tmp, *.temp, *.bak, dist, build, out, .git, __pycache__, .pytest_cache, .cache, .tmp, *-chatgpt-context-*.zip, *-*-context-*.zip
+node_modules, *.log, *.tmp, *.temp, *.bak, dist, site, build, out, .git, __pycache__, .pytest_cache, .cache, .tmp, **/*private*key*, **/*private-key*, **/*secret*key*, **/*signing*key*, **/*ed25519*key*, **/*rsa*key*, **/*.pem, **/*.key, **/*.p8, **/*.p12, **/*.pfx, **/id_rsa, **/id_dsa, **/id_ecdsa, **/id_ed25519, **/*.asc, **/*.gpg, **/.env, **/.env.*, **/*token*, **/*credential*, **/*credentials*, **/*secrets*, out*.json, *-chatgpt-context-*.zip, *-*-context-*.zip
 ```
 
 The `*-*-context-*.zip` pattern excludes zips named `{folder}-{model}-context-{timestamp}.zip`.
 
-With `export2ai.softDeleteGitMetadata` enabled, repository control files override the default dot-file ignore rules and are exported with real contents. This covers `.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, and `.git-blame-ignore-revs`. The unsafe local `.git` directory is not traversed and is not created in the export by default; Export2AI writes `_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` outside `.git` so tests that check `Path(".git").exists()` do not mistake the archive for a real Git repository. The advanced `export2ai.softDeleteGitMetadata.realGitPathPlaceholder` setting can opt back into `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt`. If a repository-control path cannot be read, Export2AI keeps the path visible with an `Export2AI Repository-Control Read Error` placeholder or `EXPORT2AI_READ_ERROR.txt` marker. Explicit `excludePaths` entries still hard-exclude matching paths.
+The Settings UI copy for `export2ai.useBuiltInExcludePatterns` intentionally shows a compact Markdown preview with the first six built-in patterns. Run **Export2AI: Manage Built-in Exclude Patterns** from the Command Palette to open the full built-in list inside the IDE through Export2AI as an editable checklist. Checked patterns stay excluded; unchecked patterns are written to `export2ai.disabledBuiltInExcludePatterns`, which includes those files again. `export2ai.disabledBuiltInExcludePatterns` is also an intentionally editable enum-backed array, so every built-in can be toggled manually from Settings JSON or the Settings array editor. `export2ai.excludePatterns` defaults to `[]` and is only for project-specific extra patterns, which prevents the native Settings page from rendering all 40 built-ins as editable array rows. VS Code/Cursor contributed settings support static `markdownDescription` text and simple array editors, but not custom inline expand/collapse buttons with extension-owned click state inside the native Settings page.
 
-When `export2ai.includeManifest` is enabled, `_EXPORT2AI_MANIFEST.txt` records the source folder name, creation timestamp, soft-delete settings, and included/excluded collection counts. The absolute local source path is redacted by default with `Source path redacted: true`.
+With `export2ai.softDeleteGitMetadata` enabled, repository control and context files override broad dot-file or `.gitignore` rules and are exported with real contents. This covers `.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, `.git-blame-ignore-revs`, `AGENTS.md`, `README.md`, `pyproject.toml`, `docs/**`, `tests/**`, and `tools/**`. Actual credential/key material still wins over these includes. The keyword guard blocks `.env*`, SSH key filenames, key/archive extensions, `out*.json`, and token/credential/private-key filename segments. It does not drop source/script files or `.github/workflows/*.yml|*.yaml` only because the filename mentions token/key words, which keeps validation helpers and CI workflow tests available. The unsafe local `.git` directory is not traversed and is not created in the export by default; Export2AI writes `_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` outside `.git` so tests that check `Path(".git").exists()` do not mistake the archive for a real Git repository. The advanced `export2ai.softDeleteGitMetadata.realGitPathPlaceholder` setting can opt back into `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt`. If a repository-control path cannot be read, Export2AI keeps the path visible with an `Export2AI Repository-Control Read Error` placeholder or `EXPORT2AI_READ_ERROR.txt` marker. Explicit `excludePaths` entries still hard-exclude matching paths.
+
+When `export2ai.includeManifest` is enabled, `_EXPORT2AI_MANIFEST.txt` records the target model, source folder name, ISO creation timestamp, included/candidate/excluded collection counts, processed bytes, optional token estimate, ignore settings, soft-delete settings, compression/comment settings, file concurrency, and the active exclude-pattern list. The absolute local source path is redacted by default with `Source path redacted: true`, and the manifest states that `.git`, credentials, and private key material were intentionally omitted and that the archive is for code-context analysis, not publishing.
 
 ### Read-only settings (display only)
 
@@ -101,7 +105,7 @@ Neither is read by extension runtime logic.
 | `export2ai.exclude` | `export2ai.excludePatterns` |
 | `export2ai.outputFolder` | Ignored — zips always written to workspace root |
 
-Legacy `export2ai.exclude` is still read as a fallback when `excludePatterns` is unset.
+Legacy `export2ai.exclude` is still read and appended as additional patterns. Disable individual built-ins with `export2ai.disabledBuiltInExcludePatterns`; disable `export2ai.useBuiltInExcludePatterns` only if you intentionally want to replace the entire built-in safe list with your own list.
 
 ## Adding a new setting
 

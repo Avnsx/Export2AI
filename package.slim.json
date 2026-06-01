@@ -68,6 +68,12 @@
         "title": "Export2AI: Copy Content to Clipboard",
         "category": "Export2AI",
         "icon": "$(copy)"
+      },
+      {
+        "command": "export2ai.showBuiltInExcludePatterns",
+        "title": "Manage Built-in Exclude Patterns",
+        "category": "Export2AI",
+        "icon": "$(list-unordered)"
       }
     ],
     "submenus": [
@@ -97,6 +103,9 @@
         {
           "command": "export2ai.copyFileContent",
           "when": "false"
+        },
+        {
+          "command": "export2ai.showBuiltInExcludePatterns"
         }
       ],
       "explorer/context": [
@@ -197,28 +206,72 @@
           },
           "export2ai.excludePatterns": {
             "type": "array",
-            "default": [
-              "node_modules",
-              "*.log",
-              "*.tmp",
-              "*.temp",
-              "*.bak",
-              "dist",
-              "build",
-              "out",
-              ".git",
-              "__pycache__",
-              ".pytest_cache",
-              ".cache",
-              ".tmp",
-              "*-chatgpt-context-*.zip",
-              "*-*-context-*.zip"
-            ],
+            "default": [],
             "items": {
               "type": "string"
             },
             "order": 5,
-            "description": "Glob patterns excluded from every zip (e.g. node_modules, build output, prior Export2AI zips). Soft-delete may restore repository-control paths; use excludePaths to hard-exclude those."
+            "description": "Additional glob patterns to exclude. These are appended to the built-in safe defaults unless export2ai.useBuiltInExcludePatterns is disabled.",
+            "markdownDescription": "Additional glob patterns to exclude. These are appended to the built-in safe defaults unless `export2ai.useBuiltInExcludePatterns` is disabled.\n\nThis setting defaults to an empty array so the native Settings UI stays compact. Use it for project-specific extra excludes."
+          },
+          "export2ai.useBuiltInExcludePatterns": {
+            "type": "boolean",
+            "default": true,
+            "order": 6,
+            "description": "Use Export2AI's built-in safe default exclude patterns.",
+            "markdownDescription": "Use Export2AI's built-in safe default exclude patterns.\n\nBuilt-in preview (first 6 of 40):\n1. `node_modules`\n2. `*.log`\n3. `*.tmp`\n4. `*.temp`\n5. `*.bak`\n6. `dist`\n\nRun **Export2AI: Manage Built-in Exclude Patterns** from the Command Palette to edit the full built-in list as a checklist. Checked patterns stay excluded; unchecked patterns are written to `export2ai.disabledBuiltInExcludePatterns` and matching files are included again.\n\nThe native VS Code/Cursor Settings UI does not provide a custom inline expand/collapse control for extension-owned settings."
+          },
+          "export2ai.disabledBuiltInExcludePatterns": {
+            "type": "array",
+            "default": [],
+            "items": {
+              "type": "string",
+              "enum": [
+                "node_modules",
+                "*.log",
+                "*.tmp",
+                "*.temp",
+                "*.bak",
+                "dist",
+                "site",
+                "build",
+                "out",
+                ".git",
+                "__pycache__",
+                ".pytest_cache",
+                ".cache",
+                ".tmp",
+                "**/*private*key*",
+                "**/*private-key*",
+                "**/*secret*key*",
+                "**/*signing*key*",
+                "**/*ed25519*key*",
+                "**/*rsa*key*",
+                "**/*.pem",
+                "**/*.key",
+                "**/*.p8",
+                "**/*.p12",
+                "**/*.pfx",
+                "**/id_rsa",
+                "**/id_dsa",
+                "**/id_ecdsa",
+                "**/id_ed25519",
+                "**/*.asc",
+                "**/*.gpg",
+                "**/.env",
+                "**/.env.*",
+                "**/*token*",
+                "**/*credential*",
+                "**/*credentials*",
+                "**/*secrets*",
+                "out*.json",
+                "*-chatgpt-context-*.zip",
+                "*-*-context-*.zip"
+              ]
+            },
+            "order": 7,
+            "description": "Built-in exclude patterns to disable so matching files can be included again.",
+            "markdownDescription": "Built-in exclude patterns to disable so matching files can be included again.\n\nPrefer the **Export2AI: Manage Built-in Exclude Patterns** Command Palette action for normal editing. This array is also intentionally editable: add one of the enum values here to disable that built-in exclude, or remove it to make the built-in exclude active again."
           },
           "export2ai.excludePaths": {
             "type": "array",
@@ -226,13 +279,13 @@
             "items": {
               "type": "string"
             },
-            "order": 6,
+            "order": 8,
             "description": "Workspace-relative paths to exclude entirely (folders or files)."
           },
           "export2ai.maxFileSize": {
             "type": "number",
             "default": 1048576,
-            "order": 7,
+            "order": 9,
             "description": "Maximum file size in bytes to include in the zip. Larger files become a placeholder entry. Default: 1 MB."
           },
           "export2ai.fileConcurrency": {
@@ -240,7 +293,7 @@
             "default": 4,
             "minimum": 1,
             "maximum": 32,
-            "order": 8,
+            "order": 10,
             "description": "Parallel file reads when scanning large folders (clamped 1–32 at runtime)."
           }
         }

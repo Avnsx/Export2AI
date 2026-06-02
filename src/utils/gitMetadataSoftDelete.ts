@@ -32,11 +32,20 @@ const PROTECTED_CREDENTIAL_EXTENSIONS = [
 ];
 
 const PROTECTED_CREDENTIAL_FILE_NAMES = new Set([
+  ".dockercfg",
   ".env",
+  ".envrc",
+  ".netrc",
+  ".npmrc",
+  ".pnpmrc",
+  ".pypirc",
+  ".yarnrc",
+  ".yarnrc.yml",
   "id_dsa",
   "id_ecdsa",
   "id_ed25519",
-  "id_rsa"
+  "id_rsa",
+  "_netrc"
 ]);
 
 const PROTECTED_CREDENTIAL_SEGMENT_PATTERNS = [
@@ -148,6 +157,10 @@ export function isProtectedCredentialPath(relativePath: string | undefined): boo
   }
 
   return segments.some((segment, index) => {
+    if (segment === "config.json" && index > 0 && segments[index - 1] === ".docker") {
+      return true;
+    }
+
     if (PROTECTED_CREDENTIAL_FILE_NAMES.has(segment) || segment.startsWith(".env.")) {
       return true;
     }

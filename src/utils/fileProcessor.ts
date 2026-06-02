@@ -159,12 +159,18 @@ export class FileProcessor {
         const fileUri = vscode.Uri.joinPath(dirUri, name);
         const relativePath = UriUtils.relativePath(rootUri, fileUri);
         const workspaceRelativePath = UriUtils.relativePath(workspaceUri, fileUri);
+        const isSymbolicLink = Boolean(fileType & vscode.FileType.SymbolicLink);
         const isDirectory = Boolean(fileType & vscode.FileType.Directory);
         const softDeleteAction = options.softDeleteGitMetadata
           ? resolveGitMetadataSoftDeleteAction(relativePath, workspaceRelativePath)
           : undefined;
         const isProtectedCredentialEntry = isProtectedCredentialPath(relativePath)
           || isProtectedCredentialPath(workspaceRelativePath);
+
+        if (isSymbolicLink) {
+          ignoredEntries += 1;
+          continue;
+        }
 
         if (IgnoreUtils.isIgnored(ig, relativePath, isDirectory)) {
           if (!softDeleteAction || isProtectedCredentialEntry) {

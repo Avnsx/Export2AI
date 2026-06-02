@@ -20,12 +20,6 @@ export const DEFAULT_EXCLUDE_PATTERNS = [
   ".pytest_cache",
   ".cache",
   ".tmp",
-  "**/*private*key*",
-  "**/*private-key*",
-  "**/*secret*key*",
-  "**/*signing*key*",
-  "**/*ed25519*key*",
-  "**/*rsa*key*",
   "**/*.pem",
   "**/*.key",
   "**/*.p8",
@@ -39,10 +33,6 @@ export const DEFAULT_EXCLUDE_PATTERNS = [
   "**/*.gpg",
   "**/.env",
   "**/.env.*",
-  "**/*token*",
-  "**/*credential*",
-  "**/*credentials*",
-  "**/*secrets*",
   "out*.json",
   "*-chatgpt-context-*.zip",
   "*-*-context-*.zip"
@@ -55,7 +45,10 @@ function getStringArray(config: vscode.WorkspaceConfiguration, key: string): str
   if (!Array.isArray(value)) {
     return [];
   }
-  return value.filter((item): item is string => typeof item === "string" && item.length > 0);
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map(item => item.trim())
+    .filter(item => item.length > 0);
 }
 
 export function getBooleanSetting(
@@ -65,6 +58,33 @@ export function getBooleanSetting(
 ): boolean {
   const value = config.get<unknown>(key, defaultValue);
   return typeof value === "boolean" ? value : defaultValue;
+}
+
+function getStringSetting(
+  config: vscode.WorkspaceConfiguration,
+  key: string,
+  defaultValue: string
+): string {
+  const value = config.get<unknown>(key, defaultValue);
+  return typeof value === "string" && value.trim().length > 0 ? value : defaultValue;
+}
+
+function getNumberSetting(
+  config: vscode.WorkspaceConfiguration,
+  key: string,
+  defaultValue: number,
+  min: number,
+  max?: number
+): number {
+  const value = config.get<unknown>(key, defaultValue);
+  const numeric = typeof value === "number" && Number.isFinite(value) ? value : defaultValue;
+  const lowerBounded = Math.max(min, numeric);
+  return max === undefined ? lowerBounded : Math.min(max, lowerBounded);
+}
+
+function getOutputFormat(config: vscode.WorkspaceConfiguration): "plaintext" | "markdown" | "xml" {
+  const value = config.get<unknown>("outputFormat", "plaintext");
+  return value === "markdown" || value === "xml" ? value : "plaintext";
 }
 
 export function normalizeDisabledBuiltInExcludePatterns(patterns: unknown): string[] {
@@ -114,27 +134,27 @@ export function getConfiguration(resource?: vscode.Uri): Export2AIConfiguration 
   );
 
   return {
-    ignoreGitIgnore: config.get<boolean>("ignoreGitIgnore", true),
-    ignoreDotFiles: config.get<boolean>("ignoreDotFiles", true),
-    ignoreDollarFiles: config.get<boolean>("ignoreDollarFiles", true),
-    softDeleteGitMetadata: config.get<boolean>("softDeleteGitMetadata", true),
-    softDeleteGitMetadataRealGitPathPlaceholder: config.get<boolean>("softDeleteGitMetadata.realGitPathPlaceholder", false),
+    ignoreGitIgnore: getBooleanSetting(config, "ignoreGitIgnore", true),
+    ignoreDotFiles: getBooleanSetting(config, "ignoreDotFiles", true),
+    ignoreDollarFiles: getBooleanSetting(config, "ignoreDollarFiles", true),
+    softDeleteGitMetadata: getBooleanSetting(config, "softDeleteGitMetadata", true),
+    softDeleteGitMetadataRealGitPathPlaceholder: getBooleanSetting(config, "softDeleteGitMetadata.realGitPathPlaceholder", false),
     useBuiltInExcludePatterns,
     disabledBuiltInExcludePatterns,
     excludePatterns,
-    excludePaths: config.get<string[]>("excludePaths") ?? [],
-    compressCode: config.get<boolean>("compressCode", false),
-    removeComments: config.get<boolean>("removeComments", false),
-    enableTokenCounting: config.get<boolean>("enableTokenCounting", true),
-    showExplorerTokenBadges: config.get<boolean>("showExplorerTokenBadges", false),
-    llmModel: config.get<string>("llmModel", DEFAULT_LLM_MODEL),
-    compressionLevel: Math.min(9, Math.max(0, config.get<number>("compressionLevel", 9))),
-    includeManifest: config.get<boolean>("includeManifest", true),
-    copyPathAfterCreate: config.get<boolean>("copyPathAfterCreate", true),
-    maxFileSize: Math.max(0, config.get<number>("maxFileSize", 1024 * 1024)),
-    maxDepth: Math.max(0, config.get<number>("maxDepth", 5)),
-    fileConcurrency: Math.min(32, Math.max(1, config.get<number>("fileConcurrency", 4))),
-    outputFormat: config.get<"plaintext" | "markdown" | "xml">("outputFormat", "plaintext"),
+    excludePaths: getStringArray(config, "excludePaths"),
+    compressCode: getBooleanSetting(config, "compressCode", false),
+    removeComments: getBooleanSetting(config, "removeComments", false),
+    enableTokenCounting: getBooleanSetting(config, "enableTokenCounting", true),
+    showExplorerTokenBadges: getBooleanSetting(config, "showExplorerTokenBadges", false),
+    llmModel: getStringSetting(config, "llmModel", DEFAULT_LLM_MODEL),
+    compressionLevel: getNumberSetting(config, "compressionLevel", 9, 0, 9),
+    includeManifest: getBooleanSetting(config, "includeManifest", true),
+    copyPathAfterCreate: getBooleanSetting(config, "copyPathAfterCreate", true),
+    maxFileSize: getNumberSetting(config, "maxFileSize", 1024 * 1024, 0),
+    maxDepth: getNumberSetting(config, "maxDepth", 5, 0),
+    fileConcurrency: getNumberSetting(config, "fileConcurrency", 4, 1, 32),
+    outputFormat: getOutputFormat(config),
     debug: isDebugLoggingEnabled()
   };
 }

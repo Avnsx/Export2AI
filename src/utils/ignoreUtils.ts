@@ -5,6 +5,14 @@ import ignore from "ignore";
 type IgnoreInstance = ReturnType<typeof ignore>;
 import { UriUtils } from "./uriUtils";
 
+function toPosixPath(value: string): string {
+  return value.replace(/\\/g, "/");
+}
+
+function normalizeComparePath(value: string): string {
+  return process.platform === "win32" ? value.toLowerCase() : value;
+}
+
 export class IgnoreUtils {
   public static createIgnoreInstance(
     patterns: string[] = [],
@@ -28,7 +36,7 @@ export class IgnoreUtils {
     if (!relativePath) {
       return false;
     }
-    const posix = relativePath.split(path.sep).join("/");
+    const posix = toPosixPath(relativePath);
     return ig.ignores(isDirectory ? `${posix}/` : posix);
   }
 
@@ -54,21 +62,30 @@ export class IgnoreUtils {
     const absoluteFileExcludePaths: string[] = [];
 
     for (const excludePath of pathsToExclude) {
-      const normalizedInput = excludePath.replace(/\\/g, "/").replace(/\/+$/, "");
+      const trimmedInput = excludePath.trim();
+      if (!trimmedInput) {
+        continue;
+      }
+      const normalizedInput = toPosixPath(trimmedInput).replace(/\/+$/, "");
 
-      if (path.isAbsolute(excludePath) && workspaceUri.scheme === "file") {
-        absoluteFileExcludePaths.push(path.normalize(excludePath));
+      if (path.isAbsolute(trimmedInput) && workspaceUri.scheme === "file") {
+        absoluteFileExcludePaths.push(normalizeComparePath(path.normalize(trimmedInput)));
         continue;
       }
 
-      relativeExcludePaths.push(
-        normalizedInput.replace(/^\.\//, "").replace(/^\/+/, "")
-      );
+      const relativeExcludePath = normalizedInput.replace(/^\.\//, "").replace(/^\/+/, "");
+      if (relativeExcludePath) {
+        relativeExcludePaths.push(normalizeComparePath(relativeExcludePath));
+      }
+    }
+
+    if (!relativeExcludePaths.length && !absoluteFileExcludePaths.length) {
+      return () => false;
     }
 
     return (resourceUri: vscode.Uri): boolean => {
       if (workspaceUri.scheme === "file" && resourceUri.scheme === "file") {
-        const normalizedFilePath = path.normalize(resourceUri.fsPath);
+        const normalizedFilePath = normalizeComparePath(path.normalize(resourceUri.fsPath));
         if (absoluteFileExcludePaths.some(excludePath =>
           normalizedFilePath === excludePath ||
           normalizedFilePath.startsWith(excludePath + path.sep)
@@ -84,9 +101,10 @@ export class IgnoreUtils {
         return false;
       }
 
+      const comparableRelativePath = normalizeComparePath(relativePath);
       return relativeExcludePaths.some(excludePath =>
-        relativePath === excludePath ||
-        relativePath.startsWith(`${excludePath}/`)
+        comparableRelativePath === excludePath ||
+        comparableRelativePath.startsWith(`${excludePath}/`)
       );
     };
   }

@@ -4,7 +4,14 @@ import * as vscode from "vscode";
 export class UriUtils {
   public static relativePath(rootUri: vscode.Uri, resourceUri: vscode.Uri): string {
     if (rootUri.scheme === "file" && resourceUri.scheme === "file") {
-      return path.relative(rootUri.fsPath, resourceUri.fsPath).split(path.sep).join("/");
+      const relative = path.relative(rootUri.fsPath, resourceUri.fsPath);
+      if (relative === "") {
+        return "";
+      }
+      if (relative.startsWith("..") || path.isAbsolute(relative)) {
+        throw new Error(`Resource ${resourceUri.toString()} is outside ${rootUri.toString()}`);
+      }
+      return relative.replace(/\\/g, "/");
     }
 
     if (rootUri.scheme !== resourceUri.scheme || rootUri.authority !== resourceUri.authority) {

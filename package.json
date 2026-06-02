@@ -1,7 +1,7 @@
 {
   "name": "export2ai",
   "displayName": "Export2AI",
-  "version": "1.2.8",
+  "version": "1.2.9",
   "description": "Create compact AI-ready zip archives from the current Cursor or VS Code workspace.",
   "icon": "icons/icon-1254x1254.png",
   "main": "./out/extension.js",
@@ -136,7 +136,7 @@
         "properties": {
           "export2ai.extensionInfo": {
             "type": "string",
-            "default": "Extension version v.1.2.8 · Last updated June 01, 2026",
+            "default": "Extension version v.1.2.9 · Last updated June 02, 2026",
             "readOnly": true,
             "order": -100
           }
@@ -219,7 +219,7 @@
             "default": true,
             "order": 6,
             "description": "Use Export2AI's built-in safe default exclude patterns.",
-            "markdownDescription": "Use Export2AI's built-in safe default exclude patterns.\n\nBuilt-in preview (first 6 of 40):\n1. `node_modules`\n2. `*.log`\n3. `*.tmp`\n4. `*.temp`\n5. `*.bak`\n6. `dist`\n\nRun **Export2AI: Manage Built-in Exclude Patterns** from the Command Palette to edit the full built-in list as a checklist. Checked patterns stay excluded; unchecked patterns are written to `export2ai.disabledBuiltInExcludePatterns` and matching files are included again.\n\nThe native VS Code/Cursor Settings UI does not provide a custom inline expand/collapse control for extension-owned settings."
+            "markdownDescription": "Use Export2AI's built-in safe default exclude patterns.\n\nBuilt-in preview (first 6 of 30):\n1. `node_modules`\n2. `*.log`\n3. `*.tmp`\n4. `*.temp`\n5. `*.bak`\n6. `dist`\n\nRun **Export2AI: Manage Built-in Exclude Patterns** from the Command Palette to edit the full built-in list as a checklist. Checked patterns stay excluded; unchecked patterns are written to `export2ai.disabledBuiltInExcludePatterns` and matching files are included again.\n\nThe native VS Code/Cursor Settings UI does not provide a custom inline expand/collapse control for extension-owned settings."
           },
           "export2ai.disabledBuiltInExcludePatterns": {
             "type": "array",
@@ -241,12 +241,6 @@
                 ".pytest_cache",
                 ".cache",
                 ".tmp",
-                "**/*private*key*",
-                "**/*private-key*",
-                "**/*secret*key*",
-                "**/*signing*key*",
-                "**/*ed25519*key*",
-                "**/*rsa*key*",
                 "**/*.pem",
                 "**/*.key",
                 "**/*.p8",
@@ -260,10 +254,6 @@
                 "**/*.gpg",
                 "**/.env",
                 "**/.env.*",
-                "**/*token*",
-                "**/*credential*",
-                "**/*credentials*",
-                "**/*secrets*",
                 "out*.json",
                 "*-chatgpt-context-*.zip",
                 "*-*-context-*.zip"

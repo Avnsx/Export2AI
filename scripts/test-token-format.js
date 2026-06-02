@@ -82,11 +82,14 @@ function testRuntimeExcludeDefaults() {
   assert(defaultsOnly.useBuiltInExcludePatterns === true, "built-in exclude switch defaults on");
   assert(defaultsOnly.excludePatterns.includes("node_modules"), "runtime defaults include node_modules");
   assert(defaultsOnly.excludePatterns.includes("**/*.pem"), "runtime defaults include credential file excludes");
+  assert(!defaultsOnly.excludePatterns.includes("**/*token*"), "runtime defaults do not broad-exclude keyword-like source filenames");
 
   const withAdditional = getRuntimeConfigurationWith({
-    excludePatterns: ["custom-cache", "node_modules"]
+    excludePatterns: [" custom-cache ", "", "node_modules"],
+    excludePaths: [" src/generated ", "", "   "]
   });
   assert(withAdditional.excludePatterns.includes("custom-cache"), "additional excludes are appended");
+  assert(withAdditional.excludePaths.length === 1 && withAdditional.excludePaths[0] === "src/generated", "excludePaths are trimmed and empty entries are ignored");
   assert(
     withAdditional.excludePatterns.filter(pattern => pattern === "node_modules").length === 1,
     "merged excludes are deduplicated"
@@ -119,6 +122,56 @@ function testRuntimeExcludeDefaults() {
   });
   assert(Array.isArray(withInvalidDisabledList.disabledBuiltInExcludePatterns), "invalid disabled built-ins value is normalized");
   assert(withInvalidDisabledList.disabledBuiltInExcludePatterns.length === 0, "invalid disabled built-ins value does not crash or apply");
+
+  const withInvalidScalarSettings = getRuntimeConfigurationWith({
+    ignoreGitIgnore: "false",
+    ignoreDotFiles: "false",
+    ignoreDollarFiles: "false",
+    softDeleteGitMetadata: "false",
+    "softDeleteGitMetadata.realGitPathPlaceholder": "true",
+    compressCode: "true",
+    removeComments: "true",
+    enableTokenCounting: "false",
+    showExplorerTokenBadges: "true",
+    includeManifest: "false",
+    copyPathAfterCreate: "false",
+    llmModel: 1234,
+    compressionLevel: "9",
+    maxFileSize: "0",
+    maxDepth: "0",
+    fileConcurrency: "32",
+    outputFormat: "yaml",
+    excludePaths: "src"
+  });
+  assert(withInvalidScalarSettings.ignoreGitIgnore === true, "invalid ignoreGitIgnore falls back to true");
+  assert(withInvalidScalarSettings.ignoreDotFiles === true, "invalid ignoreDotFiles falls back to true");
+  assert(withInvalidScalarSettings.ignoreDollarFiles === true, "invalid ignoreDollarFiles falls back to true");
+  assert(withInvalidScalarSettings.softDeleteGitMetadata === true, "invalid softDeleteGitMetadata falls back to true");
+  assert(withInvalidScalarSettings.softDeleteGitMetadataRealGitPathPlaceholder === false, "invalid realGitPathPlaceholder falls back to false");
+  assert(withInvalidScalarSettings.compressCode === false, "invalid compressCode falls back to false");
+  assert(withInvalidScalarSettings.removeComments === false, "invalid removeComments falls back to false");
+  assert(withInvalidScalarSettings.enableTokenCounting === true, "invalid enableTokenCounting falls back to true");
+  assert(withInvalidScalarSettings.showExplorerTokenBadges === false, "invalid showExplorerTokenBadges falls back to false");
+  assert(withInvalidScalarSettings.includeManifest === true, "invalid includeManifest falls back to true");
+  assert(withInvalidScalarSettings.copyPathAfterCreate === true, "invalid copyPathAfterCreate falls back to true");
+  assert(withInvalidScalarSettings.llmModel === DEFAULT_LLM_MODEL, "invalid llmModel falls back to default model");
+  assert(withInvalidScalarSettings.compressionLevel === 9, "invalid compressionLevel falls back to default");
+  assert(withInvalidScalarSettings.maxFileSize === 1024 * 1024, "invalid maxFileSize falls back to default");
+  assert(withInvalidScalarSettings.maxDepth === 5, "invalid maxDepth falls back to default");
+  assert(withInvalidScalarSettings.fileConcurrency === 4, "invalid fileConcurrency falls back to default");
+  assert(withInvalidScalarSettings.outputFormat === "plaintext", "invalid outputFormat falls back to plaintext");
+  assert(Array.isArray(withInvalidScalarSettings.excludePaths) && withInvalidScalarSettings.excludePaths.length === 0, "invalid excludePaths falls back to an empty list");
+
+  const withNumericClamps = getRuntimeConfigurationWith({
+    compressionLevel: 999,
+    maxFileSize: -1,
+    maxDepth: -1,
+    fileConcurrency: 999
+  });
+  assert(withNumericClamps.compressionLevel === 9, "compressionLevel is clamped to 9");
+  assert(withNumericClamps.maxFileSize === 0, "maxFileSize is clamped to 0 minimum");
+  assert(withNumericClamps.maxDepth === 0, "maxDepth is clamped to 0 minimum");
+  assert(withNumericClamps.fileConcurrency === 32, "fileConcurrency is clamped to 32");
 }
 
 function testOpusModernSupport() {
@@ -346,28 +399,36 @@ function testManifestHygiene() {
     ".cache",
     ".tmp",
     "site",
-    "**/*private*key*",
-    "**/*secret*key*",
-    "**/*signing*key*",
     "**/*.pem",
     "**/*.key",
     "**/.env",
     "**/.env.*",
-    "**/*token*",
-    "**/*credential*",
-    "**/*secrets*",
     "out*.json"
   ]) {
     assert(configSource.includes(`"${expected}"`), `built-in excludes include ${expected}`);
   }
+  for (const removedBroadKeywordPattern of [
+    "**/*private*key*",
+    "**/*private-key*",
+    "**/*secret*key*",
+    "**/*signing*key*",
+    "**/*ed25519*key*",
+    "**/*rsa*key*",
+    "**/*token*",
+    "**/*credential*",
+    "**/*credentials*",
+    "**/*secrets*"
+  ]) {
+    assert(!configSource.includes(`"${removedBroadKeywordPattern}"`), `built-in excludes do not broad-match ${removedBroadKeywordPattern}`);
+  }
   assert(
     Array.isArray(disabledBuiltInsSetting.items.enum)
-      && disabledBuiltInsSetting.items.enum.length === 40
+      && disabledBuiltInsSetting.items.enum.length === 30
       && disabledBuiltInsSetting.items.enum.every((pattern) => configSource.includes(`"${pattern}"`)),
     "disabled built-in exclude setting exposes the editable built-in enum"
   );
   assert(
-    useBuiltInExcludesSetting.markdownDescription.includes("Built-in preview (first 6 of 40)")
+    useBuiltInExcludesSetting.markdownDescription.includes("Built-in preview (first 6 of 30)")
       && useBuiltInExcludesSetting.markdownDescription.includes("Export2AI: Manage Built-in Exclude Patterns")
       && !useBuiltInExcludesSetting.markdownDescription.includes("command:"),
     "built-in excludes settings copy shows compact preview and command-palette action without command URI"

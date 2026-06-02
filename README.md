@@ -61,7 +61,7 @@ my-project-gpt-5.5-context-2026-06-01-140000.zip
 
 Export2AI is built for AI handoff, not for publishing secrets.
 
-It keeps useful project context:
+It keeps normal source files and useful project context, including source files whose names mention `token`, `credential`, `secret`, or `key` as ordinary code:
 
 ```text
 .github/
@@ -80,8 +80,12 @@ It excludes local or sensitive material:
 .git/
 node_modules/
 .env*
+.npmrc
+_netrc
 *.pem
 *.key
+id_rsa
+id_ed25519
 __pycache__/
 .pytest_cache/
 build/
@@ -89,7 +93,9 @@ dist/
 site/
 ```
 
-The archive manifest also states that `.git`, credentials, and private key material were intentionally omitted.
+The archive manifest also states that `.git`, credentials, and private key material were intentionally omitted. You can add project-specific hard excludes with `export2ai.excludePatterns` or `export2ai.excludePaths`.
+
+Symlinks are skipped during archive collection so an export cannot accidentally follow a link outside the selected project.
 
 ---
 

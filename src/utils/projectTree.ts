@@ -90,6 +90,7 @@ export class ProjectTreeGenerator {
         }
 
         const fileUri = vscode.Uri.joinPath(dir, name);
+        const isSymbolicLink = Boolean(fileType & vscode.FileType.SymbolicLink);
         const isDirectory = Boolean(fileType & vscode.FileType.Directory);
         const rootRelative = UriUtils.relativePath(rootUri, fileUri);
         const workspaceRelative = workspaceUri ? UriUtils.relativePath(workspaceUri, fileUri) : undefined;
@@ -101,6 +102,10 @@ export class ProjectTreeGenerator {
 
         let isIgnored = false;
         let isExcludedByPath = false;
+
+        if (isSymbolicLink) {
+          continue;
+        }
 
         try {
           isIgnored = IgnoreUtils.isIgnored(ig, rootRelative, isDirectory);

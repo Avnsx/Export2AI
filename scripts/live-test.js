@@ -7,6 +7,7 @@ const ignore = require("ignore");
 const { TokenCounter } = require("../out/utils/tokenCounter");
 const { DEFAULT_LLM_MODEL } = require("../out/utils/modelRegistry");
 const { buildZipArchiveFileName, formatCompactTimestamp } = require("../out/utils/modelFormat");
+const { isProtectedCredentialPath } = require("../out/utils/gitMetadataSoftDelete");
 
 let binaryFileModulePromise;
 
@@ -67,12 +68,16 @@ async function collectFiles(sourcePath, workspaceRoot, config, zipOutputPath) {
   async function walk(current) {
     const relativeDir = path.relative(sourcePath, current).replace(/\\/g, "/");
     if (relativeDir && isIgnored(ig, relativeDir, true)) return;
+    if (relativeDir && isProtectedCredentialPath(relativeDir)) return;
 
     for (const entry of await fs.promises.readdir(current, { withFileTypes: true })) {
+      if (entry.isSymbolicLink()) continue;
+
       const absolute = path.join(current, entry.name);
       const relative = path.relative(sourcePath, absolute).replace(/\\/g, "/");
 
       if (isIgnored(ig, relative, entry.isDirectory())) continue;
+      if (isProtectedCredentialPath(relative)) continue;
       if (path.resolve(absolute).toLowerCase() === path.resolve(zipOutputPath).toLowerCase()) continue;
 
       if (entry.isDirectory()) {
@@ -148,7 +153,7 @@ async function createZip(sourcePath, workspaceRoot, config) {
     ignoreDollarFiles: true,
     softDeleteGitMetadata: true,
     softDeleteGitMetadataRealGitPathPlaceholder: false,
-    excludePatterns: ["node_modules", "*.log", "*.tmp", "*.temp", "*.bak", "dist", "site", "build", "out", ".git", "__pycache__", ".pytest_cache", ".cache", ".tmp", "**/*private*key*", "**/*private-key*", "**/*secret*key*", "**/*signing*key*", "**/*ed25519*key*", "**/*rsa*key*", "**/*.pem", "**/*.key", "**/*.p8", "**/*.p12", "**/*.pfx", "**/id_rsa", "**/id_dsa", "**/id_ecdsa", "**/id_ed25519", "**/*.asc", "**/*.gpg", "**/.env", "**/.env.*", "**/*token*", "**/*credential*", "**/*credentials*", "**/*secrets*", "out*.json", "*-chatgpt-context-*.zip", "*-*-context-*.zip"],
+    excludePatterns: ["node_modules", "*.log", "*.tmp", "*.temp", "*.bak", "dist", "site", "build", "out", ".git", "__pycache__", ".pytest_cache", ".cache", ".tmp", "**/*.pem", "**/*.key", "**/*.p8", "**/*.p12", "**/*.pfx", "**/id_rsa", "**/id_dsa", "**/id_ecdsa", "**/id_ed25519", "**/*.asc", "**/*.gpg", "**/.env", "**/.env.*", "out*.json", "*-chatgpt-context-*.zip", "*-*-context-*.zip"],
     excludePaths: [],
     compressCode: false,
     removeComments: false,

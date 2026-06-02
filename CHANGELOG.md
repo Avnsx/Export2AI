@@ -4,23 +4,30 @@ All notable changes to Export2AI are documented in this file.
 
 ## [Unreleased]
 
+## [1.2.9] - 2026-06-02
+
+### Fixed
+
+- **Collection hardening** — malformed scalar settings now fall back to documented defaults, empty `excludePaths` entries no longer exclude the workspace root, Windows `excludePaths` matching is case-insensitive, symlink entries are skipped instead of followed, and local auth files such as `.npmrc`, `.pypirc`, `.netrc`, `_netrc`, `.dockercfg`, and `.docker/config.json` are treated as credential material.
+
 ## [1.2.8] - 2026-06-01
 
 ### Added
 
 - **Repository-aware soft-delete** — exports now keep real repository control files such as `.github/**`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.mailmap`, `.gitkeep`, and `.git-blame-ignore-revs` while keeping unsafe local `.git` internals out of the archive.
-- **Editable safe defaults** — `export2ai.excludePatterns` is now a compact additional-pattern list, while **Export2AI: Manage Built-in Exclude Patterns** opens an IDE checklist for the 40 built-in excludes. Unchecked built-ins are stored in the enum-backed `export2ai.disabledBuiltInExcludePatterns` setting so they remain manually editable.
+- **Editable safe defaults** — `export2ai.excludePatterns` is now a compact additional-pattern list, while **Export2AI: Manage Built-in Exclude Patterns** opens an IDE checklist for the 30 built-in excludes. Unchecked built-ins are stored in the enum-backed `export2ai.disabledBuiltInExcludePatterns` setting so they remain manually editable.
 - **Permanent context policy** — `AGENTS.md`, `README.md`, `pyproject.toml`, `docs/**`, `tests/**`, and `tools/**` are preserved for AI debugging and repository validation even when broad ignore rules would otherwise hide them.
 
 ### Changed
 
 - **Safer `.git` marker layout** — the default artificial marker is now `_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt`, outside `.git`, so exported zips do not make `Path(".git").exists()` true. Advanced users can opt back into `.git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt` with `export2ai.softDeleteGitMetadata.realGitPathPlaceholder`.
 - **Cleaner archive manifest** — `_EXPORT2AI_MANIFEST.txt` now records only the source folder name plus `Source path redacted: true`, and clearly states that `.git`, credentials, and private key material were intentionally omitted because the archive is for code-context analysis, not publishing.
-- **Broader junk and secret defaults** — default excludes now cover cache folders (`__pycache__`, `.pytest_cache`, `.cache`, `.tmp`), build/site output, `.env*`, private keys, token/credential filenames, `out*.json`, and previous Export2AI context zips.
+- **Broader junk and secret defaults** — default excludes now cover cache folders (`__pycache__`, `.pytest_cache`, `.cache`, `.tmp`), build/site output, `.env*`, private key/certificate extensions, SSH key filenames, `out*.json`, and previous Export2AI context zips. Keyword-like token/credential/private-key source filenames are handled by the source-aware credential guard instead of broad glob ignores.
 
 ### Fixed
 
 - **False validation failures from missing repo files** — CI workflows, Dependabot config, `.gitignore`, `.gitattributes`, docs, tests, and tools stay available in exported zips so AI agents and repository tests no longer mistake a safe handoff archive for an incomplete source tree.
+- **Keyword-like source filenames** — normal source files such as `src/tokenEstimate.ts`, `src/utils/tokenCounter.ts`, `src/credentialParser.ts`, and `src/private-key-helper.ts` stay included, while `.env*`, SSH keys, private key/certificate extensions, and likely token/credential dumps stay blocked.
 - **False Git-repository detection** — `.git/` is no longer created by default, avoiding test suites that conditionally run `git ...` commands against a placeholder directory.
 - **Settings edge cases** — malformed built-in exclude settings are normalized, unknown values are ignored, failed QuickPick/settings updates are surfaced, and Explorer token badges remain opt-in only.
 

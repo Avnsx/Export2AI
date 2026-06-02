@@ -385,7 +385,7 @@ async function testBuiltInExcludeCommand() {
     },
     workspaceFolders: [workspaceFolder],
     quickPick(items, options) {
-      assert.strictEqual(items.length, 40, "checklist exposes every built-in pattern");
+      assert.strictEqual(items.length, 30, "checklist exposes every built-in pattern");
       assert.strictEqual(options.canPickMany, true, "checklist allows multi-pick");
       assert.strictEqual(items.find(item => item.label === "node_modules").picked, false, "trimmed disabled built-in is pre-unchecked");
       assert.strictEqual(items.find(item => item.label === "**/*.pem").picked, false, "disabled credential pattern is pre-unchecked");

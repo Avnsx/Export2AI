@@ -4,128 +4,137 @@
 [![Release](https://img.shields.io/github/v/release/Avnsx/Export2AI?sort=semver)](https://github.com/Avnsx/Export2AI/releases)
 [![Open VSX](https://img.shields.io/open-vsx/v/avnsx/export2ai)](https://open-vsx.org/extension/avnsx/export2ai)
 
-**Make clean AI-ready zip files from your VS Code or Cursor workspace.**
-
-Export2AI packages the folder you choose, skips noisy or sensitive files, keeps useful repository context, and shows an offline token estimate before you upload the zip to ChatGPT, Claude, Cursor, or another AI tool.
-
 <p align="center">
   <img src="https://i.imgur.com/RpgluFc.png" alt="Export2AI banner">
 </p>
 
----
+**AI-ready project zips for VS Code, Cursor, ChatGPT, Claude, and LLM coding agents.**
 
-## Why It Exists
+Export2AI turns a workspace or selected folder into a clean `.zip` archive for AI handoff. It skips generated noise, protects local Git metadata and credential-like files, keeps useful repository context, and shows an **offline token estimate** before you upload the archive.
 
-AI tools are useful only when the project archive is actually useful.
-
-| Common handoff problem | Export2AI behavior |
-|------------------------|-------------------|
-| Huge zips full of `node_modules` and caches | Skips common junk by default |
-| Missing `.github`, `.gitignore`, or test files | Keeps repository-control and validation files |
-| Accidentally shipping `.git` internals or keys | Excludes local Git metadata and secret-like files |
-| No idea how much context you are uploading | Shows an offline token estimate |
-| Too much setup for every AI handoff | Right-click a folder and create the zip |
+**Start here:** [Quick Start](https://github.com/Avnsx/Export2AI/wiki/Quick-Start) · [Features](https://github.com/Avnsx/Export2AI/wiki/Features-and-Workflow) · [Safe Exports](https://github.com/Avnsx/Export2AI/wiki/Safe-Exports-and-Excludes) · [Token Estimates](https://github.com/Avnsx/Export2AI/wiki/Token-Estimates-and-AI-Model-Support) · [Settings](https://github.com/Avnsx/Export2AI/wiki/Settings-and-Configuration) · [Troubleshooting](https://github.com/Avnsx/Export2AI/wiki/Troubleshooting)
 
 ---
 
-## Quick Start
+## Why Export2AI?
 
-1. Install **Export2AI** from [Open VSX](https://open-vsx.org/extension/avnsx/export2ai) or download the latest `.vsix` from [Releases](https://github.com/Avnsx/Export2AI/releases).
+| Manual AI handoff | Export2AI handoff |
+|-------------------|-------------------|
+| Manually pick files and hope the zip is useful | Right-click a folder and export it |
+| Upload `node_modules`, caches, build output, or old context zips | Built-in safe excludes are on by default |
+| Lose `.github/`, `.gitignore`, docs, tests, or `AGENTS.md` | Repository-control and validation files stay readable |
+| Risk leaking `.git/`, `.env`, keys, auth files, or local history | Git internals and credential-like paths are blocked |
+| Guess whether the archive fits an LLM context window | Offline token estimate appears before and after export |
+
+**Use it for:** ChatGPT project uploads, Claude code review context, Cursor workspace handoff, AI codebase analysis, and reproducible source archives for coding agents.
+
+---
+
+## Quick Start 🚀
+
+1. Install **Export2AI** from [Open VSX](https://open-vsx.org/extension/avnsx/export2ai), or download a `.vsix` from [Releases](https://github.com/Avnsx/Export2AI/releases).
 2. Open a project in **VS Code** or **Cursor**.
 3. Right-click a folder in the Explorer.
 4. Choose **Export2AI → Zip Folder**.
-5. Upload the generated `*-context-*.zip` to your AI tool.
+5. Upload the generated `*-context-*.zip` to ChatGPT, Claude, Cursor, or another AI tool.
 
-The zip is written to the workspace root, for example:
+Example output in the workspace root:
 
 ```text
-my-project-gpt-5.5-context-2026-06-01-140000.zip
+my-project-gpt-5.5-context-2026-06-02-201700.zip
 ```
+
+Full walkthrough: [Quick Start](https://github.com/Avnsx/Export2AI/wiki/Quick-Start).
 
 ---
 
-## What It Can Do
+## What It Can Do 🛠️
 
 | Feature | What you get |
 |---------|--------------|
-| 📁 Zip folder/workspace | Clean AI-ready source archive |
-| 🌳 Copy project structure | Folder tree only, copied to clipboard |
-| 📄 Copy one file | Exact UTF-8 file text, no zip needed |
+| 📁 Zip folder/workspace | Clean AI-ready source archive in the workspace root |
+| 🌳 Copy project structure | Folder tree only, copied as plaintext, Markdown, or XML |
+| 📄 Copy one file | Exact UTF-8 text from one file, no zip needed |
 | 🔢 Token estimate | Offline estimate in status bar and zip notification |
-| 🛡️ Git metadata soft-delete | Keeps `.github/**`, `.gitignore`, `.gitattributes`, but not `.git/` |
-| ⚙️ Editable safe excludes | Built-in excludes are on by default and can be managed from the Command Palette |
+| 🛡️ Git metadata soft-delete | Keeps repo-control files, omits unsafe local `.git/` internals |
+| ⚙️ Editable safe excludes | Command Palette checklist for built-in excludes |
+| 📂 Open last zip | Reveals the most recent zip in the OS file manager |
+
+Command details: [Features & Workflow](https://github.com/Avnsx/Export2AI/wiki/Features-and-Workflow).
 
 ---
 
-## Safe by Default
+## Safe by Default 🛡️
 
-Export2AI is built for AI handoff, not for publishing secrets.
+Export2AI is built for **AI context sharing**, not for publishing secrets or backing up a local checkout.
 
-It keeps normal source files and useful project context, including source files whose names mention `token`, `credential`, `secret`, or `key` as ordinary code:
+| Included for context | Excluded or replaced for safety/noise |
+|----------------------|---------------------------------------|
+| source text, `.github/`, `.gitignore`, `.gitattributes`, `.gitmodules`, `AGENTS.md`, `README.md`, `docs/`, `tests/`, `tools/`, `pyproject.toml` | `.git/`, `node_modules/`, `dist/`, `build/`, `out/`, caches, `.env*`, local auth files, private keys, binary/oversized/invalid UTF-8 placeholders, previous context zips |
 
-```text
-.github/
-.gitignore
-.gitattributes
-AGENTS.md
-README.md
-docs/
-tests/
-tools/
-```
+Normal source files are **not excluded only because their filename mentions** `token`, `credential`, `secret`, or `key`. Actual credential/key material still wins over these includes.
 
-It excludes local or sensitive material:
+Default Git marker:
 
 ```text
-.git/
-node_modules/
-.env*
-.npmrc
-_netrc
-*.pem
-*.key
-id_rsa
-id_ed25519
-__pycache__/
-.pytest_cache/
-build/
-dist/
-site/
+_EXPORT2AI_PLACEHOLDERS/git/EXPORT2AI_SOFT_DELETE_PLACEHOLDER.txt
 ```
 
-The archive manifest also states that `.git`, credentials, and private key material were intentionally omitted. You can add project-specific hard excludes with `export2ai.excludePatterns` or `export2ai.excludePaths`.
-
-Symlinks are skipped during archive collection so an export cannot accidentally follow a link outside the selected project.
+Details: [Safe Exports](https://github.com/Avnsx/Export2AI/wiki/Safe-Exports-and-Excludes) and [Git Metadata Soft-Delete](https://github.com/Avnsx/Export2AI/wiki/Git-Metadata-Soft-Delete).
 
 ---
 
-## Main Settings
+## Token Estimates 🧮
 
-Open settings from **Export2AI → Settings**, the Command Palette, or by clicking the token count in the status bar.
+Export2AI counts locally. Nothing is sent to OpenAI, Anthropic, Google, xAI, or any other API.
 
-| Setting | Default | Plain meaning |
-|---------|---------|---------------|
-| `export2ai.llmModel` | `gpt-5.5` | Model used for token estimates and zip names |
-| `export2ai.softDeleteGitMetadata` | `true` | Keep repo-control files, omit local `.git` internals |
+| Model family | Examples | Display |
+|--------------|----------|---------|
+| OpenAI / ChatGPT modern | `gpt-5.5`, `gpt-5.5-pro`, `gpt-5.4`, `gpt-5`, `gpt-4.1`, `gpt-4o`, `o3-mini`, `o4-mini` | exact, no `~` |
+| OpenAI legacy | `gpt-4`, `gpt-3.5-turbo` | exact, no `~` |
+| Claude | `claude-opus-4-8`, `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5` | approximate, `~` |
+| Other/unknown | `gemini-*`, `grok-*`, `deepseek-*`, `mistral-*` | approximate, `~` |
+
+Default target model:
+
+```json
+"export2ai.llmModel": "gpt-5.5"
+```
+
+More: [Token Estimates & AI Model Support](https://github.com/Avnsx/Export2AI/wiki/Token-Estimates-and-AI-Model-Support).
+
+---
+
+## Main Settings ⚙️
+
+Open settings from **Export2AI → Settings**, the Command Palette, or by clicking the status bar token estimate.
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `export2ai.llmModel` | `gpt-5.5` | Target model for estimates, menu rows, zip names, manifest |
+| `export2ai.enableTokenCounting` | `true` | Status bar and notification estimates |
+| `export2ai.softDeleteGitMetadata` | `true` | Keep repo-control files; omit local `.git/` internals |
 | `export2ai.useBuiltInExcludePatterns` | `true` | Use Export2AI's safe default excludes |
-| `export2ai.excludePatterns` | `[]` | Add your own extra exclude globs |
-| `export2ai.removeComments` | `false` | Optional comment stripping |
+| `export2ai.excludePatterns` | `[]` | Extra glob excludes |
+| `export2ai.excludePaths` | `[]` | Hard-exclude specific paths |
+| `export2ai.removeComments` | `false` | Optional language-aware comment stripping |
 | `export2ai.compressCode` | `false` | Optional whitespace compaction |
-| `export2ai.showExplorerTokenBadges` | `false` | Optional folder badges; off by default |
+| `export2ai.includeManifest` | `true` | Adds `_EXPORT2AI_MANIFEST.txt` |
 
-Use **Export2AI: Manage Built-in Exclude Patterns** from the Command Palette to include or exclude individual built-in patterns.
+Full reference: [Settings & Configuration](https://github.com/Avnsx/Export2AI/wiki/Settings-and-Configuration) and [docs/configuration.md](./docs/configuration.md).
 
 ---
 
-## Learn More
+## More Guides 📚
 
-The README stays short on purpose. Detailed docs live here:
-
-- [Wiki home](https://github.com/Avnsx/Export2AI/wiki) — human guide, settings, safety behavior, troubleshooting
-- [Configuration](./docs/configuration.md) — complete `export2ai.*` setting reference
-- [Architecture](./docs/architecture.md) — how collection, soft-delete, zipping, and token estimates work
-- [Build & test](./docs/build-and-test.md) — local development and release pipeline
-- [Agent guide](./AGENTS.md) — rules for AI coding agents and contributors
+| Guide | Best for |
+|-------|----------|
+| [GitHub Wiki](https://github.com/Avnsx/Export2AI/wiki) | human-friendly documentation hub |
+| [Comment Stripping & Compression](https://github.com/Avnsx/Export2AI/wiki/Comment-Stripping-and-Compression) | context-size tradeoffs |
+| [Developer Guide](https://github.com/Avnsx/Export2AI/wiki/Developer-Guide) | source map and architecture |
+| [Build, Test & Release](https://github.com/Avnsx/Export2AI/wiki/Build-Test-and-Release) | local build and VSIX packaging |
+| [Agent Chokepoints](https://github.com/Avnsx/Export2AI/wiki/Agent-Chokepoints) | performance traps for AI coding agents |
+| [Technical docs](./docs/README.md) | repository-maintained documentation index |
 
 ---
 
@@ -135,25 +144,16 @@ The README stays short on purpose. Detailed docs live here:
 npm install
 npm run compile
 npm run package
-```
-
-The built extension appears under:
-
-```text
-build/export2ai-x.y.z.vsix
-```
-
-For release-level checks:
-
-```bash
 npm run test:critical
 ```
+
+VSIX output: `build/export2ai-x.y.z.vsix`
 
 ---
 
 ## Links
 
-- [Open VSX / Cursor marketplace](https://open-vsx.org/extension/avnsx/export2ai)
+- [Open VSX / Cursor listing](https://open-vsx.org/extension/avnsx/export2ai)
 - [GitHub releases](https://github.com/Avnsx/Export2AI/releases)
 - [Project wiki](https://github.com/Avnsx/Export2AI/wiki)
-- [GPL-3.0 license](./LICENSE.txt)
+- [GPL-3.0-only license](./LICENSE.txt)

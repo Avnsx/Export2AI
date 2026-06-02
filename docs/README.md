@@ -1,15 +1,17 @@
 # Export2AI documentation
 
-Technical documentation for the Export2AI VS Code / Cursor extension. The compact user-facing start page is the root [README.md](../README.md). The human-friendly longer guide lives in the [GitHub Wiki](https://github.com/Avnsx/Export2AI/wiki). Agent and contributor conventions live in [AGENTS.md](../AGENTS.md).
+Technical documentation for the Export2AI VS Code / Cursor extension. The compact user-facing entry point is the root [README.md](../README.md). The visually guided, human-readable documentation lives in the [GitHub Wiki](https://github.com/Avnsx/Export2AI/wiki) and is mirrored from the repository-maintained [`wiki/`](../wiki/Home.md) source folder.
 
 | Document | Audience | Contents |
 |----------|----------|----------|
-| [Agent chokepoints](./agent-chokepoints.md) | **Agents (read first)** | Hang prevention, lazy registration, settings race, build traps |
-| [Target model UI](./target-model-ui.md) | Contributors, agents | Unified `llmModel`, scoped status-bar tooltip, opt-in Explorer badges, zip filenames |
-| [Architecture](./architecture.md) | Contributors, agents | Data flows, single-pass folder aggregation, commands, ignore/soft-delete pipeline |
-| [Source modules](./source-modules.md) | Contributors, agents | Every `src/` file and `scripts/` utility |
-| [Configuration](./configuration.md) | Users, contributors | All `export2ai.*` settings |
-| [Comment stripping](./comment-stripping.md) | Users, contributors | Language profiles, extension map, limitations |
-| [Build & test](./build-and-test.md) | Contributors | Slim/generated manifest workflow, npm scripts, targetable tests, marketplace/VSIX hygiene, `build/` output |
+| [configuration.md](./configuration.md) | maintainers, power users | all `export2ai.*` settings, defaults, clamps, deprecated keys |
+| [architecture.md](./architecture.md) | contributors | command flow, ignore/soft-delete pipeline, token estimates, runtime dependencies |
+| [target-model-ui.md](./target-model-ui.md) | contributors | unified `llmModel` display in menus, status bar, filenames, notifications |
+| [comment-stripping.md](./comment-stripping.md) | maintainers, users | supported comment syntax families and limitations |
+| [build-and-test.md](./build-and-test.md) | release maintainers | build pipeline, tests, VSIX packaging, release checklist |
+| [source-modules.md](./source-modules.md) | contributors, AI agents | `src/` and `scripts/` module map |
+| [agent-chokepoints.md](./agent-chokepoints.md) | AI coding agents | performance traps and rules that must not regress |
+| [../AGENTS.md](../AGENTS.md) | AI coding agents | repository conventions and pre-PR checklist |
+| [../wiki/Home.md](../wiki/Home.md) | readers, users, SEO | source files for the public GitHub Wiki pages |
 
-**Source of truth:** TypeScript under `src/` and `package.slim.json`. When docs diverge from code, fix the docs.
+The `wiki/` folder is intentionally documentation-only. When wiki content changes, publish those Markdown files to the existing GitHub Wiki at <https://github.com/Avnsx/Export2AI/wiki>; do not create a new repository and do not upload generated context zips.

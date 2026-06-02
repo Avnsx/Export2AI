@@ -1,6 +1,6 @@
 # Export2AI documentation
 
-Technical documentation for the Export2AI VS Code / Cursor extension. User-facing quick start remains in the root [README.md](../README.md). Agent and contributor conventions live in [AGENTS.md](../AGENTS.md).
+Technical documentation for the Export2AI VS Code / Cursor extension. The compact user-facing start page is the root [README.md](../README.md). The human-friendly longer guide lives in the [GitHub Wiki](https://github.com/Avnsx/Export2AI/wiki). Agent and contributor conventions live in [AGENTS.md](../AGENTS.md).
 
 | Document | Audience | Contents |
 |----------|----------|----------|

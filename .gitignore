@@ -17,6 +17,7 @@ build/
 *.log
 npm-debug.log*
 .vscode-test/
+.tmp/
 .DS_Store
 Thumbs.db
 
